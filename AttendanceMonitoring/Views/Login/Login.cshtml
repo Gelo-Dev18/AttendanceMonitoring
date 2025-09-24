@@ -1,0 +1,65 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model LoginViewModel;
+
+@{
+    Layout = "~/Views/Shared/_LoginLayout.cshtml";
+    ViewData["Title"] = "Log in";
+}
+
+<form asp-action="Login" method="post">
+    <div class="text-center mb-1">
+        
+        <img src="~/DashboardTemplate/img/MCAPS.png" alt="MCAPS Logo" class="img-fluid" style="max-height: 150px;">
+        <h1 class="my-5 display-5 fw-bold ls-tight" style="color: hsla(125, 48%, 31%, 1.00); font-weight: 700;  margin-bottom: 1rem!important; margin-top: 0!important;">
+            <br />Login <br />
+        </h1>
+    </div>
+    <div asp-validation-summary="ModelOnly" class="text-danger custom-validation-summary"></div>
+    <div data-mdb-input-init class="form-outline mb-4">
+        <input asp-for="Email" id="form3Example3" class="form-control" />
+        <label asp-for="Email" class="form-label" for="form3Example3">Email address</label> <br />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div data-mdb-input-init class="form-outline mb-4">
+        <input asp-for="Password" id="form3Example4" class="form-control" />
+        <label asp-for="Password" class="form-label" for="form3Example4">Password</label><br />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <div class="d-flex mb-4 medium text-muted">
+        <a href="#" style="color: #225d2b;">Forgot Password?</a>
+    </div>
+
+
+    <button type="submit" value="Login" data-mdb-button-init data-mdb-ripple-init class="btn btn-success btn-block mb-4">
+        Login
+    </button>
+
+    <div class="text-center">
+        <p>visit us:</p>
+        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
+            <i class="fab fa-facebook-f"></i>
+        </button>
+
+        <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-link btn-floating mx-1">
+            <i class="fab fa-google"></i>
+        </button>
+
+    </div>
+</form>
+
+@section Scripts {
+    <script src="DashboardTemplate/vendor/jquery/jquery.min.js"></script>
+    <script src="DashboardTemplate/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <script src="DashboardTemplate/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <script src="DashboardTemplate/js/sb-admin-2.min.js"></script>
+
+    <script src="DashboardTemplate/vendor/chart.js/Chart.min.js"></script>
+
+    <script src="DashboardTemplate/js/demo/chart-area-demo.js"></script>
+    <script src="DashboardTemplate/js/demo/chart-pie-demo.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+}

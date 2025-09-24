@@ -1,0 +1,87 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <!-- Custom fonts for this template-->
+    <link href="~/DashboardTemplate/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+          rel="stylesheet">
+    <!-- Custom styles for this template-->
+    <!-- <link href="../css/sb-admin-2.min.css" rel="stylesheet"> -->
+    <link href="~/DashboardTemplate/css/sb-admin-2.css" rel="stylesheet" asp-append-version="true">
+    <link href="~/css/AdminCss.css" rel="stylesheet">
+    <link href="~/DashboardTemplate/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
+
+</head>
+<body>
+    <div id="wrapper">
+        <!-- Sidebar -->
+        <partial name="_AdminSidebar" />
+        <div id="content-wrapper" class="d-flex flex-column">
+            <!-- Main Content -->
+            <div id="content">
+                <!-- Navbar -->
+                <partial name="_AdminNavbar"/>
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+                    @RenderBody()                
+                </div>
+            </div>
+            <!-- Footer -->
+            <partial name="_Footer" />
+        </div>
+    </div>
+    @*Alert Toast*@                                     @*z-index for layering*@
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
+        <div id="successToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
+            @* <div class="toast-header bg-success text-white">  *@
+            @*     <strong class="mr-auto">Deleted!</strong>  *@
+            @*     <small>Just now</small>  *@
+            @* </div>  *@
+            <div class="toast-body bg-success text-white">
+                <i class="bi bi-check-circle-fill"></i>
+                @* <span id="toast-message"><strong class="mr-auto" id="toast-body"></strong></span> *@
+                <span id="toast-message"></span>
+            </div>
+        </div>
+    </div>
+    @*Danger Toast*@
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
+        <div id="dangerToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
+            <div class="toast-body bg-danger text-white">
+                <i class="bi bi-check-circle-fill"></i>
+                <strong class="mr-auto" id="#toast-body">Something went wrong. Please try again.</strong>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="~/DashboardTemplate/vendor/jquery/jquery.min.js"></script>
+    <script src="~/DashboardTemplate/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="~/DashboardTemplate/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="~/DashboardTemplate/js/sb-admin-2.min.js"></script>
+
+    <!-- Page level plugins -->
+    <script src="~/DashboardTemplate/vendor/chart.js/Chart.min.js"></script>
+    <script src="~/DashboardTemplate/vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="~/DashboardTemplate/vendor/datatables/dataTables.bootstrap4.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script src="~/DashboardTemplate/js/demo/chart-area-demo.js"></script>
+    <script src="~/DashboardTemplate/js/demo/chart-pie-demo.js"></script>
+    <script src="~/DashboardTemplate/js/demo/datatables-demo.js"></script>
+  
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @* <script src="~/lib/jquery/dist/jquery.min.js"></script> @*For Ajax*@ 
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

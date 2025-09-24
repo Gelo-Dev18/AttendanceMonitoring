@@ -1,0 +1,22 @@
+﻿.bg-gradient-primary {
+    background-color: #004943;
+    /* background-color: #214e34; */
+    background-image: none;
+    /* background-color: rgb(45, 81, 46); */
+}
+.sidebar .nav-item .collapse .collapse-inner .collapse-item.active, .sidebar .nav-item .collapsing .collapse-inner .collapse-item.active {
+    color: #004943!important;
+}
+
+.page-item.active .page-link {
+    background-color: #004943!important;
+    border-color: #004943!important;
+}
+
+/*.img-fluid .img-thumbnail.imageProfile {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid #ccc;
+}*/

@@ -1,0 +1,123 @@
+﻿@{
+    ViewData["Title"] = "Teacher List";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Teacher List-->
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">Teacher List</h1>
+<!-- <p class="mb-4">Table for Teachers Info</p> -->
+<!-- DataTales Example -->
+<div class="card shadow mb-4" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Teacher's Info</h6>
+        @* <a href="#" class="btn btn-success btn-icon-split"> *@
+        @*     <span class="text">Add Teacher</span> *@
+        @* </a> *@
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddTeacher">
+            <span class="text">Add Teacher</span>
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th><strong>School ID</strong></th>
+                        <th><strong>Email</strong></th>
+                        <th><strong>Full name</strong></th>
+                        <th><strong>Sex</strong></th>
+                        <th><strong>Designation</strong></th>
+                        <th><strong>Action</strong></th>
+
+                    </tr>
+                </thead>
+                <!-- <tfoot>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Middle Name</th>
+                        <th>Last Name</th>
+                        <th>Sex</th>
+                        <th>TTPS</th>
+                    </tr>
+                </tfoot> -->
+                <tbody>
+                    @foreach(var teacher in Model)
+                    {
+                        <tr>
+                            <td><strong>@teacher.SchoolId</strong></td>
+                            <td><strong>@teacher.Email</strong></td>
+                            <td><strong>@teacher.FirstName @teacher.MiddleName @teacher.LastName</strong></td>
+                            <td><strong>@teacher.Sex</strong></td>
+                            <td><strong>@teacher.positionTitle</strong></td>
+                            <td class="text-center"><strong>
+                                    <a class="btn btn-primary btn-circle" >
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    @* <a asp-controller="Admin" asp-action="Delete" asp-route-id="@teacher.Id" class="btn btn-danger btn-circle delete-teacher-button"> *@
+                                    @*     <i class="fas fa-trash"></i> *@
+                                    @* </a> *@
+
+                                    <button data-id="@teacher.Id" type="button" class="btn btn-danger btn-circle delete-teacher-button" data-bs-toggle="modal" data-bs-target="#DeleteTeacher">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    @* <button data-id="@teacher.Id" class="btn btn-danger btn-circle delete-teacher-button"> *@
+                                    @*     <i class="fas fa-trash"></i> *@
+                                    @* </button> *@
+                                </strong>
+                            </td>
+
+                        </tr>
+                        
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@*Add Teacher modal*@
+<div class="modal fade" id="AddTeacher" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel"><strong>Teacher's Details</strong></h5>
+            </div>
+            <div class="modal-body" id="AddTeacherModal">
+            </div>
+        </div>
+    </div>
+
+</div>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="DeleteTeacher" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
+    <div class="modal-dialog">
+        @* <div class="modal-dialog modal-dialog-centered"> *@
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-center" id="staticBackdropLabel"><strong>Confirmation</strong></h5>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to Delete ?
+            </div>
+            <div class="modal-footer">
+                <button id="confirmDeleteButton" class="btn btn-danger delete-teacher-button">
+                    Delete
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+<script src="~/js/adminJs.js"></script>
+<script>
+</script>
+}
+
