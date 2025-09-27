@@ -1,7 +1,9 @@
 using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -103,25 +105,43 @@ using (var scope = app.Services.CreateScope()) //gives you a fresh room for a ta
 //{   //👉 Used to create, delete, and manage users — including assigning roles, changing passwords, and retrieving user info
 //    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
 
-//    //string email = "admin@admin.com";
-//    //string password = "admin12345";
+//    string email = "admin@admin.com";
+//   int schoolid = 12345;
+//   int employeeid = 12345;
+//    string password = "admin12345";
+//    string firstname = "Jhoel";
 
-//    string email = "example@email.com";
-//    string password = "example12345";
+//    string middlname = "O";
+//    string lastname = "Mallare";
+//    string sex = "Male";
+//    string position = "Teacher III";
+//    //var created = DateTime.Now;
+
+//    //string email = "example@email.com";
+//    //string password = "example12345";
 
 
 
-//    ////if (await userManager.FindByEmailAsync(email) == null)
-//    ////{
-//    ////    var user = new AppUser();
+//    if (await userManager.FindByEmailAsync(email) == null)
+//    {
+//        var user = new AppUser();
 
-//    ////    user.UserName = email;
-//    ////    user.Email = email;
+//        user.UserName = email;
+//        user.Email = email;
+//        user.FirstName = firstname;
+//        user.SchoolId = schoolid;
+//        user.EmployeeId = employeeid;
+//        user.FirstName = firstname;
+//        user.MiddleName = middlname;
+//        user.LastName = lastname;
+//        user.Sex = sex;
+//        user.positionTitle = position;
+//        user.CreatedAt = DateTime.Now;
 
-//    ////    await userManager.CreateAsync(user, password);
-//    ////    await userManager.AddToRoleAsync(user, "Admin");
+//        await userManager.CreateAsync(user, password);
+//        await userManager.AddToRoleAsync(user, "Admin");
 
-//    ////}
+//    }
 
 //    //if (await userManager.FindByEmailAsync(email) == null)
 //    //{
