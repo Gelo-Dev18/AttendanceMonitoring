@@ -62,6 +62,10 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             contentType: false, //si browser mag set ng contenttype
             success: function (response) {
                 //$('#AddTeacherModal').html(response); //after success it will return to Teacher List just like what's on the code in controller .  return PartialView("TeacherList");
+                $('.form-control').removeClass('border-danger');
+                $('.validation-error-message').text('');
+                //$('#validationSum').empty();
+
                 if (response.success) {
                     $('#AddTeacher').modal('hide');
                     // alert(response.message);
@@ -70,7 +74,23 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
                         location.reload();
                     }, 2000);
                 } else {
-                        $('#AddTeacherModal').html(response);
+                    //$('#AddTeacherModal').html(response);
+
+                    $.each(response.errors, function (key, value) {
+
+                        if (value && value.length > 0) {
+                            var inputElement = $('[name="' + key + '"]');
+                            inputElement.addClass('border-danger');
+
+                            var errorMessageElement = inputElement.next('.validation-error-message');
+                            if (errorMessageElement.length > 0) {
+                                errorMessageElement.text(value.join(', '));
+                            } else {
+                                $('<span class="text-danger validation-error-message">' + value.join(', ') + '</span>').insertAfter(inputElement);
+                            }
+                        }
+                        
+                    });
 
                     //$.each(response.errors, function (key, message) {
                     //    $('span[data-valmsg-for="' + key + '"]').text(message);

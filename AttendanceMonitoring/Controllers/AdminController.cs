@@ -76,11 +76,13 @@ namespace AttendanceMonitoring.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddTeacher(TeacherViewModel model)
         {
-            bool teacherFirstLastNameExist = await context.Users.AnyAsync(t => t.FirstName == model.FirstName && t.LastName == model.LastName);
+            bool teacherFirstLastNameExist = await context.Users.AnyAsync(t => t.FirstName == model.FirstName && t.MiddleName == model.MiddleName && t.LastName == model.LastName);
 
             if (teacherFirstLastNameExist)
             {
-                ModelState.AddModelError("FirstName", "A Teacher with this first name and last name already exists");
+                ModelState.AddModelError("FirstName", "A Teacher with this Full name already exists");
+                ModelState.AddModelError("MiddleName", "");
+                ModelState.AddModelError("LastName", "");
             }
 
             //Gagamitin to kapag gusto kong gumawa ng sarili kong validation sa Email existed kase may sariling validation si userManager.AnyAsync() about sa email exist
@@ -166,13 +168,27 @@ namespace AttendanceMonitoring.Controllers
                         //ModelState.AddModelError("", error.Description); //general error at isesesnd kay asp-validation-summary
 
                     }
-                    return PartialView("_AddTeacherPartial", model);
+                    var errors = ModelState.ToDictionary(
+                                            kvp => kvp.Key,
+                                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                                        );
+
+                    return Json(new { success = false, errors = errors });
                 }
 
                 //return PartialView("TeacherList", teacher);
 
             }
-            return PartialView("_AddTeacherPartial", model);
+            else
+            {
+                var errors = ModelState.ToDictionary(
+                                                       kvp => kvp.Key,
+                                                       kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                                                   );
+
+                return Json(new { success = false, errors = errors });
+            }
+            //return PartialView("_AddTeacherPartial", model);
 
             //to see actual error in devtools
             //try
