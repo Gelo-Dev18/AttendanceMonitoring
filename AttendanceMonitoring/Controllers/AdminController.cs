@@ -85,6 +85,13 @@ namespace AttendanceMonitoring.Controllers
                 ModelState.AddModelError("LastName", "");
             }
 
+            bool schoolIdExisted = await context.Users.AnyAsync(s => s.SchoolId == model.SchoolId);
+
+            if (schoolIdExisted)
+            {
+                ModelState.AddModelError("SchoolId", "School Id is already taken!");
+            }
+
             //Gagamitin to kapag gusto kong gumawa ng sarili kong validation sa Email existed kase may sariling validation si userManager.AnyAsync() about sa email exist
             //bool EmailIsExisted = await context.Users.AnyAsync(e => e.Email == model.Email);
 
