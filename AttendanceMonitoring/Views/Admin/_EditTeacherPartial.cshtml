@@ -1,0 +1,100 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model TeacherViewModel;
+@{
+    ViewData["Title"] = "Edit Teacher";
+}
+
+<!-- Modal -->
+
+<form id="EditTeacherForm" asp-action="EditTeacher" class="row g-3" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div class="col-12">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    </div>
+    <div class="col-6">
+        <label asp-for="Email" class="form-label"><strong>Email</strong></label>
+        <input asp-for="Email" class="form-control" required />
+        <span asp-validation-for="Email" class="text-danger validation-error-message"></span>
+    </div>
+    <div class="col-6">
+        <label asp-for="Password" class="form-label"><strong>Password</strong></label>
+        <input asp-for="Password" class="form-control" required />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+    <div class="col-6">
+        <label asp-for="SchoolId" class="form-label"><strong>School Id</strong></label>
+        <input asp-for="SchoolId" class="form-control" required />
+        <span asp-validation-for="SchoolId" class="text-danger"></span>
+    </div>
+    <div class="col-6">
+        <label asp-for="EmployeeId" class="form-label"><strong>Employee No</strong>.</label>
+        <input asp-for="EmployeeId" class="form-control" required />
+        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="FirstName" class="form-label"><strong>First Name</strong></label>
+        <input asp-for="FirstName" class="form-control" required />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="MiddleName" class="form-label"><strong>Middle Name</strong></label>
+        <input asp-for="MiddleName" class="form-control" />
+        <span asp-validation-for="MiddleName" class="text-danger"></span>
+    </div>
+    <div class="col-8">
+        <label asp-for="LastName" class="form-label"><strong>Last Name</strong></label>
+        <input asp-for="LastName" class="form-control" required />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Sex" class="form-label"><strong>Sex</strong></label>
+        <select asp-for="Sex" class="form-control" required>
+            <option value="" selected>Choose...</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select>
+        <span asp-validation-for="Sex" class="text-danger"></span>
+    </div>
+    <div class="col-6 form-group">
+        <div>
+            <label asp-for="positionTitle" class="form-label"><strong>Designation/Position</strong></label>
+            <input asp-for="positionTitle" class="form-control" placeholder="Teacher 1, Teacher 2, Teacher 3...." required>
+            <span asp-validation-for="positionTitle" class="text-danger"></span>
+        </div>
+        
+        <div class="mt-5">
+            <div class="row">
+                <label class="col-auto col-form-label">Created At:</label>
+                <div class="col-auto">
+                    <input class="form-control-plaintext" readonly value="@ViewData["CreatedAt"]" />
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="col-6 form-group">
+        <label asp-for="imageFile" class="form-label"><strong>Upload Image </strong>(Optional)</label>
+        <div class="custom-file">
+            <input asp-for="imageFile" class="custom-file-input">
+            <label asp-for="imageFile" class="custom-file-label" for="imageFile">Choose file</label>
+            <span asp-validation-for="imageFile" class="text-danger"></span>
+        </div>
+        <div class="form-group d-flex justify-content-center align-items-center mt-2">
+            <img src="/ProfilePic/@ViewData["imageFilePath"]" class="img-fluid img-thumbnail" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%" id="imagePreview" alt="Image" />
+        </div>
+        
+    </div>
+
+    <div class="modal-footer col-12">
+        <button type="submit" class="btn btn-primary" id="SaveTeacher">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    </div>
+</form>
+
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

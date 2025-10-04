@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
                 document.getElementById('AddTeacherModal').innerHTML = html;
             },
             error: function (xhr, status, error) {
-                console.error('Error loading login modal:', error);
+                console.error('Error loading add teacher modal:', error);
             }
         });
     }
@@ -41,6 +41,36 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
         loadAddTeacher(); //load when the modal is clicked
 
     });
+
+    //load modal for editing teacher
+    var teacherID;
+
+    //loads the modal when clicked // JQUERY
+    $('#EditTeacher').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        teacherID = button.data('id');
+
+        loadEditTeacher(); //load when the modal is clicked
+
+    });
+    function loadEditTeacher() {
+        if (!teacherID) {
+            alert('Id does not found');
+            return;
+        }
+        $.ajax({ //ajax exchange data from the server without reloading the page
+            url: '/Admin/EditTeacher/' + teacherID, // Calls GET action
+            type: 'GET',              // HTTP GET Request. GET is used to retrieve data from the server. POST is used for submitting data to the server
+            success: function (html) {
+                document.getElementById('EditTeacherModal').innerHTML = html;
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading edit teacher modal:', error);
+            }
+        });
+    }
+    
+
 
     //immediately load the modal when the page once load
     // document.addEventListener("DOMContentLoaded", function(){

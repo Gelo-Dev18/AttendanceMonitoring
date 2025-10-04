@@ -1,17 +1,18 @@
 ﻿using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
+using AttendanceMonitoring.ViewModel;
 using Humanizer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Data;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using System.Net.NetworkInformation;
 using Microsoft.EntityFrameworkCore;
-using AttendanceMonitoring.ViewModel;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Data;
+using System.Net.NetworkInformation;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static NuGet.Packaging.PackagingConstants;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AttendanceMonitoring.Controllers
 {
@@ -56,6 +57,36 @@ namespace AttendanceMonitoring.Controllers
                 .ToList();
 
             return View(teacher);
+        }
+
+        [HttpGet]
+        public IActionResult EditTeacher(string id)
+        {
+            var teacher = context.Users.Find(id);
+
+            if (teacher == null)
+            {
+                return RedirectToAction("TeacherList", "Admin");
+            }
+
+            var model = new TeacherViewModel()
+            {
+                Email = teacher.Email,
+                //UserName = teacher.Email,
+                SchoolId = teacher.SchoolId,
+                EmployeeId = teacher.EmployeeId,
+                FirstName = teacher.FirstName,
+                MiddleName = teacher.MiddleName,
+                LastName = teacher.LastName,
+                Sex = teacher.Sex,
+                positionTitle = teacher.positionTitle,
+            };
+
+            ViewData["imageFileData"] = teacher.imageFileData;
+            ViewData["imageFilePath"] = teacher.imageFilePath;
+            ViewData["CreatedAt"] = teacher.CreatedAt.ToString("MM/dd/yyyy");
+
+            return PartialView("_EditTeacherPartial", model);
         }
         
         public IActionResult StudentList()
@@ -206,6 +237,7 @@ namespace AttendanceMonitoring.Controllers
             //    return Json(new { success = false, message = $"Error: {ex.Message}", stackTrace = ex.StackTrace });
             //}
         }
+        [HttpDelete]
         public async Task<IActionResult> Delete(string id)
         {
             

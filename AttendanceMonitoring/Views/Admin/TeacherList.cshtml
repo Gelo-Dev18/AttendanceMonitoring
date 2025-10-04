@@ -53,9 +53,13 @@
                             <td><strong>@teacher.Sex</strong></td>
                             <td><strong>@teacher.positionTitle</strong></td>
                             <td class="text-center"><strong>
-                                    <a class="btn btn-primary btn-circle" >
+                                    @* <a class="btn btn-primary btn-circle" asp-controller="Admin" asp-action="_EditTeacherPartial" asp-route-id="@teacher.Id">
                                         <i class="fas fa-edit"></i>
-                                    </a>
+                                    </a> *@
+                                    <button data-id="@teacher.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditTeacher">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
                                     @* <a asp-controller="Admin" asp-action="Delete" asp-route-id="@teacher.Id" class="btn btn-danger btn-circle delete-teacher-button"> *@
                                     @*     <i class="fas fa-trash"></i> *@
                                     @* </a> *@
@@ -89,8 +93,21 @@
             </div>
         </div>
     </div>
-
 </div>
+
+@*Edit Teacher modal*@
+<div class="modal fade" id="EditTeacher" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel"><strong>Edit Teacher's Details</strong></h5>
+            </div>
+            <div class="modal-body" id="EditTeacherModal">
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="DeleteTeacher" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
     <div class="modal-dialog">
