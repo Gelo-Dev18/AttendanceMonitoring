@@ -2,18 +2,19 @@
 
 namespace AttendanceMonitoring.ViewModel
 {
-    public class TeacherViewModel
+    public class EditTeacherViewModel
     {
-        [Required(ErrorMessage ="Email is Required!"), MaxLength(60)]
+        [Required(ErrorMessage = "Email is Required!"), MaxLength(60)]
         [EmailAddress(ErrorMessage = "Use a valid email with an" + " '@' " + "sign")]
         public string Email { get; set; }
 
         [DataType(DataType.Password)]
-        [Required(ErrorMessage = "Password is Required!"), MaxLength(60)]
-        public string Password { get; set; }
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 Characters")]
+        public string? NewPassword { get; set; }
 
         [Required(ErrorMessage = "School Id is Required!")]
         public int SchoolId { get; set; }
+
         [Required]
         public int EmployeeId { get; set; }
 
@@ -30,7 +31,7 @@ namespace AttendanceMonitoring.ViewModel
 
         [Required, MaxLength(30)]
         public string positionTitle { get; set; }
-
+        //[Required]
         public IFormFile? imageFile { get; set; }
     }
 }

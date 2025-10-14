@@ -1,5 +1,5 @@
 ﻿@using AttendanceMonitoring.ViewModel;
-@model TeacherViewModel;
+@model EditTeacherViewModel;
 @{
     ViewData["Title"] = "Edit Teacher";
 }
@@ -17,9 +17,10 @@
         <span asp-validation-for="Email" class="text-danger validation-error-message"></span>
     </div>
     <div class="col-6">
-        <label asp-for="Password" class="form-label"><strong>Password</strong></label>
-        <input asp-for="Password" class="form-control" required />
-        <span asp-validation-for="Password" class="text-danger"></span>
+        <label asp-for="NewPassword" class="form-label"><strong>New Password</strong></label>
+        <input asp-for="NewPassword" class="form-control"/>
+        <span asp-validation-for="NewPassword" class="text-danger"></span>
+        <label class="text-danger" style="font-style: italic; font-size: 14px;">*Leave blank if you don't want to change the password</label>
     </div>
     <div class="col-6">
         <label asp-for="SchoolId" class="form-label"><strong>School Id</strong></label>

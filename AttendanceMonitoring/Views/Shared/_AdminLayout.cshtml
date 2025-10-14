@@ -49,6 +49,17 @@
             </div>
         </div>
     </div>
+
+    @*Update Success Toast*@
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
+        <div id="updateSuccessToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
+            <div class="toast-body bg-success text-white">
+                <i class="bi bi-check-circle-fill"></i>
+                <span id="update-toast-message"></span>
+            </div>
+        </div>
+    </div>
+
     @*Danger Toast*@
     <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
         <div id="dangerToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using NuGet.DependencyResolver;
 using System.Data;
 using System.Net.NetworkInformation;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -19,17 +20,33 @@ namespace AttendanceMonitoring.Controllers
     
     public class AdminController : Controller
     {
+        //fields         //type of class: generic class. class type parin sila
+                                       //<> means generic parang placeholder. Sinasabi mo: "SignInManager for AppUser type"
+                                                //variable
         private readonly SignInManager<AppUser> signInManager;
         private readonly UserManager<AppUser> userManager;
+                         //Hindi generic kase walang <>
         private readonly ApplicationDbContext context;
         private readonly IWebHostEnvironment environment; //Accessing Static Files: Use WebRootPath to locate static files like images, CSS, or JavaScript stored in the wwwroot directory.
 
+        //private readonly UserManager<IdentityUser> _userManager;
+
+
+        //constructor           //parameters
+                                //Dependency Injection
+                                                      //eto mismo yung parameter: signInManager, tapos object dn sya pero yung laman nya, example if yung parameter is name then ang object is 'Juan'
         public AdminController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment)
         {
+            // so you can use them in any method inside the controller.
+            // eto nayung ininject sa conrstructor
+            //These four lines assign the injected parameters to the class fields
+
             this.signInManager = signInManager;
             this.userManager = userManager;
             this.context = context;
             this.environment = environment;
+
+            //this._userManager = _userManager;
         }
 
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
@@ -69,7 +86,7 @@ namespace AttendanceMonitoring.Controllers
                 return RedirectToAction("TeacherList", "Admin");
             }
 
-            var model = new TeacherViewModel()
+            var model = new EditTeacherViewModel()
             {
                 Email = teacher.Email,
                 //UserName = teacher.Email,
@@ -145,7 +162,7 @@ namespace AttendanceMonitoring.Controllers
                     //Sine - save yung actual image file sa wwwroot/ ProfilePic / folder
                     using (var stream = System.IO.File.Create(imageFullPath))
                     {
-                        model.imageFile.CopyTo(stream);
+                        await model.imageFile.CopyToAsync(stream);
                     }
                     saveImagePath = newFile;
 
@@ -233,10 +250,160 @@ namespace AttendanceMonitoring.Controllers
             //{
             //}
             //catch (Exception ex)
-            //{
+            //{ 
             //    return Json(new { success = false, message = $"Error: {ex.Message}", stackTrace = ex.StackTrace });
             //}
         }
+
+        //[HttpPut] // ginagamit lang sa mga restful api 
+        [HttpPost] //ginagamit parin ang post kagit sa pag update sa mvc kase ang form is only support post and get
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditTeacher(string id, EditTeacherViewModel model)
+        {
+            var editTeacher = await context.Users.FindAsync(id);
+
+            if(editTeacher == null)
+            {
+                return Json(new { success = false, message = "Teacher not found" });
+            }
+            //check for email duplication
+            bool sameEmail = await context.Users.AnyAsync(e => e.Email == model.Email && e.Id != id);
+
+            if (sameEmail)
+            {
+                ModelState.AddModelError("Email", "Email is already used!");
+            }
+
+            //duplicate check excluding self
+            //Dito gumamit ng s.Id != id para pag nag check ng id is hindi isasama yung current id sa pag hahanap
+            //check for Schoold Id Duplication
+            bool schoolIdExisted = await context.Users.AnyAsync(s => s.SchoolId == model.SchoolId && s.Id != id);
+
+            if (schoolIdExisted)
+            {
+                ModelState.AddModelError("SchoolId", "School Id is already taken!");
+            }
+
+            //Check for Employee Id duplication
+            bool employeeNoExisted = await context.Users.AnyAsync(e => e.EmployeeId == model.EmployeeId && e.Id != id);
+            if (employeeNoExisted)
+            {
+                ModelState.AddModelError("EmployeeId", "Employee Id is already taken!");
+            }
+
+            //Check if Full name duplication
+            bool FullNameExisted = await context.Users.AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName);
+            if (FullNameExisted)
+            {
+                ModelState.AddModelError("FirstName", "A teacher with this Full name is already existed");
+                ModelState.AddModelError("MiddleName", " ");
+                ModelState.AddModelError("LastName", " ");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewData["imageFileData"] = editTeacher.imageFileData;
+                ViewData["imageFilePath"] = editTeacher.imageFilePath;
+                ViewData["CreatedAt"] = editTeacher.CreatedAt.ToString("MM/dd/yyyy");
+
+                var errors = ModelState.ToDictionary(
+                                                                       kvp => kvp.Key,
+                                                                       kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                                                                   );
+
+                return Json(new { success = false, errors = errors });
+            }
+
+            string? saveImagePath = null;
+            byte[]? saveImageData = null;
+
+            if(model.imageFile != null)
+            {
+                string newFile = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                newFile += Path.GetExtension(model.imageFile.FileName);
+
+                string imageFullPath = environment.WebRootPath + "/ProfilePic/" + newFile;
+
+                using(var stream = System.IO.File.Create(imageFullPath))
+                {
+                    await model.imageFile.CopyToAsync(stream);
+                }
+
+                string oldImageFullPath = environment.WebRootPath + "/ProfilePic/" + editTeacher.imageFilePath;
+                System.IO.File.Delete(oldImageFullPath);
+
+                saveImagePath = newFile;
+
+                using(var inputStream = model.imageFile.OpenReadStream())
+                using(var memoryStream = new MemoryStream())
+                {
+                    await inputStream.CopyToAsync(memoryStream);
+                    saveImageData = memoryStream.ToArray();
+                }
+                //IMPORTANT: Assign to editTeacher
+                editTeacher.imageFilePath = saveImagePath;
+                editTeacher.imageFileData = saveImageData;
+            }
+
+            editTeacher.Email = model.Email;
+            editTeacher.SchoolId = model.SchoolId;
+            editTeacher.EmployeeId = model.EmployeeId;
+            editTeacher.FirstName = model.FirstName;
+            editTeacher.MiddleName = model.MiddleName;
+            editTeacher.LastName = model.LastName;
+            editTeacher.Sex = model.Sex;
+            editTeacher.positionTitle = model.positionTitle;
+
+            var result = await userManager.UpdateAsync(editTeacher);
+
+            if (!result.Succeeded)
+            {
+                foreach(var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                //return PartialView("_EditTeacherPartial", model);
+                var errors = ModelState.ToDictionary(
+                                                                       kvp => kvp.Key,
+                                                                       kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                                                                   );
+
+                return Json(new { success = false, errors = errors });
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.NewPassword))
+            {
+                var removePassword = await userManager.RemovePasswordAsync(editTeacher);
+                if (removePassword.Succeeded)
+                {
+                    var addPassword = await userManager.AddPasswordAsync(editTeacher, model.NewPassword);
+                    if (!addPassword.Succeeded)
+                    {
+                        foreach(var error in addPassword.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                        //parehas silang babalik sa form , ang pinagkaibahan lang is:
+                        //return View(model); // eto babalik sa same page 
+                        //return PartialView("_EditTeacherPartial", model); // eto babalik sa same form kase naka modal yung form
+                        var errors = ModelState.ToDictionary(
+                                                       kvp => kvp.Key,
+                                                       kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                                                   );
+
+                        return Json(new { success = false, errors = errors });
+                    }
+                }
+            }
+
+            //No need ng gamitin ang SaveChangesAsync() kase Ang UserManager.UpdateAsync(), RemovePasswordAsync(), at AddPasswordAsync() ay automatically nag-save na sa database.
+            //await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "User Updated Successfully!" });// babalik na sa teacher list table kase walang error and success na sya!
+
+        }
+
         [HttpDelete]
         public async Task<IActionResult> Delete(string id)
         {
