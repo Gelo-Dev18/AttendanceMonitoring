@@ -18,6 +18,9 @@
 
 </head>
 <body>
+    <div id="blurred-overlay" class="blurred"></div>
+    <div id="blurred-overlay-page" class="blurred"></div>
+
     <div id="wrapper">
         <!-- Sidebar -->
         <partial name="_AdminSidebar" />
@@ -42,7 +45,7 @@
             @*     <strong class="mr-auto">Deleted!</strong>  *@
             @*     <small>Just now</small>  *@
             @* </div>  *@
-            <div class="toast-body bg-success text-white">
+            <div class="toast-body bg-success text-white" style="font-size: 16px; font-weight:600;">
                 <i class="bi bi-check-circle-fill"></i>
                 @* <span id="toast-message"><strong class="mr-auto" id="toast-body"></strong></span> *@
                 <span id="toast-message"></span>
@@ -52,8 +55,8 @@
 
     @*Update Success Toast*@
     <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
-        <div id="updateSuccessToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
-            <div class="toast-body bg-success text-white">
+        <div id="updateSuccessToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000" >
+            <div class="toast-body bg-success text-white" style="font-size: 16px; font-weight:600;">
                 <i class="bi bi-check-circle-fill"></i>
                 <span id="update-toast-message"></span>
             </div>
@@ -63,14 +66,20 @@
     @*Danger Toast*@
     <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
         <div id="dangerToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
-            <div class="toast-body bg-danger text-white">
+            <div class="toast-body bg-danger text-white" style="font-size: 16px; font-weight:600;>
                 <i class="bi bi-check-circle-fill"></i>
                 <strong class="mr-auto" id="#toast-body">Something went wrong. Please try again.</strong>
             </div>
         </div>
     </div>
 
-
+    @*Spinner*@
+    <div id="spinnerWrapper" class="d-none" style="position: fixed; top: 0; right: 0; width: 100%; height: 100%; z-index: 1090; font-size: 16px; display: flex; justify-content: center; align-items: center;">
+        <div id="spinnerLoad" class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status">
+            @* <span class="visually-hidden">Loading...</span> *@
+            <span class="sr-only">Loading...</span> 
+        </div>
+    </div>
     <script src="~/DashboardTemplate/vendor/jquery/jquery.min.js"></script>
     <script src="~/DashboardTemplate/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 

@@ -40,7 +40,12 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
     $('#AddTeacher').on('show.bs.modal', function () {
         loadAddTeacher(); //load when the modal is clicked
 
+        loadBlurBackground();
     });
+
+    $('#AddTeacher').on('hide.bs.modal', function (event) {
+        hideBlurBackground();
+    })
 
     //load modal for editing teacher
     var teacherID;
@@ -67,10 +72,14 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
         teacherID = button.data('id');
 
         loadEditTeacher();
+        loadBlurBackground();
+
 
     });
     
-
+    $('#EditTeacher').on('hide.bs.modal', function (event) {
+        hideBlurBackground();
+    })
 
     //immediately load the modal when the page once load
     // document.addEventListener("DOMContentLoaded", function(){
@@ -81,6 +90,9 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
     //Event Delegation   //Targets the form 
     $(document).on('submit', '#AddTeacherForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
+
+        
+        //loadPageBlur();
 
         var formData = new FormData(this); //collect and manage form data for submission
         //RESTful api, two computer system to exchange information through the internet
@@ -97,8 +109,10 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
                 //$('#validationSum').empty();
 
                 if (response.success) {
+                    $('#AddTeacher').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
                     $('#AddTeacher').modal('hide');
                     // alert(response.message);
+                    loadSpinner();
                     showSuccessToast(response.message);
                     setTimeout(function () {
                         location.reload();
@@ -140,7 +154,9 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             },
             error: function (xhr, status, error) {
                 console.error('Error saving teacher:', error);
-                alert('Something went wrong. Please try again.');
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while updating the teacher.');
             }
         });
     });
@@ -151,6 +167,8 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
 
         var formData = new FormData(this);
         var teacherId = teacherID;
+
+        loadPageBlur();
 
         $('#EditTeacherForm .form-control').removeClass('border-danger');
         $('#EditTeacherForm .validation-error-message').remove();
@@ -166,7 +184,9 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
                 //console.log('Full response:', response); // Add this line
 
                 if (response.success) {
+                    //$('#EditTeacher').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
                     $('#EditTeacher').modal('hide');
+                    loadSpinner();
                     showUpdateSuccessToast(response.message);
                     setTimeout(function () {
                         location.reload();
@@ -194,6 +214,8 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             error: function (xhr, status, error) {
                 console.error('Error updating user:', error);
                 console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
+                loadSpinner();
+                loadPageBlur();
                 showDangerToast('An error occurred while updating the teacher.');
             }
         });
@@ -202,9 +224,15 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
     var teacherID;
     //use this kase yung DeleteTeacher is yung mismong modal ko and connected sya sa button sa loob ng foreach dahil sa data-bs-target="DeleteButton"
     $('#DeleteTeacher').on('show.bs.modal', function (event) {
+        loadBlurBackground();
+
         var button = $(event.relatedTarget); // This is the delete pag pinindot
         teacherID = button.data('id');       // Get the ID from that button
     });
+
+    $('#DeleteTeacher').on('hide.bs.modal', function (event) {
+        hideBlurBackground();
+    })
 
     //use this kapag mismong button lang
     //$('#delete-teacher-button').on('click', function (event) {
@@ -219,13 +247,19 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             return;
         }
 
+        loadSpinner();
+        //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
+        
         $.ajax({
             url: '/Admin/Delete/' + teacherID,
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
+
+                    $('#DeleteTeacher').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
                     $('#DeleteTeacher').modal('hide');
                     showSuccessToast(response.message);
+                    //loadSpinner();
                     setTimeout(function () {
                         location.reload();
                     }, 2000);
@@ -238,6 +272,8 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             error: function (xhr, status, error) {
                 console.error('Error deleting teacher:', error);
                 //    alert('Something went wrong. Please try again.');
+                loadSpinner();
+                loadPageBlur();
                 showDangerToast(response);
             }
         });
@@ -258,5 +294,30 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
     function showDangerToast() {
         $('#dangerToast').toast('show');
     }
+
+    function loadSpinner() {
+        //vanilla js
+        //const spinner = document.getElementById("spinnerLoad");
+        //spinner.classList.remove("d-none");
+
+        //jquery
+        $('#spinnerWrapper').removeClass("d-none");
+    }
+
+    function loadPageBlur() {
+        $('#blurred-overlay-page').css('display', 'block');
+    }
+
+    function loadBlurBackground() {
+        $('#blurred-overlay').css('display', 'block');
+    }
+
+    function hideBlurBackground() {
+        $('#blurred-overlay').css('display', 'none');
+    }
+
+    //function loadModalBlurBackground() {
+    //    $('#blurred-overlay-modal').css('display', 'block');
+    //}
 });
 

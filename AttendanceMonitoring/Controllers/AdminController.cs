@@ -292,7 +292,7 @@ namespace AttendanceMonitoring.Controllers
             }
 
             //Check if Full name duplication
-            bool FullNameExisted = await context.Users.AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName);
+            bool FullNameExisted = await context.Users.AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName && f.Id != id);
             if (FullNameExisted)
             {
                 ModelState.AddModelError("FirstName", "A teacher with this Full name is already existed");

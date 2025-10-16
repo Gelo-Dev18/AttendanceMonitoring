@@ -20,3 +20,31 @@
     border-radius: 50%;
     border: 2px solid #ccc;
 }*/
+
+#blurred-overlay{
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px); /*For webkit browsers para sa mga old version of browsers*/
+    z-index: 999;
+
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+#blurred-overlay-page{
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px); /*For webkit browsers para sa mga old version of browsers*/
+    z-index: 999;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
