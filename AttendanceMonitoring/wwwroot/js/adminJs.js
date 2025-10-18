@@ -221,7 +221,39 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
         });
     });
 
+
     var teacherID;
+
+    $('#ViewTeacher').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        teacherID = button.data('id');
+
+        loadVIewTeacher();
+        loadBlurBackground();
+    });
+
+    $('#ViewTeacher').on('hide.bs.modal', function (event) {
+        hideBlurBackground();
+    });
+    function loadVIewTeacher() {
+        if (!teacherID) {
+            alert('Id does not found');
+            return;
+        }
+        $.ajax({ //ajax exchange data from the server without reloading the page
+            url: '/Admin/ViewTeacher/' + teacherID, // Calls GET action
+            type: 'GET',              // HTTP GET Request. GET is used to retrieve data from the server. POST is used for submitting data to the server
+            success: function (html) {
+                //document.getElementById('ViewTeacherModal').innerHTML = html; //Vanilla js
+                $('#ViewTeacherModal').html(html); //jquery //ito ay nasa loob ng ajax dahil nasa modal yung sarili nyang table. Wala sa mismong TeacherList, kaya di gagana if nasa loob ng datatables-demo ang assignSubject .
+                $('#assignSubject').DataTable();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading edit teacher modal:', error);
+            }
+        });
+    }
+
     //use this kase yung DeleteTeacher is yung mismong modal ko and connected sya sa button sa loob ng foreach dahil sa data-bs-target="DeleteButton"
     $('#DeleteTeacher').on('show.bs.modal', function (event) {
         loadBlurBackground();

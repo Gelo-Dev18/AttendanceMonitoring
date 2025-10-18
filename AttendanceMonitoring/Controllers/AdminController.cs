@@ -105,7 +105,37 @@ namespace AttendanceMonitoring.Controllers
 
             return PartialView("_EditTeacherPartial", model);
         }
-        
+
+        [HttpGet]
+        public IActionResult ViewTeacher(string id)
+        {
+            var teacher = context.Users.Find(id);
+
+            if (teacher == null)
+            {
+                return RedirectToAction("TeacherList", "Admin");
+            }
+
+            var model = new EditTeacherViewModel()
+            {
+                Email = teacher.Email,
+                //UserName = teacher.Email,
+                SchoolId = teacher.SchoolId,
+                EmployeeId = teacher.EmployeeId,
+                FirstName = teacher.FirstName,
+                MiddleName = teacher.MiddleName,
+                LastName = teacher.LastName,
+                Sex = teacher.Sex,
+                positionTitle = teacher.positionTitle,
+                imageFilePath = teacher.imageFilePath,
+            };
+
+            ViewData["imageFileData"] = teacher.imageFileData;
+            //ViewData["imageFilePath"] = teacher.imageFilePath;
+            ViewData["CreatedAt"] = teacher.CreatedAt.ToString("MM/dd/yyyy");
+
+            return PartialView("_ViewTeacherPartial", model);
+        }
         public IActionResult StudentList()
         {
             return View();

@@ -33,5 +33,6 @@ namespace AttendanceMonitoring.ViewModel
         public string positionTitle { get; set; }
         //[Required]
         public IFormFile? imageFile { get; set; }
+        public string? imageFilePath { get; set; }
     }
 }

@@ -1,0 +1,101 @@
+﻿/* === AdminLTE User Widget Styles ONLY === */
+
+.widget-user .widget-user-header {
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    height: 135px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.widget-user .widget-user-username {
+    font-size: 25px;
+    font-weight: 300;
+    margin-bottom: 0;
+    margin-top: 0;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.widget-user .widget-user-desc {
+    margin-top: 0;
+}
+
+.widget-user .widget-user-image {
+    left: 50%;
+    margin-left: -45px;
+    position: absolute;
+    top: 80px;
+}
+
+    .widget-user .widget-user-image > img {
+        border: 3px solid #fff;
+        height: auto;
+        width: 90px;
+    }
+
+.widget-user .card-footer {
+    padding-top: 50px;
+}
+
+.widget-user-2 .widget-user-header {
+    border-top-left-radius: 0.25rem;
+    border-top-right-radius: 0.25rem;
+    padding: 1rem;
+}
+
+.widget-user-2 .widget-user-username {
+    font-size: 25px;
+    font-weight: 300;
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+.widget-user-2 .widget-user-desc {
+    margin-top: 0;
+}
+
+.widget-user-2 .widget-user-username,
+.widget-user-2 .widget-user-desc {
+    margin-left: 75px;
+}
+
+.widget-user-2 .widget-user-image > img {
+    float: left;
+    height: auto;
+    width: 65px;
+}
+.img-circle {
+    border-radius: 50%;
+}
+
+/* Para sa shadow effect na galing sa AdminLTE */
+.elevation-0 {
+    box-shadow: none !important;
+}
+
+.elevation-1 {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24) !important;
+}
+
+.elevation-2 {
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23) !important;
+}
+
+.elevation-3 {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23) !important;
+}
+
+.elevation-4 {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22) !important;
+}
+
+.elevation-5 {
+    box-shadow: 0 19px 38px rgba(0, 0, 0, 0.3), 0 15px 12px rgba(0, 0, 0, 0.22) !important;
+}
+
+
+/* Para sa background color, pwede kang kumuha ng specific classes */
+.bg-dark {
+    background-color: #343a40 !important;
+    color: #fff !important;
+}
