@@ -82,7 +82,14 @@
             <span asp-validation-for="imageFile" class="text-danger"></span>
         </div>
         <div class="form-group d-flex justify-content-center align-items-center mt-2">
-            <img src="/ProfilePic/@ViewData["imageFilePath"]" class="img-fluid img-thumbnail" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%" id="imagePreview" alt="Image" />
+            @if (string.IsNullOrEmpty(ViewData["imageFilePath"] as string))
+            {
+                <img src="~/DashboardTemplate/images/defaultImage.png" class="img-fluid img-thumbnail" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%" id="imagePreview" alt="Image" />
+            }
+            else
+            {
+                <img src="/ProfilePic/@ViewData["imageFilePath"]" class="img-fluid img-thumbnail" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%" id="imagePreview" alt="Image" />
+            }
         </div>
         
     </div>

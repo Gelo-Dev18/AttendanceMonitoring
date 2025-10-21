@@ -3,8 +3,7 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<!-- Teacher List-->
-<!-- Page Heading -->
+ <!-- Page Heading -->
 <h1 class="h3 mb-2 text-gray-800">Teacher List</h1>
 <!-- <p class="mb-4">Table for Teachers Info</p> -->
 <!-- DataTales Example -->
@@ -15,7 +14,7 @@
         @*     <span class="text">Add Teacher</span> *@
         @* </a> *@
         <!-- Button trigger modal -->
-        <button type="button" class="btn btn-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddTeacher">
+        <button type="button" class="btn btn-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddModalForm" data-url="/Admin/AddTeacher" data-title="Add Teacher's Details">
             <span class="text">Add Teacher</span>
         </button>
     </div>
@@ -56,11 +55,11 @@
                                     @* <a class="btn btn-primary btn-circle" asp-controller="Admin" asp-action="_EditTeacherPartial" asp-route-id="@teacher.Id">
                                         <i class="fas fa-edit"></i>
                                     </a> *@
-                                    <button data-id="@teacher.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#ViewTeacher">
+                                    <button data-id="@teacher.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/ViewTeacher/" data-title="View Add Teacher's Details">
                                         <i class="fas fa-eye"></i>
                                     </button>
 
-                                    <button data-id="@teacher.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditTeacher">
+                                    <button data-id="@teacher.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditModal" data-url="/Admin/EditTeacher/" data-title="Edit Add Teacher's Details">
                                         <i class="fas fa-edit"></i>
                                     </button>
 
@@ -68,7 +67,7 @@
                                     @*     <i class="fas fa-trash"></i> *@
                                     @* </a> *@
 
-                                    <button data-id="@teacher.Id" type="button" class="btn btn-danger btn-circle delete-teacher-button" data-bs-toggle="modal" data-bs-target="#DeleteTeacher">
+                                    <button data-id="@teacher.Id" type="button" class="btn btn-danger btn-circle delete-teacher-button" data-bs-toggle="modal" data-bs-target="#ModalDelete">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                     @* <button data-id="@teacher.Id" class="btn btn-danger btn-circle delete-teacher-button"> *@
@@ -86,75 +85,9 @@
     </div>
 </div>
 
-@*Add Teacher modal*@
-<div class="modal fade" id="AddTeacher" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="staticBackdropLabel"><strong>Teacher's Details</strong></h5>
-            </div>
-            <div class="modal-body" id="AddTeacherModal">
-            </div>
-        </div>
-    </div>
-</div>
-
-@*Edit Teacher modal*@
-<div class="modal fade" id="EditTeacher" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="staticBackdropLabel"><strong>Edit Teacher's Details</strong></h5>
-            </div>
-            <div class="modal-body" id="EditTeacherModal">
-            </div>
-        </div>
-    </div>
-</div>
-
-@*View Teacher Modal*@
-<div class="modal fade" id="ViewTeacher" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="staticBackdropLabel"><strong>View Teacher's Details</strong></h5>
-            </div>
-            <div class="modal-body" id="ViewTeacherModal">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-
-<div class="modal fade" id="DeleteTeacher" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
-    <div class="modal-dialog">
-        @* <div class="modal-dialog modal-dialog-centered"> *@
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-center" id="staticBackdropLabel"><strong>Confirmation</strong></h5>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to Delete ?
-            </div>
-            <div class="modal-footer">
-                <button id="confirmDeleteButton" class="btn btn-danger delete-teacher-button">
-                    Delete
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 @section Scripts{
-<script src="~/js/adminJs.js"></script>
+@* <script src="~/js/adminJs.js"></script> *@
+<script src="~/js/Admin.js"></script>
 <script>
 </script>
 }

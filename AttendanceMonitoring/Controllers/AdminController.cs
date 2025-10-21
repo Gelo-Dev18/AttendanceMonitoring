@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using NuGet.DependencyResolver;
 using System.Data;
 using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static NuGet.Packaging.PackagingConstants;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -55,7 +56,7 @@ namespace AttendanceMonitoring.Controllers
         {
             return View();
         }
-        public IActionResult TeacherList()//string TeacherRole
+        public async Task<IActionResult> TeacherList()//string TeacherRole
         {
 
             //var teacherRoleId = context.Roles
@@ -67,19 +68,35 @@ namespace AttendanceMonitoring.Controllers
             //            .Any(ur => ur.UserId == user.Id && ur.RoleId == teacherRoleId))
             //            .ToList();
 
-            var teacher = context.Users
-                .Where(user => context.UserRoles
-                .Any(ur => ur.UserId == user.Id && context.Roles
-                .Any(r => r.Id == ur.RoleId && r.Name == "Teacher")))
-                .ToList();
+            //var teacher = context.Users
+            //    .Where(user => context.UserRoles
+            //    .Any(ur => ur.UserId == user.Id && context.Roles
+            //    .Any(r => r.Id == ur.RoleId && r.Name == "Teacher")))
+            //    .ToList();
+
+            var teacher = await userManager.GetUsersInRoleAsync("Teacher");
 
             return View(teacher);
+        }
+
+        public async Task<IActionResult> SecretaryList()
+        {
+            //var secretary = context.Users
+            //    .Where(user => context.UserRoles
+            //    .Any(ur => ur.UserId == user.Id && context.Roles
+            //    .Any(r => r.Id == ur.RoleId && r.Name == "Secretary")))
+            //    .ToList();
+
+            var secretary = await userManager.GetUsersInRoleAsync("Secretary");
+
+            return View(secretary);
         }
 
         [HttpGet]
         public IActionResult EditTeacher(string id)
         {
             var teacher = context.Users.Find(id);
+            //var teacher = userManager.FindByIdAsync(id);
 
             if (teacher == null)
             {
@@ -141,13 +158,14 @@ namespace AttendanceMonitoring.Controllers
             return View();
         }
 
-        public IActionResult SecretaryList()
-        {
-            return View();
-        }
         public IActionResult AddTeacher()
         {
             return PartialView("_AddTeacherPartial");
+        }
+
+        public IActionResult AddSecretary()
+        {
+            return PartialView("_AddSecretaryPartial");
         }
 
         [HttpPost]
@@ -168,6 +186,13 @@ namespace AttendanceMonitoring.Controllers
             if (schoolIdExisted)
             {
                 ModelState.AddModelError("SchoolId", "School Id is already taken!");
+            }
+
+            bool employeeIdExisted = await context.Users.AnyAsync(e => e.EmployeeId == model.EmployeeId);
+
+            if (employeeIdExisted)
+            {
+                ModelState.AddModelError("EmployeeId", "Employee Id is already taken!");
             }
 
             //Gagamitin to kapag gusto kong gumawa ng sarili kong validation sa Email existed kase may sariling validation si userManager.AnyAsync() about sa email exist
@@ -290,7 +315,8 @@ namespace AttendanceMonitoring.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditTeacher(string id, EditTeacherViewModel model)
         {
-            var editTeacher = await context.Users.FindAsync(id);
+            //var editTeacher = await context.Users.FindAsync(id);
+            var editTeacher = await userManager.FindByIdAsync(id.ToString());
 
             if(editTeacher == null)
             {
@@ -359,8 +385,19 @@ namespace AttendanceMonitoring.Controllers
                     await model.imageFile.CopyToAsync(stream);
                 }
 
-                string oldImageFullPath = environment.WebRootPath + "/ProfilePic/" + editTeacher.imageFilePath;
-                System.IO.File.Delete(oldImageFullPath);
+                //check muna sa database if may laman ba yung image ng user
+                if (!string.IsNullOrEmpty(editTeacher.imageFilePath))
+                {
+                    //if may laman saka palang bubuuin ang filepath
+                    string oldImageFullPath = environment.WebRootPath + "/ProfilePic/" + editTeacher.imageFilePath;
+                    //tapos kapag may laman nga, dun palang mag delete
+                    if (oldImageFullPath != null)
+                    {
+                        //then mag execute to!
+                        System.IO.File.Delete(oldImageFullPath);
+                    }
+
+                }
 
                 saveImagePath = newFile;
 

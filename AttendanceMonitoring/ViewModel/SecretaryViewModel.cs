@@ -2,10 +2,10 @@
 
 namespace AttendanceMonitoring.ViewModel
 {
-    public class TeacherViewModel
+    public class SecretaryViewModel
     {
-        [Required(ErrorMessage ="Email is Required!"), MaxLength(60)]
-        [EmailAddress(ErrorMessage = "Use a valid email with an" + " '@' " + "sign")]
+        [Required(ErrorMessage = "Email is Required!"), MaxLength(60)]
+        [EmailAddress(ErrorMessage = "Use a valid email with an '@' sign")]
         public string Email { get; set; }
 
         [DataType(DataType.Password)]
@@ -14,10 +14,8 @@ namespace AttendanceMonitoring.ViewModel
 
         [Required(ErrorMessage = "School Id is Required!")]
         public int SchoolId { get; set; }
-        [Required]
-        public int EmployeeId { get; set; }
 
-        [Required, MaxLength(30)]
+        [Required, MaxLength(30)]               
         public string FirstName { get; set; }
 
         [MaxLength(30)]
@@ -29,9 +27,8 @@ namespace AttendanceMonitoring.ViewModel
         [Required(ErrorMessage = "Please Select Male or Female")]
         public string Sex { get; set; }
 
-        [Required, MaxLength(30)]
-        public string positionTitle { get; set; }
-
+        [Required]
+        public string GradeAndSection { get; set; }
         public IFormFile? imageFile { get; set; }
     }
 }

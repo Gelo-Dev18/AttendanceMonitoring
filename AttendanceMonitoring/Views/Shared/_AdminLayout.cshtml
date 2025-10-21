@@ -66,7 +66,7 @@
     @*Danger Toast*@
     <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
         <div id="dangerToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
-            <div class="toast-body bg-danger text-white" style="font-size: 16px; font-weight:600;>
+            <div class="toast-body bg-danger text-white" style="font-size: 16px; font-weight:600;">
                 <i class="bi bi-check-circle-fill"></i>
                 <strong class="mr-auto" id="#toast-body">Something went wrong. Please try again.</strong>
             </div>
@@ -78,6 +78,71 @@
         <div id="spinnerLoad" class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status">
             @* <span class="visually-hidden">Loading...</span> *@
             <span class="sr-only">Loading...</span> 
+        </div>
+    </div>
+
+    @*Add modal*@
+    <div class="modal fade" id="AddModalForm" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="AddModalFormLabel">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="AddModalFormLabel"><strong>...</strong></h5>
+                </div>
+                <div class="modal-body" id="AddModalFormBody">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @*Edit Teacher modal*@
+    <div class="modal fade" id="EditModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="EditModalLabel">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="EditModalLabel"><strong>...</strong></h5>
+                </div>
+                <div class="modal-body" id="EditModalBody">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    @*View Modal*@
+    <div class="modal fade" id="ViewModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ViewModalBody">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ViewModalLabel"><strong>...</strong></h5>
+                </div>
+                <div class="modal-body" id="ViewModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* <!-- Delete Confirmation Modal --> *@
+    <div class="modal fade" id="ModalDelete" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
+        <div class="modal-dialog">
+            @* <div class="modal-dialog modal-dialog-centered"> *@
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center" id="staticBackdropLabel"><strong>Confirmation</strong></h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to Delete ?
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmDeleteButton" class="btn btn-danger delete-teacher-button">
+                        Delete
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <script src="~/DashboardTemplate/vendor/jquery/jquery.min.js"></script>

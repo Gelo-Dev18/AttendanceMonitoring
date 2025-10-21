@@ -1,8 +1,6 @@
-﻿
-//DOM manipulation
-//.addEventListener is a time of event handling
-document.addEventListener("DOMContentLoaded", function () { //mag rarun to after mafully load yung HTML so dun palang gagana yung script
-    //$(document).ready(function){ } // JQUERY to katumbas sya ng document.addEventListener
+﻿document.addEventListener("DOMContentLoaded", function () {
+
+    var teacherID;
     //Event delegation for file input change
     $(document).on('change', 'input[type="file"].custom-file-input', function () {
         var input = this;
@@ -21,7 +19,9 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             reader.readAsDataURL(input.files[0]);
         }
     });
+    ///////////////////////////////////////////////////
 
+    //Triggers Add user modal
     $('#AddModalForm').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
 
@@ -49,100 +49,13 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
         hideBlurBackground();
     });
 
-    function loadAddSecretary() {
-        $.ajax({
-            url: '/Admin/AddSecretary',
-            type: 'GET',
-            success: function (html) {
-                //$('#AddSecretaryModal').html(html);
-                document.getElementById('AddSecretaryModal').innerHTML = html;
-
-            },
-            error: function (xhr, status, error) {
-                console.error('Error loading add secretary modal:', error);
-            }
-        });
-    }
-
-    $('#AddSecretary').on('show.bs.modal', function () {
-        loadAddSecretary();
-    });
-
-    //load modal for adding teacher
-    function loadAddTeacher() {
-        $.ajax({ //ajax exchange data from the server without reloading the page
-            url: '/Admin/AddTeacher', // Calls GET action
-            type: 'GET',              // HTTP GET Request. GET is used to retrieve data from the server. POST is used for submitting data to the server
-            success: function (html) {
-                document.getElementById('AddTeacherModal').innerHTML = html;
-            },
-            error: function (xhr, status, error) {
-                console.error('Error loading add teacher modal:', error);
-            }
-        });
-    }
-
-    //loads the modal when clicked // JQUERY
-    $('#AddTeacher').on('show.bs.modal', function () {
-        loadAddTeacher(); //load when the modal is clicked
-
-        loadBlurBackground();
-    });
-
-    $('#AddTeacher').on('hide.bs.modal', function (event) {
-        hideBlurBackground();
-    });
-
-    //load modal for editing teacher
-    var teacherID;
-    function loadEditTeacher() {
-        if (!teacherID) {
-            alert('Id does not found');
-            return;
-        }
-        $.ajax({ //ajax exchange data from the server without reloading the page
-            url: '/Admin/EditTeacher/' + teacherID, // Calls GET action
-            type: 'GET',              // HTTP GET Request. GET is used to retrieve data from the server. POST is used for submitting data to the server
-            success: function (html) {
-                document.getElementById('EditTeacherModal').innerHTML = html;
-            },
-            error: function (xhr, status, error) {
-                console.error('Error loading edit teacher modal:', error);
-            }
-        });
-    }
-
-    //loads the modal when clicked // JQUERY
-    $('#EditTeacher').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget);
-        teacherID = button.data('id');
-
-        loadEditTeacher();
-        loadBlurBackground();
-
-
-    });
-    
-    $('#EditTeacher').on('hide.bs.modal', function (event) {
-        hideBlurBackground();
-    });
-
-    //immediately load the modal when the page once load
-    // document.addEventListener("DOMContentLoaded", function(){
-    //     loadAddTeacher();
-    // })
-
-    // JQUERY basta nag start sa dollar sign
-    //Event Delegation   //Targets the form 
+    //Submit Function For Adding
     $(document).on('submit', '#AddTeacherForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
 
-        
-        //loadPageBlur();
-
         var formData = new FormData(this); //collect and manage form data for submission
         //RESTful api, two computer system to exchange information through the internet
-        $.ajax({        
+        $.ajax({
             url: '/Admin/AddTeacher',
             type: 'POST', //a RESTful API uses standard HTTP methods(GET, POST, PUT, DELETE) 
             data: formData, //sends all form data
@@ -168,8 +81,8 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
 
                     //used to loop over collections of elements, such as arrays, objects, or jQuery objects(collections of DOM elements).
                     //Ang pinaka purpsoe ng code na ito is para gawing border-danger yung textbox na mayroong validation
-                                                     //yung KEY is yung variable or fieldname ko like FirstName, PAssowrd, email etc,
-                                                          //Yung value ayun yung validation error
+                    //yung KEY is yung variable or fieldname ko like FirstName, PAssowrd, email etc,
+                    //Yung value ayun yung validation error
                     $.each(response.errors, function (key, value) {
                         //dito kapag may error is if yung value.length is > 1 is mag rarun yung code kase may error pero pag wala mag skip ito
                         // yung .length is kung ilang yung element sa loob ng array (yung error) example var errors1 = ["Email is required", "Invalid format"];
@@ -190,7 +103,7 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
                                 $('<span class="text-danger validation-error-message">' + value.join(', ') + '</span>').insertAfter(inputElement);
                             }
                         }
-                        
+
                     });
 
                     //$.each(response.errors, function (key, message) {
@@ -206,15 +119,52 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             }
         });
     });
+    //////////////////////////////////////////////////////////////
 
-    //For Update
+    //Triggers Edit Modal
+    $('#EditModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+
+        teacherID = button.data('id');
+
+        var url = button.data('url');
+        var title = button.add('title');
+
+        var modal = $(this);
+        modal.find('#EditModalLabel').text(title);
+
+        loadBlurBackground();
+
+        if (!teacherID) {
+            alert('Id does not found');
+            return;
+        }
+
+        $.ajax({
+            url: url + teacherID,
+            type: 'GET',
+            success: function (html) {
+                modal.find('#EditModalBody').html(html);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading edit teacher modal:', error);
+                modal.find('#EditModalBody').html('<p class="text-center">Failed to Load modal body</p>');
+            }
+        });      
+    });
+
+    $('#EditModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    });
+
+    //Submit Function for Edit Teacher
     $(document).on('submit', '#EditTeacherForm', function (e) {
         e.preventDefault();
 
         var formData = new FormData(this);
         var teacherId = teacherID;
 
-        loadPageBlur();
+        //loadPageBlur();
 
         $('#EditTeacherForm .form-control').removeClass('border-danger');
         $('#EditTeacherForm .validation-error-message').remove();
@@ -226,12 +176,12 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             processData: false,
             contentType: false,
             dataType: 'json',
-            success: function (response) {
+            success: function (response) { 
                 //console.log('Full response:', response); // Add this line
 
                 if (response.success) {
-                    //$('#EditTeacher').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
-                    $('#EditTeacher').modal('hide');
+                    $('#EditModal').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
+                    $('#EditModal').modal('hide');
                     loadSpinner();
                     showUpdateSuccessToast(response.message);
                     setTimeout(function () {
@@ -254,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
                     });
                     //console.log('Errors:', response.errors); // Add this line
                     //console.log('Message:', response.message); // Add this line
-                //    showDangerToast(response);
+                    //    showDangerToast(response);
                 }
             },
             error: function (xhr, status, error) {
@@ -266,56 +216,57 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             }
         });
     });
+    ///////////////////////////////////////////////////////////////////////////
 
-
-    var teacherID;
-
-    $('#ViewTeacher').on('show.bs.modal', function (event) {
-        var button = $(event.relatedTarget);
-        teacherID = button.data('id');
-
-        loadVIewTeacher();
-        loadBlurBackground();
-    });
-
-    $('#ViewTeacher').on('hide.bs.modal', function (event) {
-        hideBlurBackground();
-    });
-    function loadVIewTeacher() {
-        if (!teacherID) {
-            alert('Id does not found');
-            return;
-        }
-        $.ajax({ //ajax exchange data from the server without reloading the page
-            url: '/Admin/ViewTeacher/' + teacherID, // Calls GET action
-            type: 'GET',              // HTTP GET Request. GET is used to retrieve data from the server. POST is used for submitting data to the server
+    //BEst approach Separate Function with Parameters (soc)"Separation of Concerns"
+            //yung function, dapat tumatanggap siya ng parameters
+    function loadViewModal(url, teacherID, modal) {
+        $.ajax({
+            url: url + teacherID,
+            type: 'GET',
             success: function (html) {
-                //document.getElementById('ViewTeacherModal').innerHTML = html; //Vanilla js
-                $('#ViewTeacherModal').html(html); //jquery //ito ay nasa loob ng ajax dahil nasa modal yung sarili nyang table. Wala sa mismong TeacherList, kaya di gagana if nasa loob ng datatables-demo ang assignSubject .
-                $('#assignSubject').DataTable();
+                modal.find('#ViewModalBody').html(html);
             },
             error: function (xhr, status, error) {
-                console.error('Error loading edit teacher modal:', error);
+                console.error('Error loading add teacher modal:', error);
+                modal.find('#AddModalFormBody').html('<p class="text-center">Failed to load modal body</p>');
             }
         });
     }
 
-    //use this kase yung DeleteTeacher is yung mismong modal ko and connected sya sa button sa loob ng foreach dahil sa data-bs-target="DeleteButton"
-    $('#DeleteTeacher').on('show.bs.modal', function (event) {
-        loadBlurBackground();
+    //Trigger View Modal
+    $('#ViewModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        teacherID = button.data('id');
 
-        var button = $(event.relatedTarget); // This is the delete pag pinindot
-        teacherID = button.data('id');       // Get the ID from that button
+        var url = button.data('url');
+        var title = button.data('title');
+
+        var modal = $(this);
+
+        modal.find('#ViewModalLabel').text(title);
+
+        loadBlurBackground();
+        // Ipasa 'yung local variables sa function
+        loadViewModal(url, teacherID, modal);
     });
 
-    $('#DeleteTeacher').on('hide.bs.modal', function (event) {
+    $('#ViewModal').on('hide.bs.modal', function () {
         hideBlurBackground();
     });
+    //////////////////////////////////////////////////////////////////////////////
 
-    //use this kapag mismong button lang
-    //$('#delete-teacher-button').on('click', function (event) {
-    //    teacherID = $(this).data('id'); // 
-    //});
+    //Triggers ModalDelete
+    $('#ModalDelete').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        teacherID = button.data('id');
+
+        loadBlurBackground();
+    });
+
+    $('#ModalDelete').on('hide.bs.modal', function (event) {
+        hideBlurBackground();
+    });
 
     $('#confirmDeleteButton').on('click', function (e) {
         e.preventDefault();
@@ -327,15 +278,15 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
 
         loadSpinner();
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
-        
+
         $.ajax({
             url: '/Admin/Delete/' + teacherID,
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
 
-                    $('#DeleteTeacher').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
-                    $('#DeleteTeacher').modal('hide');
+                    $('#ModalDelete').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
+                    $('#ModalDelete').modal('hide');
                     showSuccessToast(response.message);
                     //loadSpinner();
                     setTimeout(function () {
@@ -356,9 +307,9 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
             }
         });
     });
+    ///////////////////////////////////////////////////////////////////////////
 
-        
-   
+    //Useful Functions
     function showSuccessToast(message) {
         //$('#successToast .toast-body').text(message);
         $('#toast-message').text(message);
@@ -369,16 +320,12 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
         $('#update-toast-message').text(message);
         $('#updateSuccessToast').toast('show');
     }
+
     function showDangerToast() {
         $('#dangerToast').toast('show');
     }
 
     function loadSpinner() {
-        //vanilla js
-        //const spinner = document.getElementById("spinnerLoad");
-        //spinner.classList.remove("d-none");
-
-        //jquery
         $('#spinnerWrapper').removeClass("d-none");
     }
 
@@ -393,9 +340,4 @@ document.addEventListener("DOMContentLoaded", function () { //mag rarun to after
     function hideBlurBackground() {
         $('#blurred-overlay').css('display', 'none');
     }
-
-    //function loadModalBlurBackground() {
-    //    $('#blurred-overlay-modal').css('display', 'block');
-    //}
 });
-
