@@ -1,6 +1,11 @@
-﻿var teacherID;
-var secretaryID;
-var studentID;
+﻿
+//no need this dahil isang global o general naming nalang ng variable ang gagamitin which is yung userID
+//var teacherID;
+//var secretaryID;
+//var studentID;
+
+//Eto na ang need dahi isa isa lang naman binubuksan ang modal
+var userID;
 //Reusable Codes
 function showSuccessToast(message) {
     //$('#successToast .toast-body').text(message);
@@ -33,9 +38,9 @@ function hideBlurBackground() {
 }
 //BEst approach Separate Function with Parameters (soc)"Separation of Concerns"
 //yung function, dapat tumatanggap siya ng parameters
-function loadViewModal(url, teacherID, modal) {
+function loadViewModal(url, userID, modal) {
     $.ajax({
-        url: url + teacherID,
+        url: url + userID,
         type: 'GET',
         success: function (html) {
             modal.find('#ViewModalBody').html(html);
@@ -104,7 +109,7 @@ $(document).ready(function () {
     $('#EditModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
 
-        teacherID = button.data('id');
+        userID = button.data('id');
 
         var url = button.data('url');
         var title = button.data('title');
@@ -114,19 +119,19 @@ $(document).ready(function () {
 
         loadBlurBackground();
 
-        if (!teacherID) {
+        if (!userID) {
             alert('Id does not found');
             return;
         }
 
         $.ajax({
-            url: url + teacherID,
+            url: url + userID,
             type: 'GET',
             success: function (html) {
                 modal.find('#EditModalBody').html(html);
             },
             error: function (xhr, status, error) {
-                console.error('Error loading edit teacher modal:', error);
+                console.error('Error loading edit modal:', error);
                 modal.find('#EditModalBody').html('<p class="text-center">Failed to Load modal body</p>');
             }
         });
@@ -141,7 +146,7 @@ $(document).ready(function () {
     //Trigger View Modal
     $('#ViewModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
-        teacherID = button.data('id');
+        userID = button.data('id');
 
         var url = button.data('url');
         var title = button.data('title');
@@ -152,7 +157,7 @@ $(document).ready(function () {
 
         loadBlurBackground();
         // Ipasa 'yung local variables sa function
-        loadViewModal(url, teacherID, modal);
+        loadViewModal(url, userID, modal);
     });
 
     $('#ViewModal').on('hide.bs.modal', function () {
@@ -164,7 +169,7 @@ $(document).ready(function () {
     //Triggers ModalDelete
     $('#ModalDelete').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
-        teacherID = button.data('id');
+        userID = button.data('id');
 
         loadBlurBackground();
     });

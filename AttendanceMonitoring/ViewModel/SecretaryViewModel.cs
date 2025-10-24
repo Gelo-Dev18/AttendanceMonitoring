@@ -27,8 +27,6 @@ namespace AttendanceMonitoring.ViewModel
         [Required(ErrorMessage = "Please Select Male or Female")]
         public string Sex { get; set; }
 
-        [Required]
-        public string GradeAndSection { get; set; }
         public IFormFile? imageFile { get; set; }
     }
 }

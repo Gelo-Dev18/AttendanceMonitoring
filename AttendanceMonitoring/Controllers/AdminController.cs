@@ -6,8 +6,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore.Storage;
 using NuGet.DependencyResolver;
 using System.Data;
 using System.Net.NetworkInformation;
@@ -76,7 +78,8 @@ namespace AttendanceMonitoring.Controllers
 
             var teacher = await userManager.GetUsersInRoleAsync("Teacher");
 
-            return View(teacher);
+            return View(teacher);// return view dahil full page ang nirereload
+            //return PartialView();// kapag maliit or more on modal ang rereload
         }
 
         public async Task<IActionResult> SecretaryList()
@@ -93,14 +96,15 @@ namespace AttendanceMonitoring.Controllers
         }
 
         [HttpGet]
-        public IActionResult EditTeacher(string id)
+        public async Task<IActionResult> EditTeacher(string id)
         {
-            var teacher = context.Users.Find(id);
+            var teacher = await context.Users.FindAsync(id);
             //var teacher = userManager.FindByIdAsync(id);
 
             if (teacher == null)
-            {
-                return RedirectToAction("TeacherList", "Admin");
+            {   // Hindi pwede mag-RedirectToAction sa PartialView. Unless full page load, eh naka modal
+                //return RedirectToAction("TeacherList", "Admin");
+                return Json(new { success = false, error = "Not Found" });// always gamitin ang json lalo na kapag ajax/modal. Standard para sa ajax ang json
             }
 
             var model = new EditTeacherViewModel()
@@ -124,9 +128,9 @@ namespace AttendanceMonitoring.Controllers
         }
 
         [HttpGet]
-        public IActionResult ViewTeacher(string id)
+        public async Task<IActionResult> ViewTeacher(string id)
         {
-            var teacher = context.Users.Find(id);
+            var teacher = await context.Users.FindAsync(id);
 
             if (teacher == null)
             {
@@ -479,7 +483,8 @@ namespace AttendanceMonitoring.Controllers
 
             if(teacher == null)
             {
-                return RedirectToAction("TeacherList", "Admin");
+                //return RedirectToAction("TeacherList", "Admin");
+                return Json(new { success = false, error = "Teacer does not found" });
             }
             //check kung may laman yung image yung user
             if (!string.IsNullOrEmpty(teacher.imageFilePath))
@@ -501,6 +506,330 @@ namespace AttendanceMonitoring.Controllers
             return Json(new { success = true, message = "Teacher has been Deleted successfully" }); //JSON store and transport data from server side to client side
 
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddSecretary(SecretaryViewModel model)
+        {
+            bool schoolIdExisted = await context.Users.AnyAsync(s => s.SchoolId == model.SchoolId);
+            if (schoolIdExisted)
+            {
+                ModelState.AddModelError("SchoolId", "School Id is already taken!");
+            }
+
+            bool fullNameExisted = await context.Users.AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName);
+            if (fullNameExisted)
+            {
+                ModelState.AddModelError("FirstName", "A secretary with this Full name is already existed");
+                ModelState.AddModelError("MiddleName", "");
+                ModelState.AddModelError("LastName", "");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            string? saveImagePath = null;
+            //saveImageData is yung actual data ng image, na mag sesave sa imageFileData row sa database
+            byte[]? saveImageData = null; //ginagamit ang byte para magsave ng files tulad ng images, pdf, etc. sa loob ng database
+
+            if(model.imageFile != null)
+            {
+                //Konektado ito Sa AppUser na object para talagang magsave
+
+                //create filename
+                string newFile = DateTime.Now.ToString("yyyyMMddHHmmssff");
+                newFile += Path.GetExtension(model.imageFile.FileName);
+                //create physical path for the image
+                string imageFullPath = environment.WebRootPath + "/ProfilePic/" + newFile;
+                //save the actual image to ProfilePic file na naka declare sa variable na imageFullPath
+                using(var stream = System.IO.File.Create(imageFullPath))
+                {
+                    await model.imageFile.CopyToAsync(stream);
+                }
+                //eto yung part na pag kasave nung actual image na (ex. image.jpg) eh pupunta na sya database sa imageFilePath na row
+                saveImagePath = newFile;
+
+                //Itong buong code na ito gang baba, dito kukunin yung mismong data ng image para iconvert sa byte para i-save na sa database
+                //Kase diba sa viewmodel ko is IFormFile gamit ko dun, si ang code na ito is iconvert ang iFormFile to byte na iinput ng user
+                using(var inputStream = model.imageFile.OpenReadStream())//para basahin yung upload file
+
+                using(var memoryStream = new MemoryStream())// maging temporary kolektor o lalagyan ng data
+                {
+                    await inputStream.CopyToAsync(memoryStream);// eto na yung may hawak ng raw data
+                    saveImageData = memoryStream.ToArray();// ngayon after makollect ng mismong data na naprocess na, dun na icoconvert sa byte
+                }
+            }
+
+            AppUser secretary = new AppUser()
+            {
+                Email = model.Email,
+                UserName = model.Email,
+                SchoolId = model.SchoolId,
+                FirstName = model.FirstName,
+                MiddleName = model.MiddleName,
+                LastName = model.LastName,
+                Sex = model.Sex,
+                imageFileData = saveImageData,
+                imageFilePath = saveImagePath,
+                CreatedAt = DateTime.Now
+            };
+
+            var result = await userManager.CreateAsync(secretary, model.Password);
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(secretary, "Secretary");
+                return Json(new { success = true, message = "Secretary Added Successfully!" });
+            }
+            else
+            {
+                foreach(var error in result.Errors)
+                {
+                    if (error.Code == "DuplicateUserName")
+                    {
+                        ModelState.AddModelError("Email", "Email is already used!");
+                    } else if (error.Description.Contains("Password"))
+                    {
+                        ModelState.AddModelError("Password", error.Description);
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", error.Description);
+                    }
+                }
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = errors });
+            }
+
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ViewSecretary(string id)
+        {
+            var secretary = await context.Users.FindAsync(id);
+
+            if(secretary == null)
+            {
+                return Json(new { success = false, error = "Secretary Not Found!" });
+            }
+
+            var model = new EditSecretaryViewModel()
+            {
+                Email = secretary.Email,
+                SchoolId = secretary.SchoolId,
+                FirstName = secretary.FirstName,
+                MiddleName = secretary.MiddleName,
+                LastName = secretary.LastName,
+                Sex = secretary.Sex,
+                imageFilePath = secretary.imageFilePath,
+                CreatedAt = secretary.CreatedAt,
+            };
+
+            return PartialView("_ViewSecretaryPartial", model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditSecretary(string id)
+        {
+            var secretary = await context.Users.FindAsync(id);
+
+            if(secretary == null)
+            {
+                return Json(new { success = false, error = "Secretary does not found" });
+            }
+
+            var model = new EditSecretaryViewModel()
+            {
+                Email = secretary.Email,
+                SchoolId = secretary.SchoolId,
+                FirstName = secretary.FirstName,
+                MiddleName = secretary.MiddleName,
+                LastName = secretary.LastName,  
+                Sex = secretary.Sex,
+                imageFilePath = secretary.imageFilePath,
+                CreatedAt = secretary.CreatedAt,
+            };
+
+            return PartialView("_EditSecretaryPartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSecretary(string id, EditSecretaryViewModel model)
+        {
+            //var editSecretary = await context.Users.FindAsync(id);
+            var editSecretary = await userManager.FindByIdAsync(id.ToString());
+
+            if (editSecretary == null)
+            {
+                return Json(new { success = false, error = "Secretary does not found!" });
+            }
+
+            //check for email duplication
+            bool sameEmail = await context.Users.AnyAsync(e => e.Email == model.Email && e.Id != id);
+
+            if (sameEmail)
+            {
+                ModelState.AddModelError("Email", "Email is already used!");
+            }
+
+            //duplicate check excluding self
+            //Dito gumamit ng s.Id != id para pag nag check ng id is hindi isasama yung current id sa pag hahanap
+            //check for Schoold Id Duplication
+            bool schoolIdExisted = await context.Users.AnyAsync(s => s.SchoolId == model.SchoolId && s.Id != id);
+
+            if (schoolIdExisted)
+            {
+                ModelState.AddModelError("SchoolId", "School Id is already taken!");
+            }
+
+            //Check if Full name duplication
+            bool FullNameExisted = await context.Users.AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName && f.Id != id);
+            if (FullNameExisted)
+            {
+                ModelState.AddModelError("FirstName", "A secretary with this Full name is already existed");
+                ModelState.AddModelError("MiddleName", " ");
+                ModelState.AddModelError("LastName", " ");
+            }
+
+            if (!ModelState.IsValid)
+            {
+
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+                return Json(new { sucess = false, errors = errors });
+            }
+
+            string? saveImagePath = null;
+            byte[]? saveImageData = null;
+
+            if (model.imageFile != null)
+            {
+                string newFile = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                newFile += Path.GetExtension(model.imageFile.FileName);
+
+                string imageFullPath = environment.WebRootPath + "/ProfilePic/" + newFile;
+
+                using (var stream = System.IO.File.Create(imageFullPath))
+                {
+                    await model.imageFile.CopyToAsync(stream);
+                }
+
+                //check muna sa database if may laman ba yung image ng user
+                if (!string.IsNullOrEmpty(editSecretary.imageFilePath))
+                {
+                    //if may laman saka palang bubuuin ang filepath
+                    string oldImageFullPath = environment.WebRootPath + "/ProfilePic/" + editSecretary.imageFilePath;
+                    //tapos kapag may laman nga, dun palang mag delete
+                    if (oldImageFullPath != null)
+                    {
+                        //then mag execute to!
+                        System.IO.File.Delete(oldImageFullPath);
+                    }
+
+                }
+
+                saveImagePath = newFile;
+
+                using (var inputStream = model.imageFile.OpenReadStream())
+                using (var memoryStream = new MemoryStream())
+                {
+                    await inputStream.CopyToAsync(memoryStream);
+                    saveImageData = memoryStream.ToArray();
+                }
+                //IMPORTANT: Assign to editTeacher
+                editSecretary.imageFilePath = saveImagePath;
+                editSecretary.imageFileData = saveImageData;
+            }
+
+            editSecretary.Email = model.Email;
+            editSecretary.SchoolId = model.SchoolId;
+            editSecretary.FirstName = model.FirstName;
+            editSecretary.MiddleName = model.MiddleName;
+            editSecretary.LastName = model.LastName;
+            editSecretary.Sex = model.Sex;
+
+            var result = await userManager.UpdateAsync(editSecretary);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+                //return PartialView("_EditTeacherPartial", model);
+                var errors = ModelState.ToDictionary(
+                                                                       kvp => kvp.Key,
+                                                                       kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                                                                   );
+                return Json(new { success = false, errors = errors });
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.NewPassword))
+            {
+                var removePassword = await userManager.RemovePasswordAsync(editSecretary);
+                if (removePassword.Succeeded)
+                {
+                    var newPassword = await userManager.AddPasswordAsync(editSecretary, model.NewPassword);
+                    if (!newPassword.Succeeded)
+                    {
+                        foreach(var error in newPassword.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+                        var errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                        );
+                        return Json(new { success = false, errors = errors });
+                    }
+                }
+            }
+
+            // No need ng gamitin ang SaveChangesAsync() kase Ang UserManager.UpdateAsync(), RemovePasswordAsync(), at AddPasswordAsync() ay automatically nag - save na sa database.
+            //await context.SaveChangesAsync();
+            return Json(new { success = true, message = "Secretary Updated Successfully" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteSecretary(string id)
+        {
+            var secretary = await userManager.FindByIdAsync(id);
+
+            if(secretary == null)
+            {
+                return Json(new { success = false, error = "Secretary does not Found!" });
+            }
+
+            if (!string.IsNullOrEmpty(secretary.imageFilePath))
+            {
+                string ImagePath = Path.Combine(environment.WebRootPath, "ProfilePic", secretary.imageFilePath);
+                if (System.IO.File.Exists(ImagePath))
+                {
+                    System.IO.File.Delete(ImagePath);
+                }
+            }
+
+            context.Users.Remove(secretary);
+            await context.SaveChangesAsync();
+
+            return Json(new { sucesss = true, message = "Secretary Deleted Successfully!" });
+        }
+       
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();

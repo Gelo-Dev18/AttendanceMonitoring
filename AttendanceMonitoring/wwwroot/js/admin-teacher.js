@@ -77,7 +77,7 @@
         e.preventDefault();
 
         var formData = new FormData(this);
-        var teacherId = teacherID;
+        //var teacherID = userID;
 
         //loadPageBlur();
 
@@ -85,7 +85,7 @@
         $('#EditTeacherForm .validation-error-message').remove();
 
         $.ajax({
-            url: '/Admin/EditTeacher/' + teacherId,
+            url: '/Admin/EditTeacher/' + userID,
             type: 'POST',
             data: formData,
             processData: false,
@@ -136,7 +136,7 @@
     $('#confirmDeleteButton').on('click', function (e) {
         e.preventDefault();
 
-        if (!teacherID) {
+        if (!userID) {
             alert('Id does not found');
             return;
         }
@@ -145,7 +145,7 @@
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
-            url: '/Admin/Delete/' + teacherID,
+            url: '/Admin/Delete/' + userID,
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
