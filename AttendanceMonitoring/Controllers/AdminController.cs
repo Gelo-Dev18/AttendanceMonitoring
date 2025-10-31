@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using NuGet.DependencyResolver;
 using System.Data;
+using System.Diagnostics.Metrics;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -34,10 +35,10 @@ namespace AttendanceMonitoring.Controllers
 
         //private readonly UserManager<IdentityUser> _userManager;
 
-
+        // **Dependency Injection = How the service is provided** to your controller
         //constructor           //parameters
-                                //Dependency Injection
-                                                      //eto mismo yung parameter: signInManager, tapos object dn sya pero yung laman nya, example if yung parameter is name then ang object is 'Juan'
+        //Dependency Injection
+        //eto mismo yung parameter: signInManager, tapos object dn sya pero yung laman nya, example if yung parameter is name then ang object is 'Juan'
         public AdminController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment)
         {
             // so you can use them in any method inside the controller.
@@ -58,18 +59,177 @@ namespace AttendanceMonitoring.Controllers
         {
             return View();
         }
+
+        public async Task<IActionResult> GradeAndSectionList()
+        {
+            var GradesSection = await context.AcademicClasses
+                .OrderBy(s => s.GradeLevel)
+                .ThenBy(s => s.SectionName)
+                .ToListAsync();
+
+            //var groupdSections = await context.AcademicClasses
+            //    .GroupBy(g => g.GradeLevel) //group the class by gradeLevel
+            //    .Select(group => new GradeAndSectionViewModel // transform each group into object
+            //    {
+            //        GradeLevel = group.Key, // the gradelevel (grouping key)
+            //        SectionName = string.Join(", ",  //Join Section into one string and seperate them using comma
+            //            group.Select(s => s.SectionName))//Get all section names in the group
+            //    })
+            //    .OrderBy(g => g.GradeLevel) //sort by grade level. Pag kakasunod 
+            //    .ToListAsync(); //Execure query and return result into list
+
+
+            return View(GradesSection);
+        }
+        public async Task<IActionResult> AddGradeAndSection()
+        {
+            return PartialView("_AddGradeAndSectionPartial");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddGradeAndSection(GradeAndSectionViewModel model)
+        {
+            //bool gradeLevel = await context.AcademicClasses.AnyAsync(g => g.GradeLevel == model.GradeLevel);
+            //if (gradeLevel)
+            //{
+            //    ModelState.AddModelError("GradeLevel", "Grade Level is already existed!");
+            //}
+
+            //divides section name input if the section has two or more entries
+            //split section names   
+            var sectionNames = model.SectionName
+                .Split(',')//divides a string into an array
+                .Select(s => s.Trim()) // remove extra spaces
+                .Where(s => !string.IsNullOrEmpty(s))//remove empty entries
+                .Distinct()//remove duplicates
+                .ToList();
+
+            if (!sectionNames.Any())
+            {
+                ModelState.AddModelError("SectionName", "Please provide atleast one section names");
+                //return View(model);
+            }
+
+            //Check if Section is already Existed on a specific Grade level
+            //LINQ Query Syntax
+            //var sectionExisted = from s in context.AcademicClasses
+            //                     where s.GradeLevel == model.GradeLevel && sectionNames.Contains(s.SectionName)
+            //                     select s.SectionName;
+
+            //LINQ Method Syntax
+            var sectionExisted = await context.AcademicClasses
+                .Where(s => s.GradeLevel == model.GradeLevel
+                        && sectionNames.Contains(s.SectionName))
+                .Select(s => s.SectionName)
+                .ToListAsync();
+
+
+            if (sectionExisted.Any())
+            {
+                ModelState.AddModelError("SectionName", "Section Name is Already Existed!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.ToDictionary(
+                                           kvp => kvp.Key,
+                                           kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                                       );
+
+                return Json(new { success = false, errors = errors });
+            }
+
+            //LINQ using loop //shortcut to na naka forloop
+            //pa ganito ibig sabihin may data na multiple ang iinsert na data   
+            var GradeSection = sectionNames.Select(name => new AcademicClasses
+            {
+                GradeLevel = model.GradeLevel,
+                SectionName = name, // yung name is represent mismo ng section names kase naka array na sya dahil by batch ang add. Kase kapag ang gamit is model.SectionName is string sya and isang variable lang
+                CreatedAt = DateTime.Now
+            });
+
+            await context.AcademicClasses.AddRangeAsync(GradeSection); //AddRangeAsync ang ginamit kase by batch ang iadd, means mulitiple data
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Grade and Section Added!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditGradeAndSection(int id)
+        {
+            var GradeSection = await context.AcademicClasses.FindAsync(id);
+
+            if(GradeSection == null)
+            {
+                return Json(new { success = false, error = "Grade and Section does not exist!" });
+            }
+
+            var model = new EditGradeAndSectionViewModel()
+            {
+                GradeLevel = GradeSection.GradeLevel,
+                SectionName = GradeSection.SectionName
+            };
+
+            return PartialView("_EditGradeAndSectionPartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditGradeAndSection(int id, EditGradeAndSectionViewModel model)
+        {
+            var GradeSection = await context.AcademicClasses.FindAsync(id);
+
+            if(GradeSection == null)
+            {
+                return Json(new { success = false, error = "Grade and Section does not exist!" });
+            }
+
+            bool sectionExisted = await context.AcademicClasses
+                .AnyAsync(s => s.GradeLevel == model.GradeLevel 
+                    && s.SectionName == model.SectionName 
+                    && s.Id != id);
+
+            if (sectionExisted)
+            {
+                ModelState.AddModelError("SectionName", "Section Name is already used!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.ToDictionary(
+                                kvp => kvp.Key,
+                                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                            );
+                return Json(new { success = false, errors = errors });
+            }
+
+            GradeSection.GradeLevel = model.GradeLevel;
+            GradeSection.SectionName = model.SectionName;
+
+            context.Update(GradeSection);
+            await context.SaveChangesAsync();
+            
+            return Json(new { success = true, message = "Grade & Section Successfully Edited!" });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteGradeAndSection(int id)
+        {
+            var GradeAndSection = await context.AcademicClasses.FindAsync(id);
+
+            if(GradeAndSection == null)
+            {
+                return Json(new { success = false, error = "Grade And section does not exist!" });
+            }
+
+            context.AcademicClasses.Remove(GradeAndSection);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Grade and Section Successfully deleted!" });
+        }
         public async Task<IActionResult> TeacherList()//string TeacherRole
         {
-
-            //var teacherRoleId = context.Roles
-            //    .Where(r => r.Name == "Teacher")
-            //    .Select(r => r.Id)
-            //    .FirstOrDefault();
-            //var teacher = context.Users
-            //            .Where(user => context.UserRoles
-            //            .Any(ur => ur.UserId == user.Id && ur.RoleId == teacherRoleId))
-            //            .ToList();
-
             //var teacher = context.Users
             //    .Where(user => context.UserRoles
             //    .Any(ur => ur.UserId == user.Id && context.Roles
@@ -95,9 +255,10 @@ namespace AttendanceMonitoring.Controllers
             return View(secretary);
         }
 
-        [HttpGet]
+        [HttpGet] //Entity → ViewModel(for display/edit)
         public async Task<IActionResult> EditTeacher(string id)
         {
+            // Get Entity From database
             var teacher = await context.Users.FindAsync(id);
             //var teacher = userManager.FindByIdAsync(id);
 
@@ -106,10 +267,10 @@ namespace AttendanceMonitoring.Controllers
                 //return RedirectToAction("TeacherList", "Admin");
                 return Json(new { success = false, error = "Not Found" });// always gamitin ang json lalo na kapag ajax/modal. Standard para sa ajax ang json
             }
-
+            //Map From entity to view model
             var model = new EditTeacherViewModel()
             {
-                Email = teacher.Email,
+                Email = teacher.Email, //from entity
                 //UserName = teacher.Email,
                 SchoolId = teacher.SchoolId,
                 EmployeeId = teacher.EmployeeId,
@@ -136,7 +297,7 @@ namespace AttendanceMonitoring.Controllers
             {
                 return RedirectToAction("TeacherList", "Admin");
             }
-
+            //Manual mapping
             var model = new EditTeacherViewModel()
             {
                 Email = teacher.Email,
@@ -172,7 +333,7 @@ namespace AttendanceMonitoring.Controllers
             return PartialView("_AddSecretaryPartial");
         }
 
-        [HttpPost]
+        [HttpPost] //ViewModel → Entity (for saving to database)
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddTeacher(TeacherViewModel model)
         {
@@ -236,7 +397,7 @@ namespace AttendanceMonitoring.Controllers
                     }
 
                 }
-
+                //Map from viewmodel to entity
                 AppUser teacher = new AppUser()
                 {
                     Email = model.Email,
@@ -317,10 +478,11 @@ namespace AttendanceMonitoring.Controllers
         //[HttpPut] // ginagamit lang sa mga restful api 
         [HttpPost] //ginagamit parin ang post kagit sa pag update sa mvc kase ang form is only support post and get
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditTeacher(string id, EditTeacherViewModel model)
+        public async Task<IActionResult> EditTeacher(string id, EditTeacherViewModel model)//After Edit - Submit(ViewModel → Entity) :
+
         {
             //var editTeacher = await context.Users.FindAsync(id);
-            var editTeacher = await userManager.FindByIdAsync(id.ToString());
+            var editTeacher = await userManager.FindByIdAsync(id.ToString()); //get entity from database
 
             if(editTeacher == null)
             {
@@ -415,8 +577,8 @@ namespace AttendanceMonitoring.Controllers
                 editTeacher.imageFilePath = saveImagePath;
                 editTeacher.imageFileData = saveImageData;
             }
-
-            editTeacher.Email = model.Email;
+            //Map ViewModel -> Entity(update existing entity)
+            editTeacher.Email = model.Email; //From ViewModel To Entity
             editTeacher.SchoolId = model.SchoolId;
             editTeacher.EmployeeId = model.EmployeeId;
             editTeacher.FirstName = model.FirstName;
@@ -805,7 +967,7 @@ namespace AttendanceMonitoring.Controllers
             return Json(new { success = true, message = "Secretary Updated Successfully" });
         }
 
-        [HttpGet]
+        [HttpDelete]
         public async Task<IActionResult> DeleteSecretary(string id)
         {
             var secretary = await userManager.FindByIdAsync(id);

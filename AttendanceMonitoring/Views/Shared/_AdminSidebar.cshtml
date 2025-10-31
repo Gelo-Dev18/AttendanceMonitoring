@@ -32,6 +32,14 @@
         Interface
     </div>
 
+    <!-- Nav Item - Grade & Section -->
+    <li class="nav-item @Html.IsActive("Admin", "GradeAndSectionList")">
+        <a class="nav-link" href="@Url.Action("GradeAndSectionList", "Admin")">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Grade & Section</span>
+        </a>
+    </li>
+
     <!-- Nav Item - USERS -->
     <li class="nav-item @(isUserSectionActive ? "active" : "")">
         <a class="nav-link collapsed @(isUserSectionActive ? "active" : "")" href="#" data-toggle="collapse" data-target="#collapseTwo"
@@ -48,14 +56,6 @@
             </div>
         </div>
     </li> 
-
-    <!-- Nav Item - Grade & Section -->
-    <li class="nav-item">
-        <a class="nav-link" href="#">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <span>Grade & Section</span>
-        </a>
-    </li>
 
     <!-- Nav Item - REPORTS -->
     <li class="nav-item">

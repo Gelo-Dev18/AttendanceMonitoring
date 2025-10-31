@@ -12,6 +12,7 @@ namespace AttendanceMonitoring.Data
         }
         //public DbSet<AttendanceMonitoring.Models.Student> Student { get; set; } = default!;
 
+        public DbSet<AcademicClasses> AcademicClasses { get; set; }
         public DbSet<Teacher> Teacher { get; set; }
         //public DbSet<Student> Students { get; set; }
 

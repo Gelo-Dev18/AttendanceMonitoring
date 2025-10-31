@@ -23,6 +23,7 @@
             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                 <thead>
                     <tr>
+                        <th class="text-center"><strong>#</strong></th>
                         <th><strong>School ID</strong></th>
                         <th><strong>Email</strong></th>
                         <th><strong>Full name</strong></th>
@@ -43,9 +44,13 @@
                     </tr>
                 </tfoot> -->
                 <tbody>
+                    @{
+                        var i = 1;
+                    }
                     @foreach(var teacher in Model)
                     {
                         <tr>
+                            <td class="text-center"><strong>@(i++)</strong></td>
                             <td><strong>@teacher.SchoolId</strong></td>
                             <td><strong>@teacher.Email</strong></td>
                             <td><strong>@teacher.FirstName @teacher.MiddleName @teacher.LastName</strong></td>

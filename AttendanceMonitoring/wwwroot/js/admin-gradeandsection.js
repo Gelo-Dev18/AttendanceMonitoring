@@ -1,13 +1,11 @@
 ﻿$(document).ready(function () {
-
-    //Submit Function For Secretary Teacher
-    $(document).on('submit', '#AddSecretaryForm', function (e) {
+    $(document).on('submit', '#AddGradeAndSectionForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
 
         var formData = new FormData(this); //collect and manage form data for submission
         //RESTful api, two computer system to exchange information through the internet
         $.ajax({
-            url: '/Admin/AddSecretary',
+            url: '/Admin/AddGradeAndSection',
             type: 'POST', //a RESTful API uses standard HTTP methods(GET, POST, PUT, DELETE) 
             data: formData, //sends all form data
             processData: false, // para hindi maconvert ni formdata to strings yung submission ng data lalo na if my file included
@@ -19,8 +17,8 @@
                 //$('#validationSum').empty();
 
                 if (response.success) {
-                    $('#AddModalForm').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
-                    $('#AddModalForm').modal('hide');
+                    $('#AddSmallModalForm').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
+                    $('#AddSmallModalForm').modal('hide');
                     // alert(response.message);
                     loadSpinner();
                     showSuccessToast(response.message);
@@ -63,71 +61,81 @@
                 }
             },
             error: function (xhr, status, error) {
-                console.error('Error saving user:', error);
+                console.error('Error saving Grade and Section:', error);
                 loadSpinner();
                 loadPageBlur();
-                showDangerToast('An error occurred while updating the user.');
+                showDangerToast('An error occurred while updating Grade and Section.');
             }
         });
     });
-    /////////////////////////////////////////////////////////////////////////////////////
 
-    $(document).on('submit', '#EditSecretaryForm', function (e) {
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //Submit Function for Edit Teacher
+    $(document).on('submit', '#EditGradeAndSectionForm', function (e) {
         e.preventDefault();
 
         var formData = new FormData(this);
+        //var teacherID = userID;
 
-        $('#EditSecretaryForm .form-control').removeClass('border-danger');
-        $('#EditSecretaryForm .validation-error-message').remove();
+        //loadPageBlur();
+
+        $('#EditGradeAndSectionForm .form-control').removeClass('border-danger');
+        $('#EditGradeAndSectionForm .validation-error-message').remove();
 
         $.ajax({
-            url: '/Admin/EditSecretary/' + userID,
+            url: '/Admin/EditGradeAndSection/' + userID,
             type: 'POST',
             data: formData,
             processData: false,
             contentType: false,
             dataType: 'json',
             success: function (response) {
+                //console.log('Full response:', response); // Add this line
 
                 if (response.success) {
-                    $('#EditModal').off('hide.bs.modal');
-                    $('#EditModal').modal('hide');
+                    $('#EditSmallModal').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
+                    $('#EditSmallModal').modal('hide');
                     loadSpinner();
                     showUpdateSuccessToast(response.message);
                     setTimeout(function () {
                         location.reload();
                     }, 2000);
                 } else {
+
                     $.each(response.errors, function (key, value) {
                         if (value && value.length > 0) {
                             var inputElement = $('[name="' + key + '"]');
                             inputElement.addClass('border-danger');
 
-                            var errorMessageElement = inputElement.next('validation-error-message');
+                            var errorMessageElement = inputElement.next('.validation-error-message');
                             if (errorMessageElement.length > 0) {
-                                //pag may exisiting error na for validation then nag karoon ulit ng error after submit is dun gagana si if, Irereplace nyan analng yung error para di mag patong yung html element!
                                 errorMessageElement.text(value.join(', '));
                             } else {
-                                //pag unang error, else muna gagana
                                 $('<span class="text-danger validation-error-message">' + value.join(', ') + '</span>').insertAfter(inputElement);
                             }
                         }
                     });
+                    //console.log('Errors:', response.errors); // Add this line
+                    //console.log('Message:', response.message); // Add this line
+                    //    showDangerToast(response);
                 }
             },
             error: function (xhr, status, error) {
-                console.error('Error updating user: ', error);
-                console.log('XHR Response: ', xhr.responseText);
+                console.error('Error updating user:', error);
+                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
                 loadSpinner();
                 loadPageBlur();
-                showDangerToast('An error occured while updating the teacher');
+                showDangerToast('An error occurred while updating the Grade and section.');
             }
-        })
+        });
     });
+
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     $('#confirmDeleteButton').on('click', function (e) {
         e.preventDefault();
+        console.log('Confirm clicked, userID is:', userID); // Debug log
 
         if (!userID) {
             alert('Id does not found');
@@ -138,7 +146,7 @@
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
-            url: '/Admin/Delete/' + userID,
+            url: '/Admin/DeleteGradeAndSection/' + userID,
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {

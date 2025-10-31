@@ -103,7 +103,7 @@ $(document).ready(function () {
         hideBlurBackground();
     });
 
-    ///////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
 
     //Triggers Edit Modal
     $('#EditModal').on('show.bs.modal', function (event) {
@@ -141,7 +141,7 @@ $(document).ready(function () {
         hideBlurBackground();
     }); 
 
-    ///////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Trigger View Modal
     $('#ViewModal').on('show.bs.modal', function (event) {
@@ -164,7 +164,7 @@ $(document).ready(function () {
         hideBlurBackground();
     });
 
-    ///////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Triggers ModalDelete
     $('#ModalDelete').on('show.bs.modal', function (event) {
@@ -177,4 +177,71 @@ $(document).ready(function () {
     $('#ModalDelete').on('hide.bs.modal', function (event) {
         hideBlurBackground();
     });
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //Add Small Modal Form
+    $('#AddSmallModalForm').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+
+        var url = button.data('url');
+        var title = button.data('title');
+
+        var modal = $(this);
+
+        modal.find('#AddSmallModalFormLabel').text(title);
+        loadBlurBackground();
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function (html) {
+                modal.find('#AddSmallModalFormBody').html(html);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading add teacher modal:', error);
+                modal.find('#AddSmallModalFormBody').html('<p class="text-center">Failed to load modal body</p>');
+            }
+        });
+    });
+
+    $('#AddSmallModalForm').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    });
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Triggers Edit Small Modal
+    $('#EditSmallModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+
+        userID = button.data('id');
+
+        var url = button.data('url');
+        var title = button.data('title');
+
+        var modal = $(this);
+        modal.find('#EditSmallModalLabel').text(title);
+
+        loadBlurBackground();
+
+        if (!userID) {
+            alert('Id does not found');
+            return;
+        }
+
+        $.ajax({
+            url: url + userID,
+            type: 'GET',
+            success: function (html) {
+                modal.find('#EditSmallModalBody').html(html);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading edit modal:', error);
+                modal.find('#EditSmallModalBody').html('<p class="text-center">Failed to Load modal body</p>');
+            }
+        });
+    });
+
+    $('#EditSmallModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    }); 
+
 });
