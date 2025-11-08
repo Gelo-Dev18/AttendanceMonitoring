@@ -1,7 +1,7 @@
 ﻿@using AttendanceMonitoring.ViewModel;
-@model GradeAndSectionViewModel;
+@model GradeViewModel;
 @{
-    ViewData["Title"] = "Add Grade And Section";
+    ViewData["Title"] = "Add Grade";
 }
 <style>
     input::placeholder{
@@ -12,24 +12,33 @@
     }
 </style>
 
-<form id="AddGradeAndSectionForm" asp-action="AddGradeAndSection" method="post">
+<form id="AddGradeForm" asp-action="AddGrade" method="post">
     @Html.AntiForgeryToken()
     <div class="form-group">
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     </div>
     <div class="form-group">
         <label asp-for="GradeLevel" class="form-label"><strong>Grade Level</strong></label>
-        <input asp-for="GradeLevel" class="form-control" required />
+        <select asp-for="GradeLevel" class="form-control" required>
+            <option value="" selected>Choose...</option>
+            <option value="7">Grade 7</option>
+            <option value="8">Grade 8</option>
+            <option value="9">Grade 9</option>
+            <option value="10">Grade 10</option>
+            <option value="11">Grade 11</option>
+            <option value="12">Grade 12</option>
+
+        </select>
         <span asp-validation-for="GradeLevel" class="text-danger validation-error-message"></span>
     </div>
-    <div class="form-group">
+    @* <div class="form-group">
         <label asp-for="SectionName" class="form-label"><strong>Section Name</strong></label>
         <input asp-for="SectionName" class="form-control" placeholder="Block 1, Block 2, Section 1, Section 2....." required />
         <small class="form-text text-muted" style="font-style: italic;">
             Separate multiple columns with commas (e.g Block 1, Block 2);
         </small>
         <span asp-validation-for="SectionName" class="text-danger"></span>
-    </div>
+    </div> *@
 
     <div class="modal-footer">
         <button type="submit" class="btn btn-primary" id="SaveGradeAndSection">Save</button>

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.Rendering; // para sa SelectListItem
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -60,174 +61,515 @@ namespace AttendanceMonitoring.Controllers
             return View();
         }
 
-        public async Task<IActionResult> GradeAndSectionList()
+        public async Task<IActionResult> SubjectList()
         {
-            var GradesSection = await context.AcademicClasses
-                .OrderBy(s => s.GradeLevel)
-                .ThenBy(s => s.SectionName)
+            var subjectList = await context.Subjects
+                .OrderBy(s => s.SubjectCode)
                 .ToListAsync();
 
-            //var groupdSections = await context.AcademicClasses
-            //    .GroupBy(g => g.GradeLevel) //group the class by gradeLevel
-            //    .Select(group => new GradeAndSectionViewModel // transform each group into object
-            //    {
-            //        GradeLevel = group.Key, // the gradelevel (grouping key)
-            //        SectionName = string.Join(", ",  //Join Section into one string and seperate them using comma
-            //            group.Select(s => s.SectionName))//Get all section names in the group
-            //    })
-            //    .OrderBy(g => g.GradeLevel) //sort by grade level. Pag kakasunod 
-            //    .ToListAsync(); //Execure query and return result into list
-
-
-            return View(GradesSection);
+            return View(subjectList);
         }
-        public async Task<IActionResult> AddGradeAndSection()
+
+        public async Task<IActionResult> GradeList()
         {
-            return PartialView("_AddGradeAndSectionPartial");
+            var GradeList = await context.Grades
+                .OrderBy(s => s.GradeLevel)
+                .ToListAsync();
+
+            return View(GradeList);
+        }
+
+        public async Task<IActionResult> AddSubject()
+        {
+            return PartialView("_AddSubjectPartial");
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddGradeAndSection(GradeAndSectionViewModel model)
+        public async Task<IActionResult> AddSubject(SubjectViewModel model)
         {
-            //bool gradeLevel = await context.AcademicClasses.AnyAsync(g => g.GradeLevel == model.GradeLevel);
-            //if (gradeLevel)
-            //{
-            //    ModelState.AddModelError("GradeLevel", "Grade Level is already existed!");
-            //}
+            bool subjectcodeExisted = await context.Subjects.AnyAsync(s => s.SubjectCode == model.SubjectCode);
+            
+            if (subjectcodeExisted)
+            {
+                ModelState.AddModelError("SubjectCode", "Subject code is already existed!");
+            }
 
-            //divides section name input if the section has two or more entries
-            //split section names   
+            bool subjectDescriptionExisted = await context.Subjects.AnyAsync(s => s.SubjectDescription == model.SubjectDescription);
+            
+            if (subjectDescriptionExisted)
+            {
+                ModelState.AddModelError("SubjectDescription", "Subject Description is already existed!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            var Subject = new Subject()
+            {
+                SubjectCode = model.SubjectCode,
+                SubjectDescription = model.SubjectDescription,
+                CreatedAt = DateTime.Now
+            };
+
+            await context.Subjects.AddAsync(Subject);
+            await context.SaveChangesAsync();
+            
+            return Json(new { success = true, message = "Subject Added Successfully!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditSubject(int id)
+        {
+            var Subject = await context.Subjects.FindAsync(id);
+
+            if(Subject == null)
+            {
+                return Json(new { success = false, error = "Subject Not Found!" });
+            }
+
+            var model = new EditSubjectViewModel()
+            {
+                SubjectCode = Subject.SubjectCode,
+                SubjectDescription = Subject.SubjectDescription
+            };
+
+            return PartialView("_EditSubjectPartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSubject(int id, EditSubjectViewModel model)
+        {
+            var EditSubject = await context.Subjects.FindAsync(id);
+
+            if (EditSubject == null)
+            {
+                return Json(new { success = false, error = "Subject Not Found!" });
+            }
+
+            bool subjectcodeExisted = await context.Subjects.AnyAsync(s => s.SubjectCode == model.SubjectCode && s.Id != id);
+
+            if (subjectcodeExisted)
+            {
+                ModelState.AddModelError("SubjectCode", "Subject code is already existed!");
+            }
+
+            bool subjectDescriptionExisted = await context.Subjects.AnyAsync(s => s.SubjectDescription == model.SubjectDescription && s.Id != id);
+
+            if (subjectDescriptionExisted)
+            {
+                ModelState.AddModelError("SubjectDescription", "Subject Description is already existed!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            EditSubject.SubjectCode = model.SubjectCode;
+            EditSubject.SubjectDescription = model.SubjectDescription;
+
+            context.Subjects.Update(EditSubject);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Subject Edited Successfully!" });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteSubject(int id)
+        {
+            var DeleteSubject = await context.Subjects.FindAsync(id);
+
+            if (DeleteSubject == null)
+            {
+                return Json(new { success = false, error = "Subject Not Found!" });
+            }
+
+            context.Subjects.Remove(DeleteSubject);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Subject Deleted Successfully!" });
+        }
+
+        //public async Task<IActionResult> GradeAndSectionList()
+        //{
+        //    var GradesSection = await context.AcademicClasses
+        //        .OrderBy(s => s.GradeLevel)
+        //        .ThenBy(s => s.SectionName)
+        //        .ToListAsync();
+
+        //    //var groupdSections = await context.AcademicClasses
+        //    //    .GroupBy(g => g.GradeLevel) //group the class by gradeLevel
+        //    //    .Select(group => new GradeAndSectionViewModel // transform each group into object
+        //    //    {
+        //    //        GradeLevel = group.Key, // the gradelevel (grouping key)
+        //    //        SectionName = string.Join(", ",  //Join Section into one string and seperate them using comma
+        //    //            group.Select(s => s.SectionName))//Get all section names in the group
+        //    //    })
+        //    //    .OrderBy(g => g.GradeLevel) //sort by grade level. Pag kakasunod 
+        //    //    .ToListAsync(); //Execure query and return result into list
+
+
+        //    return View(GradesSection);
+        //}
+
+        public IActionResult AddGrade()
+        {
+            return PartialView("_AddGradePartial");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddGrade(GradeViewModel model)
+        {
+            bool gradeExisted = await context.Grades.AnyAsync(g => g.GradeLevel == model.GradeLevel);
+
+            if (gradeExisted)
+            {
+                ModelState.AddModelError("GradeLevel", "Grade Level is already Existed!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            var grade = new Grade()
+            {
+                GradeLevel = model.GradeLevel,
+                CreatedAt = DateTime.Now
+            };
+
+            await context.Grades.AddAsync(grade);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Grade Level Added Successfully!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditGrade(int id)
+        {
+            var grade = await context.Grades.FindAsync(id);
+
+            if (grade == null)
+            {
+                return Json(new { success = false, error = "Not Found" });// always gamitin ang json lalo na kapag ajax/modal. Standard para sa ajax ang json
+            }
+
+            var model = new GradeViewModel()
+            {
+                GradeLevel = grade.GradeLevel
+            };
+
+
+            return PartialView("_EditGradePartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditGrade(int id, GradeViewModel model)
+        {
+            var editGrade = await context.Grades.FindAsync(id);
+
+            if(editGrade == null)
+            {
+                return Json(new { success = false, message = "Grade not found" });
+            }
+
+            bool GradeLevelExisted = await context.Grades.AnyAsync(g => g.GradeLevel == model.GradeLevel && g.Id != id);
+
+            if (GradeLevelExisted)
+            {
+                ModelState.AddModelError("GradeLevel", "Grade Level already existed!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            editGrade.GradeLevel = model.GradeLevel;
+
+            context.Grades.Update(editGrade);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Grade Successfully Edited!" });
+
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteGrade(int id)
+        {
+            var grade = await context.Grades.FindAsync(id);
+
+            if(grade == null)
+            {
+                return Json(new { success = false, error = "Grade does not found" });
+            }
+
+            context.Grades.Remove(grade);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Grade Successfully Deleted!" });
+
+        }
+        public async Task<IActionResult> SectionList()
+        {
+            var sectionList = await context.Sections
+                .Include(g => g.Grade)
+                .OrderBy(s => s.GradesId)
+                .ToListAsync();
+
+            return View(sectionList);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AddSection()
+        {
+            // With 'new' (pulls only what we need):
+            var availableGrades = await context.Grades
+                .Select(g => new { g.Id, g.GradeLevel }) //Only gets id and GradeLevel
+                .ToListAsync();
+
+                
+            var model = new SectionViewModel
+            {
+                //this create a dropdown
+                AvailableGrades = availableGrades.Select(g => new SelectListItem //SelectListItem design for creating dropdown list
+                {
+                    Value = g.Id.ToString(), // what gets sent to the server when selected
+                    Text = $"Grade {g.GradeLevel}" // eto yung makikita ng user
+                }).ToList()
+
+            };
+
+            return PartialView("_AddSectionPartial", model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddSection(CreateSectionViewModel model)
+        {    
             var sectionNames = model.SectionName
-                .Split(',')//divides a string into an array
-                .Select(s => s.Trim()) // remove extra spaces
+                .Split(',') //Divide string into an array
+                .Select(s => s.Trim()) //remove extra spaces
                 .Where(s => !string.IsNullOrEmpty(s))//remove empty entries
-                .Distinct()//remove duplicates
+                .Distinct() //remove duplicates
                 .ToList();
 
             if (!sectionNames.Any())
             {
-                ModelState.AddModelError("SectionName", "Please provide atleast one section names");
-                //return View(model);
+                ModelState.AddModelError("SectionName", "Please provide atleast 1 section name");
             }
 
-            //Check if Section is already Existed on a specific Grade level
-            //LINQ Query Syntax
-            //var sectionExisted = from s in context.AcademicClasses
-            //                     where s.GradeLevel == model.GradeLevel && sectionNames.Contains(s.SectionName)
-            //                     select s.SectionName;
-
-            //LINQ Method Syntax
-            var sectionExisted = await context.AcademicClasses
-                .Where(s => s.GradeLevel == model.GradeLevel
+            var sectionExisted = await context.Sections
+                .Where(s => s.GradesId == model.GradesId
                         && sectionNames.Contains(s.SectionName))
                 .Select(s => s.SectionName)
                 .ToListAsync();
 
-
             if (sectionExisted.Any())
             {
-                ModelState.AddModelError("SectionName", "Section Name is Already Existed!");
+                ModelState.AddModelError("SectionName", "Section Name is Already Existed");
             }
 
             if (!ModelState.IsValid)
             {
-                var errors = ModelState.ToDictionary(
-                                           kvp => kvp.Key,
-                                           kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
-                                       );
+                var overallErrors = ModelState.ToDictionary(
+                   kvp => kvp.Key,
+                   kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
 
-                return Json(new { success = false, errors = errors });
+                return Json(new { success = false, errors = overallErrors });
             }
 
-            //LINQ using loop //shortcut to na naka forloop
-            //pa ganito ibig sabihin may data na multiple ang iinsert na data   
-            var GradeSection = sectionNames.Select(name => new AcademicClasses
+            //var Section = new Section()
+            //{
+            //    GradesId = model.GradesId,
+            //    SectionName = model.SectionName,
+            //    Track = model.Track,
+            //    CreatedAt = DateTime.Now
+            //};
+
+            //pag ganito ibig sabihin may data na multiple ang iinsert na data   
+            var Sections = sectionNames.Select(name => new Section
             {
-                GradeLevel = model.GradeLevel,
-                SectionName = name, // yung name is represent mismo ng section names kase naka array na sya dahil by batch ang add. Kase kapag ang gamit is model.SectionName is string sya and isang variable lang
+                GradesId = model.GradesId,
+                SectionName = name,
+                Track = model.Track,
                 CreatedAt = DateTime.Now
             });
 
-            await context.AcademicClasses.AddRangeAsync(GradeSection); //AddRangeAsync ang ginamit kase by batch ang iadd, means mulitiple data
+            await context.Sections.AddRangeAsync(Sections);
             await context.SaveChangesAsync();
 
-            return Json(new { success = true, message = "Grade and Section Added!" });
+            return Json(new { success = true, message = "Section Added Succesfully!" });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> EditGradeAndSection(int id)
-        {
-            var GradeSection = await context.AcademicClasses.FindAsync(id);
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> AddGradeAndSection(GradeAndSectionViewModel model)
+        //{
+        //    //bool gradeLevel = await context.AcademicClasses.AnyAsync(g => g.GradeLevel == model.GradeLevel);
+        //    //if (gradeLevel)
+        //    //{
+        //    //    ModelState.AddModelError("GradeLevel", "Grade Level is already existed!");
+        //    //}
 
-            if(GradeSection == null)
-            {
-                return Json(new { success = false, error = "Grade and Section does not exist!" });
-            }
+        //    //divides section name input if the section has two or more entries
+        //    //split section names   
+        //    var sectionNames = model.SectionName
+        //        .Split(',')//divides a string into an array
+        //        .Select(s => s.Trim()) // remove extra spaces
+        //        .Where(s => !string.IsNullOrEmpty(s))//remove empty entries
+        //        .Distinct()//remove duplicates
+        //        .ToList();
 
-            var model = new EditGradeAndSectionViewModel()
-            {
-                GradeLevel = GradeSection.GradeLevel,
-                SectionName = GradeSection.SectionName
-            };
+        //    if (!sectionNames.Any())
+        //    {
+        //        ModelState.AddModelError("SectionName", "Please provide atleast one section names");
+        //        //return View(model);
+        //    }
 
-            return PartialView("_EditGradeAndSectionPartial", model);
-        }
+        //    //Check if Section is already Existed on a specific Grade level
+        //    //LINQ Query Syntax
+        //    //var sectionExisted = from s in context.AcademicClasses
+        //    //                     where s.GradeLevel == model.GradeLevel && sectionNames.Contains(s.SectionName)
+        //    //                     select s.SectionName;
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditGradeAndSection(int id, EditGradeAndSectionViewModel model)
-        {
-            var GradeSection = await context.AcademicClasses.FindAsync(id);
+        //    //LINQ Method Syntax
+        //    //var sectionExisted = await context.AcademicClasses
+        //    //    .Where(s => s.GradeLevel == model.GradeLevel
+        //    //            && sectionNames.Contains(s.SectionName))
+        //    //    .Select(s => s.SectionName)
+        //    //    .ToListAsync();
 
-            if(GradeSection == null)
-            {
-                return Json(new { success = false, error = "Grade and Section does not exist!" });
-            }
 
-            bool sectionExisted = await context.AcademicClasses
-                .AnyAsync(s => s.GradeLevel == model.GradeLevel 
-                    && s.SectionName == model.SectionName 
-                    && s.Id != id);
+        //    //if (sectionExisted.Any())
+        //    //{
+        //    //    ModelState.AddModelError("SectionName", "Section Name is Already Existed!");
+        //    //}
 
-            if (sectionExisted)
-            {
-                ModelState.AddModelError("SectionName", "Section Name is already used!");
-            }
+        //    if (!ModelState.IsValid)
+        //    {
+        //        var errors = ModelState.ToDictionary(
+        //                                   kvp => kvp.Key,
+        //                                   kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+        //                               );
 
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.ToDictionary(
-                                kvp => kvp.Key,
-                                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
-                            );
-                return Json(new { success = false, errors = errors });
-            }
+        //        return Json(new { success = false, errors = errors });
+        //    }
 
-            GradeSection.GradeLevel = model.GradeLevel;
-            GradeSection.SectionName = model.SectionName;
+        //    //LINQ using loop //shortcut to na naka forloop
+        //    //pa ganito ibig sabihin may data na multiple ang iinsert na data   
+        //    //var GradeSection = sectionNames.Select(name => new GradeLevel
+        //    //{
+        //    //    GradeLevel = model.GradeLevel,
+        //    //    SectionName = name, // yung name is represent mismo ng section names kase naka array na sya dahil by batch ang add. Kase kapag ang gamit is model.SectionName is string sya and isang variable lang
+        //    //    CreatedAt = DateTime.Now
+        //    //});
 
-            context.Update(GradeSection);
-            await context.SaveChangesAsync();
-            
-            return Json(new { success = true, message = "Grade & Section Successfully Edited!" });
-        }
+        //    //await context.AcademicClasses.AddRangeAsync(GradeSection); //AddRangeAsync ang ginamit kase by batch ang iadd, means mulitiple data
+        //    //await context.SaveChangesAsync();
 
-        [HttpDelete]
-        public async Task<IActionResult> DeleteGradeAndSection(int id)
-        {
-            var GradeAndSection = await context.AcademicClasses.FindAsync(id);
+        //    //return Json(new { success = true, message = "Grade and Section Added!" });
+        //}
 
-            if(GradeAndSection == null)
-            {
-                return Json(new { success = false, error = "Grade And section does not exist!" });
-            }
+        //[HttpGet]
+        //public async Task<IActionResult> EditGradeAndSection(int id)
+        //{
+        //    var GradeSection = await context.AcademicClasses.FindAsync(id);
 
-            context.AcademicClasses.Remove(GradeAndSection);
-            await context.SaveChangesAsync();
+        //    if(GradeSection == null)
+        //    {
+        //        return Json(new { success = false, error = "Grade and Section does not exist!" });
+        //    }
 
-            return Json(new { success = true, message = "Grade and Section Successfully deleted!" });
-        }
+        //    var model = new EditGradeAndSectionViewModel()
+        //    {
+        //        GradeLevel = GradeSection.GradeLevel,
+        //        SectionName = GradeSection.SectionName
+        //    };
+
+        //    return PartialView("_EditGradeAndSectionPartial", model);
+        //}
+
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> EditGradeAndSection(int id, EditGradeAndSectionViewModel model)
+        //{
+        //    var GradeSection = await context.AcademicClasses.FindAsync(id);
+
+        //    if(GradeSection == null)
+        //    {
+        //        return Json(new { success = false, error = "Grade and Section does not exist!" });
+        //    }
+
+        //    bool sectionExisted = await context.AcademicClasses
+        //        .AnyAsync(s => s.GradeLevel == model.GradeLevel 
+        //            && s.SectionName == model.SectionName 
+        //            && s.Id != id);
+
+        //    if (sectionExisted)
+        //    {
+        //        ModelState.AddModelError("SectionName", "Section Name is already used!");
+        //    }
+
+        //    if (!ModelState.IsValid)
+        //    {
+        //        var errors = ModelState.ToDictionary(
+        //                        kvp => kvp.Key,
+        //                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+        //                    );
+        //        return Json(new { success = false, errors = errors });
+        //    }
+
+        //    GradeSection.GradeLevel = model.GradeLevel;
+        //    GradeSection.SectionName = model.SectionName;
+
+        //    context.Update(GradeSection);
+        //    await context.SaveChangesAsync();
+
+        //    return Json(new { success = true, message = "Grade & Section Successfully Edited!" });
+        //}
+
+        //[HttpDelete]
+        //public async Task<IActionResult> DeleteGradeAndSection(int id)
+        //{
+        //    var GradeAndSection = await context.AcademicClasses.FindAsync(id);
+
+        //    if(GradeAndSection == null)
+        //    {
+        //        return Json(new { success = false, error = "Grade And section does not exist!" });
+        //    }
+
+        //    context.AcademicClasses.Remove(GradeAndSection);
+        //    await context.SaveChangesAsync();
+
+        //    return Json(new { success = true, message = "Grade and Section Successfully deleted!" });
+        //}
         public async Task<IActionResult> TeacherList()//string TeacherRole
         {
             //var teacher = context.Users

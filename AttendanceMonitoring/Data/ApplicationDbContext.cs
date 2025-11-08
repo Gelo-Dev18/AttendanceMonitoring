@@ -11,26 +11,23 @@ namespace AttendanceMonitoring.Data
         {
         }
         //public DbSet<AttendanceMonitoring.Models.Student> Student { get; set; } = default!;
-
-        public DbSet<AcademicClasses> AcademicClasses { get; set; }
+        public DbSet<Subject> Subjects { get; set; }
+        public DbSet<Grade> Grades { get; set; }
+        public DbSet<Section> Sections { get; set; }
         public DbSet<Teacher> Teacher { get; set; }
         //public DbSet<Student> Students { get; set; }
 
-        //protected override void OnModelCreating(ModelBuilder builder)
-        //{
-        //    base.OnModelCreating(builder);
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
-        //    builder.Entity<AppUser>()
-        //        .Property(a => a.CreatedAt)
-        //        .HasDefaultValueSql("GETDATE()"); // An Entity Framework Core method for to set the current value during insert using GETDATE()
-
-        //    //builder.Entity<AppUser>()
-        //    //    .Property(a => a.UpdatedAt)
-        //    //    .HasDefaultValueSql("GETDATE()")
-        //    //    .ValueGeneratedOnAddOrUpdate();
-
-            
-        //}
+            //GradeLevel - SectionName Relationship (One-to-Many)
+            modelBuilder.Entity<Section>()
+                .HasOne(s => s.Grade)          //Section has one Grade
+                .WithMany(g => g.Sections)      //Grade has many Sections
+                .HasForeignKey(s => s.GradesId)      //Foreign key
+                .OnDelete(DeleteBehavior.Restrict);  // ← IMPORTANT! Prevent cascade delete
+        }
 
     }
 }

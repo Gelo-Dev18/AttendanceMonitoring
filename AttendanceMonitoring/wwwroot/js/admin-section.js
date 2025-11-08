@@ -1,11 +1,11 @@
 ﻿$(document).ready(function () {
-    $(document).on('submit', '#AddGradeForm', function (e) {
+    $(document).on('submit', '#AddSectionForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
 
         var formData = new FormData(this); //collect and manage form data for submission
         //RESTful api, two computer system to exchange information through the internet
         $.ajax({
-            url: '/Admin/AddGrade',
+            url: '/Admin/AddSection',
             type: 'POST', //a RESTful API uses standard HTTP methods(GET, POST, PUT, DELETE) 
             data: formData, //sends all form data
             processData: false, // para hindi maconvert ni formdata to strings yung submission ng data lalo na if my file included
@@ -65,111 +65,6 @@
                 loadSpinner();
                 loadPageBlur();
                 showDangerToast('An error occurred while updating Grade.');
-            }
-        });
-    });
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //Submit Function for Edit Teacher
-    $(document).on('submit', '#EditGradeForm', function (e) {
-        e.preventDefault();
-
-        var formData = new FormData(this);
-        //var teacherID = userID;
-
-        //loadPageBlur();
-
-        $('#EditGradeForm .form-control').removeClass('border-danger');
-        $('#EditGradeForm .validation-error-message').remove();
-
-        $.ajax({
-            url: '/Admin/EditGrade/' + userID,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function (response) {
-                //console.log('Full response:', response); // Add this line
-
-                if (response.success) {
-                    $('#EditSmallModal').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
-                    $('#EditSmallModal').modal('hide');
-                    loadSpinner();
-                    showUpdateSuccessToast(response.message);
-                    setTimeout(function () {
-                        location.reload();
-                    }, 2000);
-                } else {
-
-                    $.each(response.errors, function (key, value) {
-                        if (value && value.length > 0) {
-                            var inputElement = $('[name="' + key + '"]');
-                            inputElement.addClass('border-danger');
-
-                            var errorMessageElement = inputElement.next('.validation-error-message');
-                            if (errorMessageElement.length > 0) {
-                                errorMessageElement.text(value.join(', '));
-                            } else {
-                                $('<span class="text-danger validation-error-message">' + value.join(', ') + '</span>').insertAfter(inputElement);
-                            }
-                        }
-                    });
-                    //console.log('Errors:', response.errors); // Add this line
-                    //console.log('Message:', response.message); // Add this line
-                    //    showDangerToast(response);
-                }
-            },
-            error: function (xhr, status, error) {
-                console.error('Error updating user:', error);
-                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
-                loadSpinner();
-                loadPageBlur();
-                showDangerToast('An error occurred while updating the Grade and section.');
-            }
-        });
-    });
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    $('#confirmDeleteButton').on('click', function (e) {
-        e.preventDefault();
-        console.log('Confirm clicked, userID is:', userID); // Debug log
-
-        if (!userID) {
-            alert('Id does not found');
-            return;
-        }
-
-        loadSpinner();
-        //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
-
-        $.ajax({
-            url: '/Admin/DeleteGrade/' + userID,
-            type: 'DELETE',
-            success: function (response) {
-                if (response.success) {
-
-                    $('#ModalDelete').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
-                    $('#ModalDelete').modal('hide');
-                    showSuccessToast(response.message);
-                    //loadSpinner();
-                    setTimeout(function () {
-                        location.reload();
-                    }, 2000);
-                } else {
-                    alert('Could not delete Grade');
-                }
-                //alert(response.message);
-                //location.reload();
-            },
-            error: function (xhr, status, error) {
-                console.error('Error deleting Grade:', error);
-                //    alert('Something went wrong. Please try again.');
-                loadSpinner();
-                loadPageBlur();
-                showDangerToast(response);
             }
         });
     });

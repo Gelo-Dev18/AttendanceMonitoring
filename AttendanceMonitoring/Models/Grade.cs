@@ -1,10 +1,10 @@
 ﻿namespace AttendanceMonitoring.Models
 {
-    public class AcademicClasses
+    public class Grade
     {
         public int Id { get; set; }
-        public string GradeLevel { get; set; }
-        public string SectionName { get; set; }
+        public int GradeLevel { get; set; }
         public DateTime CreatedAt { get; set; }
+        public ICollection<Section> Sections { get; set; }
     }
 }

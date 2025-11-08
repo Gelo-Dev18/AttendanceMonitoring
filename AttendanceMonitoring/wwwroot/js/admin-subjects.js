@@ -1,11 +1,12 @@
 ﻿$(document).ready(function () {
-    $(document).on('submit', '#AddGradeForm', function (e) {
+    
+    $(document).on('submit', '#AddSubjectForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
 
         var formData = new FormData(this); //collect and manage form data for submission
         //RESTful api, two computer system to exchange information through the internet
         $.ajax({
-            url: '/Admin/AddGrade',
+            url: '/Admin/AddSubject',
             type: 'POST', //a RESTful API uses standard HTTP methods(GET, POST, PUT, DELETE) 
             data: formData, //sends all form data
             processData: false, // para hindi maconvert ni formdata to strings yung submission ng data lalo na if my file included
@@ -61,18 +62,16 @@
                 }
             },
             error: function (xhr, status, error) {
-                console.error('Error saving Grade :', error);
+                console.error('Error saving user:', error);
                 loadSpinner();
                 loadPageBlur();
-                showDangerToast('An error occurred while updating Grade.');
+                showDangerToast('An error occurred while updating the Subject.');
             }
         });
     });
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    //Submit Function for Edit Teacher
-    $(document).on('submit', '#EditGradeForm', function (e) {
+    $(document).on('submit', '#EditSubjectForm', function (e) {
         e.preventDefault();
 
         var formData = new FormData(this);
@@ -80,11 +79,11 @@
 
         //loadPageBlur();
 
-        $('#EditGradeForm .form-control').removeClass('border-danger');
-        $('#EditGradeForm .validation-error-message').remove();
+        $('#EditSubjectForm .form-control').removeClass('border-danger');
+        $('#EditSubjectForm .validation-error-message').remove();
 
         $.ajax({
-            url: '/Admin/EditGrade/' + userID,
+            url: '/Admin/EditSubject/' + userID,
             type: 'POST',
             data: formData,
             processData: false,
@@ -122,17 +121,15 @@
                 }
             },
             error: function (xhr, status, error) {
-                console.error('Error updating user:', error);
+                console.error('Error updating Subject:', error);
                 console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
                 loadSpinner();
                 loadPageBlur();
-                showDangerToast('An error occurred while updating the Grade and section.');
+                showDangerToast('An error occurred while updating Subject.');
             }
         });
     });
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     $('#confirmDeleteButton').on('click', function (e) {
         e.preventDefault();
         console.log('Confirm clicked, userID is:', userID); // Debug log
@@ -146,7 +143,7 @@
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
-            url: '/Admin/DeleteGrade/' + userID,
+            url: '/Admin/DeleteSubject/' + userID,
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
@@ -159,13 +156,13 @@
                         location.reload();
                     }, 2000);
                 } else {
-                    alert('Could not delete Grade');
+                    alert('Could not delete Subject');
                 }
                 //alert(response.message);
                 //location.reload();
             },
             error: function (xhr, status, error) {
-                console.error('Error deleting Grade:', error);
+                console.error('Error deleting Subject:', error);
                 //    alert('Something went wrong. Please try again.');
                 loadSpinner();
                 loadPageBlur();

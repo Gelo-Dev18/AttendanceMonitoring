@@ -1,5 +1,6 @@
 ﻿@{
     var isUserSectionActive = Html.IsActive("Admin", "TeacherList", "StudentList", "SecretaryList") == "active";
+    var isGradeAndSectionActive = Html.IsActive("Admin", "GradeList", "SectionList") == "active";
 }
 <!-- Sidebar -->
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
@@ -32,13 +33,38 @@
         Interface
     </div>
 
-    <!-- Nav Item - Grade & Section -->
+    @* <!-- Nav Item - Grade & Section -->
     <li class="nav-item @Html.IsActive("Admin", "GradeAndSectionList")">
         <a class="nav-link" href="@Url.Action("GradeAndSectionList", "Admin")">
             <i class="fas fa-chalkboard-teacher"></i>
             <span>Grade & Section</span>
         </a>
+    </li> *@
+
+    <!-- Nav Item - Grade And Section -->
+    <li class="nav-item @(isGradeAndSectionActive ? "active" : "")">
+        <a class="nav-link collapsed @(isGradeAndSectionActive ? "active" : "")" href="#" data-toggle="collapse" data-target="#collapseTwo01"
+           aria-expanded="true" aria-controls="collapseTwo">
+            <i class="fas fa-chalkboard-teacher"></i>
+            <span>Academic Classes</span>
+        </a>
+        <div id="collapseTwo01" class="collapse @(isGradeAndSectionActive ? "show" : "")" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+            <div class="bg-white py-2 collapse-inner rounded">
+                <h6 class="collapse-header">Class Components:</h6>
+                <a class="collapse-item @Html.IsActive("Admin", "GradeList")" href="@Url.Action("GradeList", "Admin")">Grade List</a>
+                <a class="collapse-item @Html.IsActive("Admin", "SectionList")" href="@Url.Action("SectionList", "Admin")">Section List</a>
+            </div>
+        </div>
     </li>
+
+    <!-- Nav Item - Subjects -->
+    <li class="nav-item @Html.IsActive("Admin", "SubjectList")">
+        <a class="nav-link" href="@Url.Action("SubjectList", "Admin")">
+            <i class="fa fa-book">‌</i>
+            <span>Subjects</span>
+        </a>
+    </li>
+
 
     <!-- Nav Item - USERS -->
     <li class="nav-item @(isUserSectionActive ? "active" : "")">

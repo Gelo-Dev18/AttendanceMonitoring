@@ -4,6 +4,7 @@ using AttendanceMonitoring.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AttendanceMonitoring.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251101082147_RemoveSectionNameInGradeLevelAndRenameAcademicClasstoGradeLevel")]
+    partial class RemoveSectionNameInGradeLevelAndRenameAcademicClasstoGradeLevel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -123,7 +126,7 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("AttendanceMonitoring.Models.Grade", b =>
+            modelBuilder.Entity("AttendanceMonitoring.Models.GradeLevel", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -134,63 +137,12 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("GradeLevel")
+                    b.Property<int>("Grades")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Grades");
-                });
-
-            modelBuilder.Entity("AttendanceMonitoring.Models.Section", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("GradesId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("SectionName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Track")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GradesId");
-
-                    b.ToTable("Sections");
-                });
-
-            modelBuilder.Entity("AttendanceMonitoring.Models.Subject", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SubjectCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SubjectDescription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Subjects");
+                    b.ToTable("GradeLevel");
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Teacher", b =>
@@ -367,17 +319,6 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("AttendanceMonitoring.Models.Section", b =>
-                {
-                    b.HasOne("AttendanceMonitoring.Models.Grade", "Grade")
-                        .WithMany("Sections")
-                        .HasForeignKey("GradesId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Grade");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -427,11 +368,6 @@ namespace AttendanceMonitoring.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("AttendanceMonitoring.Models.Grade", b =>
-                {
-                    b.Navigation("Sections");
                 });
 #pragma warning restore 612, 618
         }

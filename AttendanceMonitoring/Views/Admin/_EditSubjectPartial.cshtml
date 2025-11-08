@@ -1,0 +1,45 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model EditSubjectViewModel;
+@{
+    ViewData["Title"] = "Edit Subject";
+}
+<style>
+    input::placeholder {
+        font-style: italic;
+    }
+
+    .form-group {
+        color: black;
+    }
+</style>
+
+<form id="EditSubjectForm" asp-action="EditSubject" method="post">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    </div>
+    <div class="form-group">
+        <label asp-for="SubjectCode" class="form-label"><strong>Subject Code</strong></label>
+        <input asp-for="SubjectCode" class="form-control" required />
+        <span asp-validation-for="SubjectCode" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SubjectDescription" class="form-label"><strong>Subject Description</strong></label>
+        <input asp-for="SubjectDescription" class="form-control" required />
+        @* <small class="form-text text-muted" style="font-style: italic;">
+            Separate multiple columns with commas (e.g Block 1, Block 2);
+        </small> *@
+        <span asp-validation-for="SubjectDescription" class="text-danger"></span>
+    </div>
+
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" id="SaveSubject">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</form>
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

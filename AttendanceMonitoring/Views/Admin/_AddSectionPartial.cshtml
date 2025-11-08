@@ -1,0 +1,62 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model SectionViewModel;
+@{
+    ViewData["Title"] = "Add Section and Assign Subject";
+}
+<style>
+    input::placeholder {
+        font-style: italic;
+    }
+
+    .form-group {
+        color: black;
+    }
+</style>
+
+<form id="AddSectionForm" asp-action="AddSection" method="post">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    </div>
+    <div class="form-group">
+        <label asp-for="GradesId" class="form-label"><strong>Grade Level</strong></label>
+        <select asp-for="GradesId" asp-items="@Model.AvailableGrades" class="form-control required">
+            <option value="">Select Grade Level...</option>
+        </select>
+        <span asp-validation-for="GradesId" class="text-danger validation-error-message"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="SectionName" class="form-label"><strong>Section Name</strong></label>
+        <input asp-for="SectionName" class="form-control" placeholder="Block 1, Block 2, Section 1, Section 2....." required />
+        <small class="form-text text-muted" style="font-style: italic;">
+            Separate multiple columns with commas (e.g Block 1, Block 2);
+        </small>
+        <span asp-validation-for="SectionName" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Track" class="form-label"><strong>Track</strong></label>
+        <select asp-for="Track" class="form-control">
+            <option value="" selected>Choose Track....</option>
+            <option value="HUMSS">HUMMS</option>
+            <option value="ABM">ABM</option>
+            <option value="STEM">STEM</option>
+            <option value="GAS">GAS</option>
+            <option value="TVL">TVl</option>
+        </select>
+        <small class="form-text text-muted" style="font-style: italic;">
+            For Senior High School Only
+        </small>
+        <span asp-validation-for="Track" class="text-danger validation-error-message"></span>
+    </div>
+
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" id="SaveSection">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</form>
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

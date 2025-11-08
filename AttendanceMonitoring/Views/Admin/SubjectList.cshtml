@@ -1,0 +1,57 @@
+﻿@{
+    ViewData["Title"] = "Subject List";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">Subject List</h1>
+<!-- <p class="mb-4">Table for Teachers Info</p> -->
+<!-- DataTales Example -->
+<div class="card shadow mb-4" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Subject's Info</h6>
+        <button type="button" class="btn btn-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddSmallModalForm" data-url="/Admin/AddSubject" data-title="Add Subject Details">
+            <span class="text">Add Subjects</span>
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th><strong>#</strong></th>
+                        <th><strong>Subject Code</strong></th>
+                        <th><strong>Subject Description</strong></th>
+                        <th><strong>Action</strong></th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var c = 1;
+                    }
+                    @foreach(var Subjects in Model)
+                    {
+                        <tr>
+                            <td><strong>@(c++)</strong></td>
+                            <td><strong>@Subjects.SubjectCode</strong></td>
+                            <td><strong>@Subjects.SubjectDescription</strong></td>
+                            <td class="text-center">
+                                <button data-id="@Subjects.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditSmallModal" data-url="/Admin/EditSubject/" data-title="Edit Subject Detail's">
+                                    <i class="fas fa-edit"></i>@*Edit*@
+                                </button>
+                                <button data-id="@Subjects.Id" type="button" class="btn btn-danger btn-circle" data-bs-toggle="modal" data-bs-target="#ModalDelete">
+                                    <i class="fas fa-trash"></i>@*Delete*@
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                   
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/admin-subjects.js"></script>
+}
