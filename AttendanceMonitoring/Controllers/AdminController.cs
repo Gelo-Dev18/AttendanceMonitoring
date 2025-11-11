@@ -22,7 +22,8 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace AttendanceMonitoring.Controllers
 {
-    
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         //fields         //type of class: generic class. class type parin sila
@@ -54,8 +55,8 @@ namespace AttendanceMonitoring.Controllers
             //this._userManager = _userManager;
         }
 
-        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
-        [Authorize(Roles = "Admin")]
+        //[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
+        //[Authorize(Roles = "Admin")]
         public IActionResult AdminHome()
         {
             return View();
