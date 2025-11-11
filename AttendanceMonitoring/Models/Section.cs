@@ -3,7 +3,7 @@
     public class Section
     {
         public int Id { get; set; }
-        public int GradesId { get; set; }
+        public int GradesId { get; set; } //Grade Level!
         public string SectionName { get; set; } 
         public string? Track { get; set; }
         public DateTime CreatedAt { get; set; }

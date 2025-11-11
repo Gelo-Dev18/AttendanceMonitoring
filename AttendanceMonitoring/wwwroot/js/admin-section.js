@@ -68,4 +68,108 @@
             }
         });
     });
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //Submit Function for Edit Teacher
+    $(document).on('submit', '#EditSectionForm', function (e) {
+        e.preventDefault();
+
+        var formData = new FormData(this);
+        //var teacherID = userID;
+
+        //loadPageBlur();
+
+        $('#EditSectionForm .form-control').removeClass('border-danger');
+        $('#EditSectionForm .validation-error-message').remove();
+
+        $.ajax({
+            url: '/Admin/EditSection/' + userID,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function (response) {
+                //console.log('Full response:', response); // Add this line
+
+                if (response.success) {
+                    $('#EditSmallModal').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
+                    $('#EditSmallModal').modal('hide');
+                    loadSpinner();
+                    showUpdateSuccessToast(response.message);
+                    setTimeout(function () {
+                        location.reload();
+                    }, 2000);
+                } else {
+
+                    $.each(response.errors, function (key, value) {
+                        if (value && value.length > 0) {
+                            var inputElement = $('[name="' + key + '"]');
+                            inputElement.addClass('border-danger');
+
+                            var errorMessageElement = inputElement.next('.validation-error-message');
+                            if (errorMessageElement.length > 0) {
+                                errorMessageElement.text(value.join(', '));
+                            } else {
+                                $('<span class="text-danger validation-error-message">' + value.join(', ') + '</span>').insertAfter(inputElement);
+                            }
+                        }
+                    });
+                    //console.log('Errors:', response.errors); // Add this line
+                    //console.log('Message:', response.message); // Add this line
+                    //    showDangerToast(response);
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating Section:', error);
+                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while updating the section.');
+            }
+        });
+    });
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    $('#confirmDeleteButton').on('click', function (e) {
+        e.preventDefault();
+        console.log('Confirm clicked, userID is:', userID); // Debug log
+
+        if (!userID) {
+            alert('Id does not found');
+            return;
+        }
+
+        loadSpinner();
+        //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
+
+        $.ajax({
+            url: '/Admin/DeleteSection/' + userID,
+            type: 'DELETE',
+            success: function (response) {
+                if (response.success) {
+
+                    $('#ModalDelete').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
+                    $('#ModalDelete').modal('hide');
+                    showSuccessToast(response.message);
+                    //loadSpinner();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    alert('Could not delete Section');
+                }
+                //alert(response.message);
+                //location.reload();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error deleting Section:', error);
+                //    alert('Something went wrong. Please try again.');
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast(response);
+            }
+        });
+    });
 });

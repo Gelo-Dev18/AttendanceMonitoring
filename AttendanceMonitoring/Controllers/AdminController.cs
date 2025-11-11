@@ -65,7 +65,7 @@ namespace AttendanceMonitoring.Controllers
         public async Task<IActionResult> SubjectList()
         {
             var subjectList = await context.Subjects
-                .OrderBy(s => s.SubjectCode)
+                .OrderBy(s => s.SubjectDescription)
                 .ToListAsync();
 
             return View(subjectList);
@@ -89,13 +89,6 @@ namespace AttendanceMonitoring.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddSubject(SubjectViewModel model)
         {
-            bool subjectcodeExisted = await context.Subjects.AnyAsync(s => s.SubjectCode == model.SubjectCode);
-            
-            if (subjectcodeExisted)
-            {
-                ModelState.AddModelError("SubjectCode", "Subject code is already existed!");
-            }
-
             bool subjectDescriptionExisted = await context.Subjects.AnyAsync(s => s.SubjectDescription == model.SubjectDescription);
             
             if (subjectDescriptionExisted)
@@ -115,7 +108,6 @@ namespace AttendanceMonitoring.Controllers
 
             var Subject = new Subject()
             {
-                SubjectCode = model.SubjectCode,
                 SubjectDescription = model.SubjectDescription,
                 CreatedAt = DateTime.Now
             };
@@ -138,7 +130,6 @@ namespace AttendanceMonitoring.Controllers
 
             var model = new EditSubjectViewModel()
             {
-                SubjectCode = Subject.SubjectCode,
                 SubjectDescription = Subject.SubjectDescription
             };
 
@@ -154,13 +145,6 @@ namespace AttendanceMonitoring.Controllers
             if (EditSubject == null)
             {
                 return Json(new { success = false, error = "Subject Not Found!" });
-            }
-
-            bool subjectcodeExisted = await context.Subjects.AnyAsync(s => s.SubjectCode == model.SubjectCode && s.Id != id);
-
-            if (subjectcodeExisted)
-            {
-                ModelState.AddModelError("SubjectCode", "Subject code is already existed!");
             }
 
             bool subjectDescriptionExisted = await context.Subjects.AnyAsync(s => s.SubjectDescription == model.SubjectDescription && s.Id != id);
@@ -180,7 +164,6 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, errors = overallErrors });
             }
 
-            EditSubject.SubjectCode = model.SubjectCode;
             EditSubject.SubjectDescription = model.SubjectDescription;
 
             context.Subjects.Update(EditSubject);
@@ -371,6 +354,7 @@ namespace AttendanceMonitoring.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddSection(CreateSectionViewModel model)
         {    
             var sectionNames = model.SectionName
@@ -385,6 +369,7 @@ namespace AttendanceMonitoring.Controllers
                 ModelState.AddModelError("SectionName", "Please provide atleast 1 section name");
             }
 
+            //Check if Section is already Existed on a specific Grade level sa iinput na bagong section
             var sectionExisted = await context.Sections
                 .Where(s => s.GradesId == model.GradesId
                         && sectionNames.Contains(s.SectionName))
@@ -427,6 +412,100 @@ namespace AttendanceMonitoring.Controllers
             await context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Section Added Succesfully!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditSection(int id)
+        {
+            var section = await context.Sections.FindAsync(id);
+
+            if(section == null)
+            {
+                return Json(new { success = false, message = "Section not found" });
+            }
+
+            // With 'new' (pulls only what we need):
+            var availableGrades = await context.Grades
+                .Select(g => new { g.Id, g.GradeLevel }) //Only gets id and GradeLevel
+                .ToListAsync();
+
+            var model = new EditSectionViewModel()
+            {
+                AvailableGrades = availableGrades.Select(g => new SelectListItem
+                {
+                    Value = g.Id.ToString(),
+                    Text = $"Grade {g.GradeLevel}"
+                }).ToList(),
+
+                GradesId = section.GradesId,
+                SectionName = section.SectionName,
+                Track = section.Track
+            };
+
+
+            return PartialView("_EditSectionPartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditSection(int id, EditSectionViewModel model)
+        {
+            var editSection = await context.Sections.FindAsync(id);
+
+            if (editSection == null)
+            {
+                return Json(new { success = false, message = "Section not found" });
+            }
+
+            //Gamitin ang FirstOrDefaultAsync If you need to do something with the existing section data. Pag kailangan mo ng actual data
+            //var sectionExisted = await context.Sections
+            //    .FirstOrDefaultAsync(s => s.GradesId == model.GradesId
+            //            && s.SectionName == model.SectionName && s.Id != id);
+
+            //Gamitin ang Any kapag more on validation checking lang
+            var sectionExisted = await context.Sections
+                .AnyAsync(s => s.GradesId == model.GradesId
+                        && s.SectionName == model.SectionName && s.Id != id);        
+
+            if (sectionExisted)
+            {
+                ModelState.AddModelError("SectionName", "Section Name is already Existed");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            editSection.GradesId = model.GradesId;
+            editSection.SectionName = model.SectionName;
+            editSection.Track = model.Track;
+
+            context.Sections.Update(editSection);
+            await context.SaveChangesAsync();
+
+            return Json( new {success = true, message = "Section Edited Succcessfully!"});
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteSection(int id)
+        {
+            var Section = await context.Sections.FindAsync(id);
+
+            if (Section == null)
+            {
+                return Json(new { success = false, error = "Section does not exist!" });
+            }
+
+            context.Sections.Remove(Section);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Section Successfully deleted!" });
         }
 
         //[HttpPost]
@@ -561,7 +640,7 @@ namespace AttendanceMonitoring.Controllers
         //{
         //    var GradeAndSection = await context.AcademicClasses.FindAsync(id);
 
-        //    if(GradeAndSection == null)
+        //    if (GradeAndSection == null)
         //    {
         //        return Json(new { success = false, error = "Grade And section does not exist!" });
         //    }
