@@ -3,6 +3,7 @@ using AttendanceMonitoring.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace AttendanceMonitoring.Controllers
@@ -12,7 +13,7 @@ namespace AttendanceMonitoring.Controllers
         private readonly SignInManager<AppUser> signInManager;
         private readonly UserManager<AppUser> userManager;
 
-                                //Dependency Injection
+        //Dependency Injection
         public LoginController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager)
         {
             this.signInManager = signInManager;
@@ -36,40 +37,151 @@ namespace AttendanceMonitoring.Controllers
             }
             return View();
         }
+        //ETONG CODE NA ITO IS IF ANG USER AY EMAIL ANG GAMIT PANG LOGIN!
+
+        //[HttpPost]
+        //public async Task<IActionResult> Login(LoginViewModel model)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        var user = await userManager.FindByEmailAsync(model.Email);
+
+        //        if (user != null)
+        //        {                                                                                     //false yung isPersistent parameter kase di ako nag lagay ng remember me password
+        //            var result = await signInManager.PasswordSignInAsync(user.UserName, model.Password, isPersistent: false, false); //PasswordSignInAsync create authentication cookies para hindi na mag set ng session manually
+
+        //            if (result.Succeeded)
+        //            {   //IsInRoleAsync is check nya if yung role is belong to a user. THen mag stop agad sya once na nakita nya yung role
+        //                //GetRoleAsync naman is ichecheck nya or ifefetch nya lahat ng role,Good for if yung user is maraming role
+        //                if (await userManager.IsInRoleAsync(user, "Admin"))
+        //                    return RedirectToAction("AdminHome", "Admin");
+        //                if (await userManager.IsInRoleAsync(user, "Teacher"))
+        //                    return RedirectToAction("TeacherHome", "Teacher");
+        //                if (await userManager.IsInRoleAsync(user, "Secretary"))
+        //                    return RedirectToAction("SecretaryHome", "Secretary");
+
+        //                //return sa index if walang Role yung account
+        //                return RedirectToAction("Index", "Home");
+
+        //            }
+
+        //            ModelState.AddModelError("", "Email or password is incorrect!");
+        //            return View(model);
+        //        }
+
+        //    }
+        //    return View(model);
+        //}
+
+
+        //ETO NAMAN KAPAG MAY ERROR SA PAG CONVERT NG INT INTO STRING
+
+        //[HttpPost]
+        //public async Task<IActionResult> Login(LoginViewModel model)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return View(model);
+        //    }
+
+        //    if(!int.TryParse(model.SchoolId, out int schoolIdInt))
+        //    {
+        //        ModelState.AddModelError("", "Invalid School ID Format");
+        //        return View(model);
+        //    }
+
+        //    var user = await userManager.Users.FirstOrDefaultAsync(u => u.SchoolId == schoolIdInt);
+
+        //    if (user == null)
+        //    {
+        //        ModelState.AddModelError("", "School ID or Password is incorrect!");
+        //        return View(model);
+        //    }
+
+        //    var result = await signInManager.PasswordSignInAsync(user.UserName, model.Password, isPersistent: false, false);
+
+        //    if (result.Succeeded)
+        //    {
+        //        if (await userManager.IsInRoleAsync(user, "Admin"))
+        //            return RedirectToAction("AdminHome", "Admin");
+        //        if (await userManager.IsInRoleAsync(user, "Teacher"))
+        //            return RedirectToAction("TeacherHome", "Teacher");
+        //        if (await userManager.IsInRoleAsync(user, "Secretary"))
+        //            return RedirectToAction("SecretaryHome", "Secretary");
+
+        //        return RedirectToAction("Index", "Home");
+        //    }
+
+        //    ModelState.AddModelError("", "School ID or Password is incorrect!");
+        //    return View(model);
+        //}
+
+        //DITO NAMAN IS YUNG LOGIC GUMAGAMIT NG MODELSTATE WITHOUT EXCLAMATION
+
+        //[HttpPost]
+        //public async Task<IActionResult> Login(LoginViewModel model)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        var user = await userManager.Users.FirstOrDefaultAsync(u => u.SchoolId == model.SchoolId);
+
+        //        if (user != null)
+        //        {
+        //            var result = await signInManager.PasswordSignInAsync(user.UserName, model.Password, isPersistent: false, false);
+
+        //            if (result.Succeeded)
+        //            {
+        //                if (await userManager.IsInRoleAsync(user, "Admin"))
+        //                    return RedirectToAction("AdminHome", "Admin");
+        //                if (await userManager.IsInRoleAsync(user, "Teacher"))
+        //                    return RedirectToAction("TeacherHome", "Teacher");
+        //                if (await userManager.IsInRoleAsync(user, "Secretary"))
+        //                    return RedirectToAction("SecretaryHome", "Secretary");
+
+        //                return RedirectToAction("Index", "Home");
+        //            }
+
+        //            ModelState.AddModelError("", "School ID or Password is incorrect!");
+        //            return View(model);
+        //        }
+        //    }
+        //    return View(model);
+        //}
+
+        //DITO NAMAN IS YUNG LOGIC GUMAGAMIT NG MODELSTATE WITH EXCLAMATION
 
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var user = await userManager.FindByEmailAsync(model.Email);
+                return View(model);
+            }
 
-                if(user != null)
-                {                                                                                     //false yung isPersistent parameter kase di ako nag lagay ng remember me password
-                    var result = await signInManager.PasswordSignInAsync(user.UserName, model.Password, isPersistent: false, false); //PasswordSignInAsync create authentication cookies para hindi na mag set ng session manually
+            var user = await userManager.Users.FirstOrDefaultAsync(u => u.SchoolId == model.SchoolId);
 
-                    if (result.Succeeded)
-                    {   //IsInRoleAsync is check nya if yung role is belong to a user. THen mag stop agad sya once na nakita nya yung role
-                        //GetRoleAsync naman is ichecheck nya or ifefetch nya lahat ng role,Good for if yung user is maraming role
-                        if(await userManager.IsInRoleAsync(user, "Admin"))
-                            return RedirectToAction("AdminHome", "Admin");
-                        if (await userManager.IsInRoleAsync(user, "Teacher"))
-                            return RedirectToAction("TeacherHome", "Teacher");
-                        if (await userManager.IsInRoleAsync(user, "Secretary"))
-                            return RedirectToAction("SecretaryHome", "Secretary");
+            if (user != null)
+            {
+                var result = await signInManager.PasswordSignInAsync(user.UserName, model.Password, isPersistent: false, false);
 
-                        //return sa index if walang Role yung account
-                        return RedirectToAction("Index", "Home");
-                        
-                    }
-                    
-                    ModelState.AddModelError("", "Email or password is incorrect!");
-                    return View(model);
+                if (result.Succeeded)
+                {
+                    if (await userManager.IsInRoleAsync(user, "Admin"))
+                        return RedirectToAction("AdminHome", "Admin");
+                    if (await userManager.IsInRoleAsync(user, "Teacher"))
+                        return RedirectToAction("TeacherHome", "Teacher");
+                    if (await userManager.IsInRoleAsync(user, "Secretary"))
+                        return RedirectToAction("SecretaryHome", "Secretary");
+
+                    return RedirectToAction("Index", "Home");
                 }
 
+                ModelState.AddModelError("", "School ID or Password is incorrect!");
+                return View(model);
             }
+
+            ModelState.AddModelError("", "School ID or Password is null!");
             return View(model);
         }
-        
     }
 }
