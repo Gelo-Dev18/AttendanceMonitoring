@@ -1,0 +1,130 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model ManageSectionSubjectViewModel;
+
+@{
+    ViewData["Title"] = "Assign Subject List";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">Assign Subject List</h1>
+<!-- Button trigger modal -->
+    
+<div style="display: flex;">
+    <div class="card shadow mb-4 col-8" style="margin-top: 20px;">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            @if (Model.Section.Track == null)
+            {
+                <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27); font-size: 19px;">
+                    Manage Subject : Grade @Model.Section.Grade.GradeLevel - @Model.Section.SectionName
+                </h6>
+            }
+            else
+            {             
+                <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27); font-size: 19px;">
+                    Manage Subject : Grade @Model.Section.Grade.GradeLevel - @Model.Section.SectionName: @Model.Section.Track - @Model.Section.TVLProgram
+                </h6>
+            }
+
+        </div>
+        <div class="card-body">
+            <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27); font-size: 18px;">
+                Currently Assigned Subjects ():
+            </h6>
+            <br />
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th><strong>#</strong></th>
+                            <th><strong>Subject Description</strong></th>
+                            <th><strong>Category</strong></th>
+                            <th><strong>Action</strong></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            var i = 1;
+                        }
+                        @foreach (var assignedSubjectList in Model.assignedList)
+                        {
+                            <tr>
+                                <td><strong>@(i++)</strong></td>
+                                <td><strong>@assignedSubjectList.Subject.SubjectDescription</strong></td>
+                                <td><strong>@assignedSubjectList.Subject.Category</strong></td>
+                                <td class="text-center">
+                                    <strong>
+                                        <button class="btn btn-danger remove-btn" data-assign-id="@assignedSubjectList.Id" type="button">
+                                            Remove
+                                        </button>
+                                    </strong>
+                                </td>
+                            </tr>
+                        }
+
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    
+    </div>
+
+    <div class="col-4" style="margin-top: 20px;">
+        <div>
+            @*Assign button*@
+
+            <a class="btn btn-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AssignForm" data-url="/Admin/AssignSubject" data-section-id="@Model.Section.Id" data-title="Add Subject Details">
+            @* <a class="btn btn-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AssignForm" data-url="/Admin/AssignSubject" data-id="@Model.Section.Id" data-title="Add Subject Details"> *@
+
+                <span class="text">Assign Subject</span>
+            </a>
+            <a asp-controller="Admin" asp-action="SectionList" class="btn btn-secondary">
+                <span class="text">Section List</span>
+            </a>
+        </div>
+        
+        <div class="card shadow mb-3" style="margin-top: 20px;">
+            <div class="card-header"> 
+                <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27); font-size: 19px;">
+                    💢 Quick Action: Copy all Subjects to Available other sections:
+                </h6>
+            </div>           
+            <div class="card-body">
+                <form asp-action="CopySubjects" type="post">
+                    <input type="hidden" name="sourceSectionId" value="@Model.Section.Id" /> @*Eto yung current subject kapag pinindot yung manageSubject*@
+                    <br />
+                    @if (Model.otherSectionWithSameGrade != null && Model.otherSectionWithSameGrade.Any())
+                    {
+                        @foreach (var otherSection in Model.otherSectionWithSameGrade)
+                        {                 
+                            <div class="d-flex" style="font-size: 16px; color: black;">
+                                <input type="checkbox" name="targetSectionIds" value="@otherSection.Id" id="otherSection_@otherSection.Id"/>
+                                Grade @otherSection.Grade.GradeLevel - @otherSection.SectionName
+                            </div>
+
+                        }
+                    }
+                    else
+                    {
+                        <div class="d-flex" style="font-size: 16px; color: black;">
+                            <p style="font-style: italic;">No other section yet</p>
+                        </div>
+                    }
+
+                <br />
+                <div class="footer">
+                    <button class="btn btn-success" type="submit" id="SubmitCopySubject ">Copy Subject</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+
+    
+</div>
+
+@section Scripts 
+{
+    <script src="~/js/admin-assignSubject.js"></script>
+}

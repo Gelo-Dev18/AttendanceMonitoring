@@ -15,7 +15,7 @@ namespace AttendanceMonitoring.ViewModel
 
         [Display(Name = "Track")]
         public string? Track { get; set; }
-
+        public string? TVLProgram { get; set; }
         public List<SelectListItem>? AvailableGrades { get; set; } //SelectListItem design for creating dropdown list
     }
 }

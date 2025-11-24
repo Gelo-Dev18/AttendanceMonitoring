@@ -21,6 +21,7 @@
                     <tr>
                         <th><strong>#</strong></th>
                         <th><strong>Subject Description</strong></th>
+                        <th><strong>Category</strong></th>
                         <th><strong>Action</strong></th>
 
                     </tr>
@@ -34,6 +35,19 @@
                         <tr>
                             <td><strong>@(c++)</strong></td>
                             <td><strong>@Subjects.SubjectDescription</strong></td>
+                            @* <td><strong>@Subjects.Category</strong></td> *@
+                            <td class="text-center">
+                                
+                                @if(Subjects.Category == "JHS")
+                                {
+                                    <strong>Junior High School</strong>
+                                }
+                                else
+                                {
+                                    <strong>Senior High School</strong>
+                                }
+                              
+                            </td>
                             <td class="text-center">
                                 <button data-id="@Subjects.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditSmallModal" data-url="/Admin/EditSubject/" data-title="Edit Subject Detail's">
                                     <i class="fas fa-edit"></i>@*Edit*@

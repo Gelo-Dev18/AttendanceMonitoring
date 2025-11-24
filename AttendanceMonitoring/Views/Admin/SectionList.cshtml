@@ -23,7 +23,7 @@
                         <th><strong>#</strong></th>
                         <th><strong>Grade Level</strong></th>
                         <th><strong>Section Name</strong></th>
-                        <th><strong>Track</strong></th>
+                        <th><strong>Category/Track</strong></th>
                         <th><strong>Action</strong></th>
                     </tr>
                 </thead>
@@ -37,12 +37,34 @@
                             <td><strong>@(i++)</strong></td>
                             <td><strong>Grade @Section.Grade.GradeLevel</strong></td>
                             <td><strong>@Section.SectionName</strong></td>
-                            <td><strong>@Section.Track</strong></td>
-                            <td class="text-center"> 
-                                <button data-id="@Section.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditSmallModal" data-url="/Admin/EditSection/" data-title="Edit Section Detail's">
+                            @* <td><strong>@Section.Grade.Category - @Section.Track</strong></td> *@
+                            <td>
+                                <strong>
+                                    @if(Section.Grade.Category == "Junior High School(JHS)")
+                                    {
+                                        @Section.Grade.Category
+                                    }else if (Section.Track == "TVL")
+                                    {
+                                        @($"{Section.Grade.Category} - {Section.Track} - {Section.TVLProgram} ")
+                                    }
+                                    else
+                                    {
+                                        @($"{Section.Grade.Category} - {Section.Track} ")
+                                    }
+                                </strong>
+                            </td>
+
+                            <td class="text-center">
+                                @* <a asp-controller="SectionList" asp-action="ManageSectionSubject" asp-route-id="@Section.Id" title="Manage Assign Subjects">
+                                    <i class="fa fa-tasks"></i>
+                                </a> *@
+                                <a asp-action="ManageSectionSubject" asp-route-id="@Section.Id" class="btn btn-primary btn-circle" title="Manage Assign Subjects">
+                                    <i class="fa fa-tasks"></i>
+                                </a>
+                                <button title="Edit Section" data-id="@Section.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditSmallModal" data-url="/Admin/EditSection/" data-title="Edit Section Detail's">
                                     <i class="fas fa-edit"></i>@*Edit*@
                                 </button>
-                                <button data-id="@Section.Id" type="button" class="btn btn-danger btn-circle" data-bs-toggle="modal" data-bs-target="#ModalDelete">
+                                <button title="Delete Section" data-id="@Section.Id" type="button" class="btn btn-danger btn-circle" data-bs-toggle="modal" data-bs-target="#ModalDelete">
                                     <i class="fas fa-trash"></i>@*Delete*@
                                 </button>
                             </td>
@@ -57,5 +79,6 @@
 
 @section Scripts {
     <script src="~/js/admin-section.js"></script>
+    @* <script src="~/js/admin-assignSubject.js"></script> *@
 }
 

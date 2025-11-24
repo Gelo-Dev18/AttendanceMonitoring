@@ -22,6 +22,7 @@
                     <tr>
                         <th><strong>#</strong></th>
                         <th><strong>Grade Level</strong></th>
+                        <th><strong>Category</strong></th>
                         <th><strong>Action</strong></th>
                     </tr>
                 </thead>
@@ -35,6 +36,7 @@
                         <tr>
                             <td><strong>@(i++)</strong></td>
                             <td><strong>Grade @GradeLevel.GradeLevel</strong></td>
+                            <td><strong>@GradeLevel.Category</strong></td>
                             <td class="text-center">
                                 <strong>
                                     <button data-id="@GradeLevel.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditSmallModal" data-url="/Admin/EditGrade/" data-title="Edit Grade Detail's">

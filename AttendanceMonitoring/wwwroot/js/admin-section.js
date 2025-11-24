@@ -1,4 +1,16 @@
-﻿$(document).ready(function () {
+﻿function checkOption() {
+    const selectElement = document.getElementById('trackId');
+    const inputElement = document.getElementById('TVLInput');
+
+    if (selectElement.value === 'TVL') {
+        inputElement.disabled = false;
+    } else {
+        inputElement.disabled = true;
+        inputElement.value = ''; //Optional clear the input field
+    }
+}
+
+$(document).ready(function () {
     $(document).on('submit', '#AddSectionForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
 
@@ -171,5 +183,70 @@
                 showDangerToast(response);
             }
         });
+    });
+
+    //$(document).on('submit', '#searchForm', function (e) {
+    //    e.preventDefault();
+
+    //    var form = $(this);
+    //    var url = form.attr('action');
+    //    var data = form.serialize();
+    //    $.ajax({
+    //        type: 'GET',
+    //        url: url,
+    //        data: data,
+    //        success: function (response) {
+    //            $('#mainModalContent').html(response);
+    //        },
+    //        error: function (xhr, status, error) {
+    //            alert('Something went wrong with the search.');
+    //            console.error(error);
+    //        }
+    //    });
+
+    //});
+
+    
+
+    $(document).on('input', 'input[name="SearchString"]', function () {
+                                        //Convert all letters to lowercase
+                                                      //Remove extra spaces to avoid confused query
+        var searchValue = $(this).val().toLowerCase().trim();
+        var visibleCount = 0;
+
+        if (searchValue === '') {
+            //show all subject if searchbox is empty
+            $('input[name="SelectedSubjects"').parent().show();
+            $('#noSubjectMessage').hide();
+        } else {
+            //Filters subjects
+            $('input[name="SelectedSubjects"').each(function () {
+                                         //kumuha ng parent element ng check box yung div na nakabalot sa input checkbox
+                                                   //kunin yung text content
+                var subjectText = $(this).parent().text().toLowerCase().trim();
+
+                if (subjectText.includes(searchValue)) {
+                    $(this).parent().show();
+                    visibleCount++; //starts to count if the matching of subjects exists
+                } else {
+                    $(this).parent().hide();
+                }
+            });
+
+            if (visibleCount === 0) {
+                $('#noSubjectMessage').show(); //show if there is no subject matches the input
+            } else {
+                $('#noSubjectMessage').hide(); // if subject exists, auto hide
+            }
+        }
+
+        //ibig sabihin nito visibleCount++; // Count visible is kapag may subject mag ka count sya
+        //then gagana to : else { $('#noSubjectMessage').hide(); }
+
+        //tapos kapag equals sya sa zero eto na gagana nt lalba nayung noSubjectmessage: if (visibleCount === 0) { $('#noSubjectMessage').show(); }
+    });
+
+    $(document).on('click', "#SelectAllSubjects", function () {
+        $('input[name="SelectedSubjects"]').prop('checked', true);
     });
 });

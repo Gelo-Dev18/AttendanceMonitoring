@@ -1,0 +1,103 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model AssignSubjectViewModel;
+@{
+    ViewData["Title"] = "Assign Section Subject";
+}
+<style>
+    input::placeholder {
+        font-style: italic;
+    }
+
+    .form-group {
+        color: black;
+    }
+</style>
+
+<div id="mainModalContent"> 
+    @*/////////////////////////////////////////////////////////////////////////*@
+    @*Dito naman is May viewdata sa value kapag ang ajax is nirereload ang buong page*@
+    @*/////////////////////////////////////////////////////////////////////////*@
+
+    @* <div class="row">
+        <div class="col-md-8">
+            <label><strong>Search Subject</strong></label>
+            <input class="form-control" type="text" placeholder="Search" aria-label="Search" name="SearchString" value="@ViewData["searchString"]">
+        </div>
+        <div class="col-md-4">
+            <label><strong>Filter Subject</strong></label>
+            <select id="selectedCategory" name="SelectedCategory" class="form-control" required>
+                <option value="">All categories</option>
+                <option value="JHS" selected="@(ViewData["category"]?.ToString() == "JHS")">JHS</option>
+                <option value="SHS" selected="@(ViewData["category"]?.ToString() == "JHS")">SHS</option>
+
+            </select>
+        </div>
+    </div> *@
+
+    @*/////////////////////////////////////////////////////////////////////////*@
+    @*Current Set up para sa search and catergory filter. No Need Viewdata kase sa Ajax is hindi full page nirereload so okay lang kahit walang viewData na value ang input at select tag*@
+    @*/////////////////////////////////////////////////////////////////////////*@
+    <div class="row">
+        <div class="col-md-8">
+            <label><strong>Search Subject</strong></label>
+            <input class="form-control" type="text" placeholder="Search" aria-label="Search" name="SearchString">
+        </div>
+        <div class="col-md-4">
+            <label><strong>Filter Subject</strong></label>
+            <select id="selectedCategory" name="SelectedCategory" class="form-control" required>
+                <option value="">All categories</option>
+                <option value="JHS">JHS</option>
+                <option value="SHS">SHS</option>
+            </select>
+        </div>
+    </div>
+    
+    <form id="AssignedSubjectForm" asp-action="AssignSubject" method="post">
+        @Html.AntiForgeryToken()
+        <div>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        </div>
+        <input type="hidden" id="sectionId" name="sectionId" value="@Model.SectionId" /> @*Kailangan nito dito dahil kapag wala, walang maassign sa FK na sectionId sa linking table. Also di sya magsasubmit*@
+    
+        <div class="form-group card shadow mb-2 mt-2">
+            <div class="card-body">
+                <h6>Available Subjects:</h6>
+                <div id="filteredSubject">
+                    @if(Model.AvailableSubject != null && Model.AvailableSubject.Any())
+                    {
+                        @foreach (var Subject in Model.AvailableSubject)
+                        {
+                            <div id="subject-Item">
+                                <input type="checkbox" class="subjectCheckbox" name="SelectedSubjects" value="@Subject.Id"/>
+                                <label>@Subject.SubjectDescription</label>
+
+                            </div>
+                        }
+                        <p id="noSubjectMessage" class="text-muted" style="display: none">
+                            No Subjects found matching your search
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No Subjects Found</p>
+                    }
+                
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-warning" id="SelectAllSubjects">Select All</button>
+        <button type="button" class="btn btn-secondary" id="DeselectSubjects">Deselect</button>
+
+        <div class="modal-footer mt-2">
+            <button type="submit" class="btn btn-primary" id="SaveAssignedSubject" disabled>Save</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+    </form>
+</div>
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

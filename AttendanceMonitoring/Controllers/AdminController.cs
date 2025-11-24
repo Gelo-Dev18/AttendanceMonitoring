@@ -86,7 +86,7 @@ namespace AttendanceMonitoring.Controllers
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
+        [ValidateAntiForgeryToken] //protecting applications from CSRF attacks. //ValidateAntiForgeryToken is recommended for Form submission
         public async Task<IActionResult> AddSubject(SubjectViewModel model)
         {
             bool subjectDescriptionExisted = await context.Subjects.AnyAsync(s => s.SubjectDescription == model.SubjectDescription);
@@ -95,7 +95,7 @@ namespace AttendanceMonitoring.Controllers
             {
                 ModelState.AddModelError("SubjectDescription", "Subject Description is already existed!");
             }
-
+            
             if (!ModelState.IsValid)
             {
                 var overallErrors = ModelState.ToDictionary(
@@ -109,8 +109,11 @@ namespace AttendanceMonitoring.Controllers
             var Subject = new Subject()
             {
                 SubjectDescription = model.SubjectDescription,
+                Category = model.Category,
                 CreatedAt = DateTime.Now
             };
+
+            
 
             await context.Subjects.AddAsync(Subject);
             await context.SaveChangesAsync();
@@ -130,7 +133,9 @@ namespace AttendanceMonitoring.Controllers
 
             var model = new EditSubjectViewModel()
             {
-                SubjectDescription = Subject.SubjectDescription
+                SubjectDescription = Subject.SubjectDescription,
+                Category = Subject.Category,
+
             };
 
             return PartialView("_EditSubjectPartial", model);
@@ -165,6 +170,16 @@ namespace AttendanceMonitoring.Controllers
             }
 
             EditSubject.SubjectDescription = model.SubjectDescription;
+            EditSubject.Category = model.Category;
+
+            //if (model.Category != "TVL")
+            //{
+            //    EditSubject.TVLProgram = null;
+            //}
+            //else
+            //{
+            //    EditSubject.TVLProgram = model.TVLProgram;
+            //}
 
             context.Subjects.Update(EditSubject);
             await context.SaveChangesAsync();
@@ -188,6 +203,228 @@ namespace AttendanceMonitoring.Controllers
             return Json(new { success = true, message = "Subject Deleted Successfully!" });
         }
 
+        //public async Task<IActionResult> ManageSectionSubject()
+        //{
+        //    var assignedSubjectList = await context.SectionSubjects
+        //                                           .OrderBy(a => a.SectionId)
+        //                                           .ToListAsync();
+
+        //    return View(assignedSubjectList);
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> ManageSectionSubject(int id)
+        {
+            //Displays assigned subjects on an specific Grade and section
+            var assignedSubjectList = await context.SectionSubjects
+                                                   .Include(ss => ss.Subject) //para sa Razor page is maaccess yun SubjectDescription
+                                                   .Where(ss => ss.SectionId == id) //Where SectionId (FK) in SectionSubjects Db is equals to int db
+                                                   .ToListAsync();
+
+            var GradeSection = await context.Sections
+                .Include(g => g.Grade) // dahil sa Nav.Property/Lazy loading na nakadeclare sa Section.cs kaya gumana ang .Include
+                .FirstOrDefaultAsync(g => g.Id == id); //Retrieve single data
+                                                       //.TolistAsync(); //Retrieve all data
+
+            var sectionWithSameGrade = await context.Sections
+                                                    .Include(s => s.Grade)
+                                                    .Where(s => s.GradesId == GradeSection.GradesId && s.Track == GradeSection.Track && s.TVLProgram == GradeSection.TVLProgram && s.Id != id)
+                                                    //.Select(s => s.SectionName)
+                                                    .ToListAsync();
+
+            var model = new ManageSectionSubjectViewModel
+            {
+                Section = GradeSection,
+                otherSectionWithSameGrade = sectionWithSameGrade,
+                assignedList = assignedSubjectList
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+                                                   //id of section where to copy from(sang section galing)
+                                                                           //Which sections to copy To(kaya nakaList)
+        public async Task<IActionResult> CopySubjects(int sourceSectionId, List<int> targetSectionIds)
+        {
+            //Gets all subjects under the source section
+            var sourceSubjects = await context.SectionSubjects
+                                              .Where(ss => ss.SectionId == sourceSectionId)
+                                              .ToListAsync();
+            int copiedCount = 0;
+
+            //Outer loop: Copy subject to each target sections
+            foreach(var targetSectionId in targetSectionIds) //<- Where to Copy
+            {
+                //check if yung sections is existing
+                var targetSection = await context.Sections.FindAsync(targetSectionId);
+                //Inner Loop: Copying each subject
+                foreach(var sourceSubject in sourceSubjects) //<- What to copy
+                {
+                    //Check if the subject is already exist on the target section
+                    var exists = await context.SectionSubjects
+                                              .AnyAsync(ss => ss.SectionId == targetSectionId && ss.SubjectId == sourceSubject.SubjectId);
+                    //If subjec does not already exists, it adds it
+                    if (!exists)
+                    {
+                        context.SectionSubjects.Add(new SectionSubject
+                        {
+                            SectionId = targetSectionId,
+                            SubjectId = sourceSubject.SubjectId,
+                        });
+                        copiedCount++;
+                    }
+                }
+            }
+
+            await context.SaveChangesAsync();
+
+            return Json(new { sucess = true, message = $"Successfully copied {copiedCount} subjects!" });
+        }
+
+        //[HttpGet]
+        //public async Task<IActionResult> AssignSubject(string searchString)
+        //{
+        //    var subjectList = await context.Subjects
+        //        .OrderBy(s => s.SubjectDescription)
+        //        .Take(10)
+        //        .ToListAsync();
+
+        //    var model = new ManageSectionSubjectViewModel()
+        //    {
+        //        //SubjectDescription = subjectList.SubjectDesription //Ginagamit kapag single string value lang
+        //        AvailableSubject = subjectList //Uses for list
+
+        //    };
+
+        //    if (!string.IsNullOrEmpty(searchString))
+        //    {
+        //        subjectList = await context.Subjects
+        //                     .Where(s => s.SubjectDescription.Contains(searchString));
+
+        //    }
+        //    return PartialView("_AssignSubjectPartial", model);
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> AssignSubject(int sectionId, int subjectId, string searchString, string category)
+        {
+            var assignedSubject = await context.SectionSubjects
+                                               .Where(s => s.SectionId == sectionId) //This excluded the assigned subject by an specific section only
+                                               .Select(s => s.SubjectId)
+                                               .ToListAsync();
+
+            //var availableSubject = await context.Subjects
+            //                                    .Where(s => s.Category == "JHS" && !assignedSubject.Contains(s.Id))
+            //                                    .ToListAsync();
+
+            //Used for Dynamic filtereing. Hindi agad gagana yung query unless tinawag na yung ToList
+            IQueryable<Subject> subjectQuery = context.Subjects
+                                                      .Where(s => !assignedSubject.Contains(s.Id))
+                                                      .OrderBy(s => s.SubjectDescription);
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                subjectQuery = subjectQuery.Where(s => s.SubjectDescription.Contains(searchString));
+            }
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                subjectQuery = subjectQuery.Where(c => c.Category == category);
+            }
+
+            var subjectList = await subjectQuery.Take(10).ToListAsync();
+
+
+            var model = new AssignSubjectViewModel()
+            {
+                SectionId = sectionId,
+                AvailableSubject = subjectList,
+            };
+
+            ViewData["searchString"] = searchString;
+            ViewData["category"] = category;
+
+            return PartialView("_AssignSubjectPartial", model);
+
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignSubject(int sectionId, List<int> SelectedSubjects)
+        {
+            var section = await context.Sections.FindAsync(sectionId);
+
+            if ( section == null)
+            {
+                return Json(new { success = false, errors = "Section Id Not Found!" });
+            }
+
+            if(SelectedSubjects == null || !SelectedSubjects.Any())
+            {
+                return Json(new { success = false, errors = "Please select atleast 1 subject" });
+            }
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            foreach(var subjectId in SelectedSubjects)
+            {
+                var subject = await context.Subjects.FindAsync(subjectId);
+                if (subject != null)
+                {
+                    var assigned = new SectionSubject()
+                    {
+                        SectionId = sectionId,
+                        SubjectId = subjectId,
+                        CreatedAt = DateTime.Now
+
+                    };
+                    await context.SectionSubjects.AddAsync(assigned);
+                }
+                //if(subject != null)
+                //{
+                //    await context.SectionSubjects.AddAsync(new SectionSubject
+                //    {
+                //        SectionId = sectionId,
+                //        SubjectId = subjectId
+                //    });
+                //}
+            }
+            await context.SaveChangesAsync();
+            return Json(new { success = true, message = "Subject Assigned Successfully!" });
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> RemoveAssignedSubject(int id)
+        {
+            var subject = await context.SectionSubjects.FindAsync(id);
+
+            if (subject == null)
+            {
+                return Json(new { success = true, error = "Id not Found!" });
+            }
+
+            context.SectionSubjects.Remove(subject);
+            await context.SaveChangesAsync();
+
+            return Json(new {success = true, message = "Subject Removed!"});
+        }
+
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> AssignSubject()
+        //{
+        //    return Json(new { success = true, message = "Subject assigned successfully!" });
+        //}
         //public async Task<IActionResult> GradeAndSectionList()
         //{
         //    var GradesSection = await context.AcademicClasses
@@ -239,6 +476,7 @@ namespace AttendanceMonitoring.Controllers
             var grade = new Grade()
             {
                 GradeLevel = model.GradeLevel,
+                Category = model.Category,
                 CreatedAt = DateTime.Now
             };
 
@@ -260,7 +498,9 @@ namespace AttendanceMonitoring.Controllers
 
             var model = new GradeViewModel()
             {
-                GradeLevel = grade.GradeLevel
+                GradeLevel = grade.GradeLevel,
+                Category = grade.Category
+
             };
 
 
@@ -296,6 +536,7 @@ namespace AttendanceMonitoring.Controllers
             }
 
             editGrade.GradeLevel = model.GradeLevel;
+            editGrade.Category = model.Category;
 
             context.Grades.Update(editGrade);
             await context.SaveChangesAsync();
@@ -323,7 +564,7 @@ namespace AttendanceMonitoring.Controllers
         public async Task<IActionResult> SectionList()
         {
             var sectionList = await context.Sections
-                .Include(g => g.Grade)
+                .Include(g => g.Grade) // dahil sa Nav.Property/Lazy loading na nakadeclare sa Section.cs kaya gumana ang .Include
                 .OrderBy(s => s.GradesId)
                 .ToListAsync();
 
@@ -371,7 +612,7 @@ namespace AttendanceMonitoring.Controllers
 
             //Check if Section is already Existed on a specific Grade level sa iinput na bagong section
             var sectionExisted = await context.Sections
-                .Where(s => s.GradesId == model.GradesId
+                .Where(s => s.GradesId == model.GradesId && s.Track == model.Track
                         && sectionNames.Contains(s.SectionName))
                 .Select(s => s.SectionName)
                 .ToListAsync();
@@ -405,6 +646,7 @@ namespace AttendanceMonitoring.Controllers
                 GradesId = model.GradesId,
                 SectionName = name,
                 Track = model.Track,
+                TVLProgram = model.TVLProgram,
                 CreatedAt = DateTime.Now
             });
 
@@ -426,7 +668,7 @@ namespace AttendanceMonitoring.Controllers
 
             // With 'new' (pulls only what we need):
             var availableGrades = await context.Grades
-                .Select(g => new { g.Id, g.GradeLevel }) //Only gets id and GradeLevel
+                .Select(g => new { g.Id, g.GradeLevel, g.Category }) //Only gets id and GradeLevel
                 .ToListAsync();
 
             var model = new EditSectionViewModel()
@@ -439,7 +681,9 @@ namespace AttendanceMonitoring.Controllers
 
                 GradesId = section.GradesId,
                 SectionName = section.SectionName,
-                Track = section.Track
+                Track = section.Track,
+                TVLProgram = section.TVLProgram,
+
             };
 
 
@@ -464,7 +708,7 @@ namespace AttendanceMonitoring.Controllers
 
             //Gamitin ang Any kapag more on validation checking lang
             var sectionExisted = await context.Sections
-                .AnyAsync(s => s.GradesId == model.GradesId
+                .AnyAsync(s => s.GradesId == model.GradesId && s.Track == model.Track
                         && s.SectionName == model.SectionName && s.Id != id);        
 
             if (sectionExisted)
@@ -485,6 +729,7 @@ namespace AttendanceMonitoring.Controllers
             editSection.GradesId = model.GradesId;
             editSection.SectionName = model.SectionName;
             editSection.Track = model.Track;
+            editSection.TVLProgram = model.TVLProgram;
 
             context.Sections.Update(editSection);
             await context.SaveChangesAsync();

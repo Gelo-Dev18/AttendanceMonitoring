@@ -35,7 +35,7 @@
     </div>
     <div class="form-group">
         <label asp-for="Track" class="form-label"><strong>Track</strong></label>
-        <select asp-for="Track" class="form-control">
+        <select id="trackId" asp-for="Track" class="form-control">
             <option value="" selected>Choose Track....</option>
             <option value="HUMSS">HUMMS</option>
             <option value="ABM">ABM</option>
@@ -48,7 +48,14 @@
         </small>
         <span asp-validation-for="Track" class="text-danger validation-error-message"></span>
     </div>
-
+    <div class="form-group">
+        <label asp-for="TVLProgram" class="form-label"><strong>Technical Vocational Program</strong></label>
+        <input id="TVLInput" asp-for="TVLProgram" disabled placeholder="Enter Technical Vocational Program" class="form-control" required />
+        <span asp-validation-for="TVLProgram" class="text-danger"></span>
+        <small class="form-text text-muted" style="font-style: italic;">
+            For Technical Vocational Livelihood Track only
+        </small>
+    </div>
     <div class="modal-footer">
         <button type="submit" class="btn btn-primary" id="SaveSection">Save</button>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

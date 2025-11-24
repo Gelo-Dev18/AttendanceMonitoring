@@ -1,4 +1,16 @@
-﻿$(document).ready(function () {
+﻿//function checkOption() {
+//    const selectElement = document.getElementById('categoryId');
+//    const inputElement = document.getElementById('TVLInput');
+
+//    if (selectElement.value === 'TVL') {
+//        inputElement.disabled = false;
+//    } else {
+//        inputElement.disabled = true;
+//        inputElement.value = ''; //Optional clear the input field
+//    }
+//}
+
+$(document).ready(function () {
     
     $(document).on('submit', '#AddSubjectForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.

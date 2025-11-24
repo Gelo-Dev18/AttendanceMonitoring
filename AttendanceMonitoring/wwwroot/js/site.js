@@ -52,6 +52,17 @@ function loadViewModal(url, userID, modal) {
     });
 }
 
+function checkOption() {
+    const selectElement = $('#categoryId');
+    const inputElement = $('#TVLInput');
+
+    if (selectElement.val() === 'TVL') {
+        inputElement.prop('disabled', false);
+    } else {
+        inputElement.prop('disabled', true).val('');
+    }
+}
+
 $(document).ready(function () {
 
     //Event delegation for file input change
@@ -75,6 +86,10 @@ $(document).ready(function () {
 
     ///////////////////////////////////////////////////////////////////////////////
 
+    //Pag Binago  yung dropdown  mag-enable/disable yung TVL input
+    $(document).on('change', '#categoryId', checkOption); //handle onchange using jqeury so no need onchange inside html tags
+    $(document).on('change', '#trackId', checkOption);
+
     //Triggers Add user modal
     $('#AddModalForm').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
@@ -91,6 +106,8 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#AddModalFormBody').html(html);
+                checkOption(); //onchange function
+
             },
             error: function (xhr, status, error) {
                 console.error('Error loading add teacher modal:', error);
@@ -137,9 +154,12 @@ $(document).ready(function () {
         });
     });
 
+    
+
     $('#EditModal').on('hide.bs.modal', function () {
         hideBlurBackground();
     }); 
+
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -207,7 +227,37 @@ $(document).ready(function () {
         hideBlurBackground();
     });
 
+    //Add Small Modal Form
+    $('#AssignForm').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+
+        var url = button.data('url');
+        var title = button.data('title');
+        var sectionId = button.data('section-id');
+
+        var modal = $(this);
+
+        modal.find('#AssignFormLabel').text(title);
+        loadBlurBackground();
+        $.ajax({
+            url: url,
+            type: 'GET',
+            data: { sectionId: sectionId },
+            success: function (html) {
+                modal.find('#AssignFormBody').html(html);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading add teacher modal:', error);
+                modal.find('#AssignFormBody').html('<p class="text-center">Failed to load modal body</p>');
+            }
+        });
+    });
+
+    $('#AssignForm').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    });
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //Triggers Edit Small Modal
     $('#EditSmallModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
@@ -232,6 +282,8 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#EditSmallModalBody').html(html);
+                checkOption(); //onchange function
+
             },
             error: function (xhr, status, error) {
                 console.error('Error loading edit modal:', error);
@@ -243,5 +295,7 @@ $(document).ready(function () {
     $('#EditSmallModal').on('hide.bs.modal', function () {
         hideBlurBackground();
     }); 
+
+    
 
 });

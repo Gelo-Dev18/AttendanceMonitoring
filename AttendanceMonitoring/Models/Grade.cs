@@ -4,7 +4,11 @@
     {
         public int Id { get; set; }
         public int GradeLevel { get; set; }
+        public string Category { get; set; }
+
         public DateTime CreatedAt { get; set; }
-        public ICollection<Section> Sections { get; set; }
+        
+        //This means Grade has many sections
+        public ICollection<Section> Sections { get; set; } //Collection of Object, One to Many relation
     }
 }
