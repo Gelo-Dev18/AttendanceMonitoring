@@ -20,6 +20,7 @@
   <ItemGroup>
     <Folder Include="wwwroot\DashboardTemplate\images\" />
     <Folder Include="wwwroot\ProfilePic\" />
+    <Folder Include="wwwroot\select2Plugin\" />
   </ItemGroup>
 
 </Project>

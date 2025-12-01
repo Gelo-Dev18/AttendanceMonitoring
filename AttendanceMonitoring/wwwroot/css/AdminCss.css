@@ -48,3 +48,44 @@
     z-index: 999;
     transition: opacity 0.3s ease, visibility 0.3s ease;
 }
+
+
+/* Fix Select2 Clear Button Visibility */
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__clear {
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+    line-height: 1;
+    color: #6e707e;
+    margin-right: 25px;
+    cursor: pointer;
+}
+
+    .select2-container--bootstrap4 .select2-selection--single .select2-selection__clear:hover {
+        color: #e74a3b;
+    }
+
+/* Adjust arrow position when clear button is present */
+.select2-container--bootstrap4 .select2-selection--single .select2-selection__arrow {
+    right: 5px;
+}
+
+/*green color */
+.select2-container--bootstrap4 .select2-results__option--highlighted,
+.select2-container--bootstrap4 .select2-results__option--highlighted.select2-results__option[aria-selected] {
+    background-color: #1cc88a !important; /* Green color */
+    color: white !important;
+}
+/* Hover effect on dropdown items */
+.select2-container--bootstrap4 .select2-results__option:hover {
+    background-color: #f8f9fc;
+    cursor: pointer;
+}
+
+/* Force all form controls and Select2 to use same focus color */
+.form-control:focus,
+.select2-container--bootstrap4.select2-container--focus .select2-selection,
+.select2-container--bootstrap4.select2-container--open .select2-selection {
+    border-color: #bac8f3 !important;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25) !important;
+}

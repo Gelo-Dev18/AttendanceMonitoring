@@ -204,6 +204,73 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.ToTable("SectionSubjects");
                 });
 
+            modelBuilder.Entity("AttendanceMonitoring.Models.Student", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("LRN")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MiddelName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Sex")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("imageFileData")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("imageFilePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Students");
+                });
+
+            modelBuilder.Entity("AttendanceMonitoring.Models.StudentSectionAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SectionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectionId");
+
+                    b.HasIndex("StudentId", "SectionId")
+                        .IsUnique();
+
+                    b.ToTable("StudentSectionAssignments");
+                });
+
             modelBuilder.Entity("AttendanceMonitoring.Models.Subject", b =>
                 {
                     b.Property<int>("Id")
@@ -263,6 +330,34 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Teacher");
+                });
+
+            modelBuilder.Entity("AttendanceMonitoring.Models.TeacherAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("SectionSubjectId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TeacherId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SectionSubjectId");
+
+                    b.HasIndex("TeacherId", "SectionSubjectId")
+                        .IsUnique();
+
+                    b.ToTable("TeacherAssignments");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -424,12 +519,50 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasOne("AttendanceMonitoring.Models.Subject", "Subject")
                         .WithMany("SectionSubjects")
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Section");
 
                     b.Navigation("Subject");
+                });
+
+            modelBuilder.Entity("AttendanceMonitoring.Models.StudentSectionAssignment", b =>
+                {
+                    b.HasOne("AttendanceMonitoring.Models.Section", "Section")
+                        .WithMany("StudentAssignments")
+                        .HasForeignKey("SectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AttendanceMonitoring.Models.Student", "Student")
+                        .WithMany("SectionAssignments")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Section");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("AttendanceMonitoring.Models.TeacherAssignment", b =>
+                {
+                    b.HasOne("AttendanceMonitoring.Models.SectionSubject", "SectionSubject")
+                        .WithMany("TeacherAssignments")
+                        .HasForeignKey("SectionSubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AttendanceMonitoring.Models.AppUser", "Teacher")
+                        .WithMany("TeachingAssignments")
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SectionSubject");
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -483,6 +616,11 @@ namespace AttendanceMonitoring.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("AttendanceMonitoring.Models.AppUser", b =>
+                {
+                    b.Navigation("TeachingAssignments");
+                });
+
             modelBuilder.Entity("AttendanceMonitoring.Models.Grade", b =>
                 {
                     b.Navigation("Sections");
@@ -491,6 +629,18 @@ namespace AttendanceMonitoring.Data.Migrations
             modelBuilder.Entity("AttendanceMonitoring.Models.Section", b =>
                 {
                     b.Navigation("SectionSubjects");
+
+                    b.Navigation("StudentAssignments");
+                });
+
+            modelBuilder.Entity("AttendanceMonitoring.Models.SectionSubject", b =>
+                {
+                    b.Navigation("TeacherAssignments");
+                });
+
+            modelBuilder.Entity("AttendanceMonitoring.Models.Student", b =>
+                {
+                    b.Navigation("SectionAssignments");
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Subject", b =>

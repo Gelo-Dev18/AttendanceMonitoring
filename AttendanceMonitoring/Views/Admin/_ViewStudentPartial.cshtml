@@ -1,0 +1,77 @@
+﻿
+
+@using AttendanceMonitoring.ViewModel;
+@* @model EditStudentViewModel; *@
+@{
+    ViewData["Title"] = "View Student";
+}
+
+<div class="card card-widget widget-user shadow">
+    @Html.AntiForgeryToken()
+    <div class="widget-user-header bg-dark">
+        <h3 class="widget-user-username">@Model.FirstName @Model.MiddelName @Model.LastName</h3>
+        @* <h5 class="widget-user-desc">@Model.LRN</h5> *@
+    </div>
+    <div class="widget-user-image">
+        @* @if (Model.imageFile == null || Model.imageFile.Length > 0) *@
+        @if (string.IsNullOrEmpty(Model.imageFilePath))
+        {
+            <h4 class="brand-image img-circle elevation-2 d-flex justify-content-center align-items-center bg-primary text-white font-weight-500" style="width: 110px;height: 110px">
+                @if (!string.IsNullOrEmpty(Model.FirstName) && !string.IsNullOrEmpty(Model.LastName))
+                {
+                    @* <span>@Model.FirstName[0]</span> *@ @*Ginagamit kapag isang character lang ang need*@
+                    <span>@(Model.FirstName.Substring(0, 1).ToUpper() + Model.LastName.Substring(0, 1).ToUpper())</span> @*Gamitin kapag gusto display ang isang string at kapag need nag concatenation*@
+                }
+            </h4>
+        }
+        else
+        {
+            <img class="img-circle elevation-2" src="/ProfilePic/@Model.imageFilePath" alt="User Avatar"
+                 style="width: 120px;height: 120px;object-fit: cover">
+        }
+
+        @* <h4 class="brand-image img-circle elevation-2 d-flex justify-content-center align-items-center bg-primary text-white font-weight-500" style="width: 110px;height: 110px">
+                BG
+            </h4> *@
+    </div>
+    <div class="card-footer">
+        <dl>
+            <dt style="color: black">Student's LRN</dt>
+            <dd>@Model.LRN</dd>
+        </dl>
+        <dl>
+            <dt style="color: black">Student's Grade and Section</dt>
+                @if(@Model.studentClass.Section.Track == null)
+                {
+                <dd>
+                    Grade @Model.studentClass.Section.Grade.GradeLevel -
+                    @Model.studentClass.Section.SectionName
+                </dd>
+                }else if(@Model.studentClass.Section.TVLProgram == null)
+                {
+                <dd>
+                    Grade @Model.studentClass.Section.Grade.GradeLevel -
+                    @Model.studentClass.Section.SectionName -
+                    @Model.studentClass.Section.Track
+                </dd>
+                }
+                else
+                {
+                <dd>
+                    Grade @Model.studentClass.Section.Grade.GradeLevel -
+                    @Model.studentClass.Section.SectionName -
+                    @Model.studentClass.Section.Track -
+                    @Model.studentClass.Section.TVLProgram
+                </dd>
+                }           
+        </dl>
+    </div>
+
+</div>
+
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

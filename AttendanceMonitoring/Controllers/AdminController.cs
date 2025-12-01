@@ -57,9 +57,20 @@ namespace AttendanceMonitoring.Controllers
 
         //[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
         //[Authorize(Roles = "Admin")]
-        public IActionResult AdminHome()
+        public async Task<IActionResult> AdminHome()
         {
-            return View();
+            var studentList = await context.Students.ToListAsync();
+            var teacherList = await userManager.GetUsersInRoleAsync("Teacher");
+            var subjectList = await context.Subjects.ToListAsync();
+
+            var adminHome = new AdminHomeViewModel
+            {
+                StudentCount = studentList.Count,
+                TeacherCount = teacherList.Count,
+                SubjectCount = subjectList.Count
+            };
+
+            return View(adminHome);
         }
 
         public async Task<IActionResult> SubjectList()
@@ -197,6 +208,14 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, error = "Subject Not Found!" });
             }
 
+            var isAssigned = await context.SectionSubjects.AnyAsync(s => s.SubjectId == id);
+
+            if (isAssigned)
+            {
+                return Json(new { success = false, message = "Cannot delete Subject when already Assigned!" });
+
+            }
+
             context.Subjects.Remove(DeleteSubject);
             await context.SaveChangesAsync();
 
@@ -236,9 +255,12 @@ namespace AttendanceMonitoring.Controllers
             {
                 Section = GradeSection,
                 otherSectionWithSameGrade = sectionWithSameGrade,
-                assignedList = assignedSubjectList
+                assignedList = assignedSubjectList,
+
+                DataCount = assignedSubjectList.Count
             };
 
+            
             return View(model);
         }
 
@@ -272,6 +294,7 @@ namespace AttendanceMonitoring.Controllers
                         {
                             SectionId = targetSectionId,
                             SubjectId = sourceSubject.SubjectId,
+                            CreatedAt = DateTime.Now,
                         });
                         copiedCount++;
                     }
@@ -552,9 +575,15 @@ namespace AttendanceMonitoring.Controllers
 
             if(grade == null)
             {
-                return Json(new { success = false, error = "Grade does not found" });
+                return Json(new { success = false, error = "Grade Level does not found" });
             }
 
+            var hasSection = await context.Sections.AnyAsync(s => s.GradesId == id);
+
+            if (hasSection)
+            {
+                return Json(new { success = false, message = "Cannot delete Grade when contain sections" });
+            }
             context.Grades.Remove(grade);
             await context.SaveChangesAsync();
 
@@ -747,6 +776,13 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, error = "Section does not exist!" });
             }
 
+            var hasStudentAssigned = await context.StudentSectionAssignments.AnyAsync(ssa => ssa.SectionId == id);
+
+            if (hasStudentAssigned)
+            {
+                return Json(new { success = false, message = "Cannot Delete if students are already enrolled to this Class" });
+
+            }
             context.Sections.Remove(Section);
             await context.SaveChangesAsync();
 
@@ -911,12 +947,6 @@ namespace AttendanceMonitoring.Controllers
 
         public async Task<IActionResult> SecretaryList()
         {
-            //var secretary = context.Users
-            //    .Where(user => context.UserRoles
-            //    .Any(ur => ur.UserId == user.Id && context.Roles
-            //    .Any(r => r.Id == ur.RoleId && r.Name == "Secretary")))
-            //    .ToList();
-
             var secretary = await userManager.GetUsersInRoleAsync("Secretary");
 
             return View(secretary);
@@ -984,10 +1014,6 @@ namespace AttendanceMonitoring.Controllers
             ViewData["CreatedAt"] = teacher.CreatedAt.ToString("MM/dd/yyyy");
 
             return PartialView("_ViewTeacherPartial", model);
-        }
-        public IActionResult StudentList()
-        {
-            return View();
         }
 
         public IActionResult AddTeacher()
@@ -1334,6 +1360,328 @@ namespace AttendanceMonitoring.Controllers
             //return RedirectToAction("TeacherList", "Admin");
             return Json(new { success = true, message = "Teacher has been Deleted successfully" }); //JSON store and transport data from server side to client side
 
+        }
+        public async Task<IActionResult> StudentList()
+        {
+            var Students = await context.Students   
+                .Include(sa => sa.SectionAssignments)
+                    .ThenInclude(sn => sn.Section)
+                        .ThenInclude(g => g.Grade)
+                .OrderBy(s => s.Id)
+                .ToListAsync();
+
+            return View(Students);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> AddStudent()
+        {
+            var availableGradeSection = await context.Sections
+                                                     .Include(g => g.Grade)
+                                                     .Select(ags => new { ags.Id, ags.Grade.GradeLevel, ags.SectionName, ags.Track, ags.TVLProgram })
+                                                     .ToListAsync();
+            var model = new StudentViewModel
+            {
+                AvailableGradeSection = availableGradeSection.Select(ags => new SelectListItem
+                {
+                    Value = ags.Id.ToString(),
+
+                    Text = ags.TVLProgram == null //condition
+                           ? $"Grade {ags.GradeLevel} - {ags.SectionName}, {ags.Track}" //if result is True
+                           : $"Grade {ags.GradeLevel} - {ags.SectionName}, {ags.Track} - {ags.TVLProgram}" //Else False
+
+                })
+                .Take(10)
+                .ToList()
+            };
+
+            return PartialView("_AddStudentPartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddStudent(StudentViewModel model)
+        {
+            bool studentFirstLastNameExist = await context.Students.AnyAsync(t => t.FirstName == model.FirstName && t.MiddelName == model.MiddelName && t.LastName == model.LastName);
+
+            if (studentFirstLastNameExist)
+            {
+                ModelState.AddModelError("FirstName", "A Student with this Full name already exists");
+                ModelState.AddModelError("MiddelName", "");
+                ModelState.AddModelError("LastName", "");
+            }
+
+            bool LRNExisted = await context.Students.AnyAsync(s => s.LRN == model.LRN);
+
+            if (LRNExisted)
+            {
+                ModelState.AddModelError("LRN", "LRN is already taken!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            string? saveImagePath = null;
+            //saveImageData is yung actual data ng image, na mag sesave sa imageFileData row sa database
+            byte[]? saveImageData = null; //ginagamit ang byte para magsave ng files tulad ng images, pdf, etc. sa loob ng database
+
+            if (model.imageFile != null)
+            {
+                //Konektado ito Sa AppUser na object para talagang magsave
+
+                //create filename
+                string newFile = DateTime.Now.ToString("yyyyMMddHHmmssff");
+                newFile += Path.GetExtension(model.imageFile.FileName);
+                //create physical path for the image
+                string imageFullPath = environment.WebRootPath + "/ProfilePic/" + newFile;
+                //save the actual image to ProfilePic file na naka declare sa variable na imageFullPath
+                using (var stream = System.IO.File.Create(imageFullPath))
+                {
+                    await model.imageFile.CopyToAsync(stream);
+                }
+                //eto yung part na pag kasave nung actual image na (ex. image.jpg) eh pupunta na sya database sa imageFilePath na row
+                saveImagePath = newFile;
+
+                //Itong buong code na ito gang baba, dito kukunin yung mismong data ng image para iconvert sa byte para i-save na sa database
+                //Kase diba sa viewmodel ko is IFormFile gamit ko dun, si ang code na ito is iconvert ang iFormFile to byte na iinput ng user
+                using (var inputStream = model.imageFile.OpenReadStream())//para basahin yung upload file
+
+                using (var memoryStream = new MemoryStream())// maging temporary kolektor o lalagyan ng data
+                {
+                    await inputStream.CopyToAsync(memoryStream);// eto na yung may hawak ng raw data
+                    saveImageData = memoryStream.ToArray();// ngayon after makollect ng mismong data na naprocess na, dun na icoconvert sa byte
+                }
+            }
+
+            var student = new Student
+            {
+                LRN = model.LRN,
+                FirstName = model.FirstName,
+                MiddelName = model.MiddelName,
+                LastName = model.LastName,
+                Sex = model.Sex,
+                imageFileData = saveImageData,
+                imageFilePath = saveImagePath,
+                CreatedAt = DateTime.Now
+            };
+
+            context.Students.Add(student);
+            await context.SaveChangesAsync();
+
+            var sectionAssignment = new StudentSectionAssignment
+            {
+                StudentId = student.Id,
+                SectionId = model.SectionId,
+                CreatedAt = DateTime.Now
+            };
+
+            context.StudentSectionAssignments.Add(sectionAssignment);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Student Added Successfully" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditStudent(int id)
+        {
+            var student = await context.Students.FindAsync(id);
+
+            if (student == null)
+            {
+                return Json(new { success = false, message = "Student does not exist" });
+            }
+            //Retrieve all available Sections
+            var allSection = await context.Sections
+                    .Include(g => g.Grade)
+                .Select(ags => new { ags.Id, ags.Grade.GradeLevel, ags.SectionName, ags.Track, ags.TVLProgram })
+                .ToListAsync();
+
+            //Retrieve current student's assigned Grade and Section
+            var studentsGradeSection = await context.StudentSectionAssignments
+                .Where(si => si.StudentId == id)
+                .Select(s => s.SectionId)
+                .FirstOrDefaultAsync(); 
+
+            var model = new EditStudentViewModel()
+            {
+                AvailableGradeSection = allSection.Select(gs => new SelectListItem
+                {
+                    Value = gs.Id.ToString(),
+                    Text = $"Grade {gs.GradeLevel} {gs.SectionName} {gs.Track} {gs.TVLProgram}",
+                }).ToList(),
+
+                SectionId = studentsGradeSection,
+                LRN = student.LRN,
+                FirstName = student.FirstName,
+                MiddelName = student.MiddelName,
+                LastName = student.LastName,
+                Sex = student.Sex,
+                imageFilePath = student.imageFilePath,
+                CreatedAt = student.CreatedAt,
+
+            };
+
+            return PartialView("_EditStudentPartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditStudent(int id, EditStudentViewModel model)
+        {
+            var editStudent = await context.Students.FindAsync(id);
+
+            if(editStudent == null)
+            {
+                return Json(new { sucess = false, message = "Student id does not found" });
+
+            }
+
+            var studentGradeSectionAssigned = await context.StudentSectionAssignments.FindAsync(id);
+            if (studentGradeSectionAssigned == null)
+            {
+                return Json(new { sucess = false, message = "Student assignment Id does not found" });
+
+            }
+
+            bool studentFirstLastNameExist = await context.Students.AnyAsync(t => t.FirstName == model.FirstName && t.MiddelName == model.MiddelName && t.LastName == model.LastName && t.Id != id);
+
+            if (studentFirstLastNameExist)
+            {
+                ModelState.AddModelError("FirstName", "A Student with this Full name already exists");
+                ModelState.AddModelError("MiddelName", "");
+                ModelState.AddModelError("LastName", "");
+            }
+
+            bool LRNExisted = await context.Students.AnyAsync(s => s.LRN == model.LRN && s.Id != id);
+
+            if (LRNExisted)
+            {
+                ModelState.AddModelError("LRN", "LRN is already taken!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+
+                var errors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+                return Json(new { success = false, errors = errors });
+            }
+
+            string? saveImagePath = null;
+            byte[]? saveImageData = null;
+
+            if (model.imageFile != null)
+            {
+                string newFile = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                newFile += Path.GetExtension(model.imageFile.FileName);
+
+                string imageFullPath = environment.WebRootPath + "/ProfilePic/" + newFile;
+
+                using (var stream = System.IO.File.Create(imageFullPath))
+                {
+                    await model.imageFile.CopyToAsync(stream);
+                }
+
+                //check muna sa database if may laman ba yung image ng user
+                if (!string.IsNullOrEmpty(editStudent.imageFilePath))
+                {
+                    //if may laman saka palang bubuuin ang filepath
+                    string oldImageFullPath = environment.WebRootPath + "/ProfilePic/" + editStudent.imageFilePath;
+                    //tapos kapag may laman nga, dun palang mag delete
+                    if (oldImageFullPath != null)
+                    {
+                        //then mag execute to!
+                        System.IO.File.Delete(oldImageFullPath);
+                    }
+
+                }
+
+                saveImagePath = newFile;
+
+                using (var inputStream = model.imageFile.OpenReadStream())
+                using (var memoryStream = new MemoryStream())
+                {
+                    await inputStream.CopyToAsync(memoryStream);
+                    saveImageData = memoryStream.ToArray();
+                }
+                //IMPORTANT: Assign to editTeacher
+                editStudent.imageFilePath = saveImagePath;
+                editStudent.imageFileData = saveImageData;
+            }
+
+            editStudent.LRN = model.LRN; 
+            editStudent.FirstName = model.FirstName;
+            editStudent.MiddelName = model.MiddelName;
+            editStudent.LastName = model.LastName;
+            editStudent.Sex = model.Sex;
+
+            context.Students.Update(editStudent);
+            await context.SaveChangesAsync();
+
+            studentGradeSectionAssigned.StudentId = editStudent.Id;
+            studentGradeSectionAssigned.SectionId = model.SectionId;
+
+            context.StudentSectionAssignments.Update(studentGradeSectionAssigned);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Student Successfully Edited!" });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ViewStudent(int id)
+        {
+            var students = await context.Students.FindAsync(id);
+
+            if (students == null)
+            {
+                return Json(new { success = false, error = "Student Not Found!" });
+            }
+
+            //1. Nakuha na yung data sa database
+            var studentsClass = await context.StudentSectionAssignments
+                .Include(s => s.Section)
+                    .ThenInclude(g => g.Grade)
+                .Where(sc => sc.StudentId == id)
+                .FirstOrDefaultAsync();
+
+            var model = new EditStudentViewModel()
+            {
+                LRN = students.LRN,
+                FirstName = students.FirstName,
+                MiddelName = students.MiddelName,
+                LastName = students.LastName,
+                Sex = students.Sex,
+                imageFilePath = students.imageFilePath,
+                studentClass = studentsClass, //2. Ilagay sa viewmodel object para maaccess sa razor page 
+            };
+            return PartialView("_ViewStudentPartial", model); //3. yung model ang magiging view ex. @Model.studentClass.Id 
+
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteStudent(int id)
+        {
+            var Student = await context.Students.FindAsync(id);
+
+            if (Student == null)
+            {
+                return Json(new { success = false, error = "Student does not exist!" });
+            }
+
+            
+            context.Students.Remove(Student);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Student Successfully deleted!" });
         }
 
         [HttpPost]

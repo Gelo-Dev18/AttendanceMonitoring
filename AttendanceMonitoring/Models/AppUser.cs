@@ -15,8 +15,8 @@ namespace AttendanceMonitoring.Models
         public string? imageFilePath { get; set; }
         public byte[]? imageFileData { get; set; }
         public DateTime CreatedAt { get; set; }
-
-        //public DateTime UpdatedAt { get; set; }
+        public ICollection<TeacherAssignment> TeachingAssignments { get; set; }
+        
 
     }
 }

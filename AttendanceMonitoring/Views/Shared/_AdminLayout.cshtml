@@ -16,6 +16,10 @@
     <link href="~/DashboardTemplate/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
     <link href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="~/css/custom-widget.css" rel="stylesheet" />
+    <link href="~/DashboardTemplate/img/MCAPS.png" rel="icon" type="image/png" asp-append-version="true" />
+    <link rel="stylesheet" href="~/select2Plugin/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="~/select2Plugin/dist/css/select2-bootstrap4.min.css" />
+
 </head>
 <body>
     <div id="blurred-overlay" class="blurred"></div>
@@ -68,7 +72,8 @@
         <div id="dangerToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
             <div class="toast-body bg-danger text-white" style="font-size: 16px; font-weight:600;">
                 <i class="bi bi-check-circle-fill"></i>
-                <strong class="mr-auto" id="#toast-body">Something went wrong. Please try again.</strong>
+                @* <strong class="mr-auto" id="#toast-body">Something went wrong. Please try again.</strong> *@
+                <span id="dangertoast-message"></span>
             </div>
         </div>
     </div>
@@ -208,7 +213,11 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     @* <script src="~/lib/jquery/dist/jquery.min.js"></script> @*For Ajax*@ 
 
+    <!-- Select2 Plugin script -->
+    <script src="~/select2Plugin/dist/js/select2.min.js"></script>
+
     <script src="~/js/site.js"></script>
+
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

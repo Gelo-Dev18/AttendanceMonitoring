@@ -173,7 +173,9 @@ namespace AttendanceMonitoring.Controllers
                     if (await userManager.IsInRoleAsync(user, "Secretary"))
                         return RedirectToAction("SecretaryHome", "Secretary");
 
+                    //return RedirectToAction("Index", "Login");
                     return RedirectToAction("Index", "Home");
+
                 }
 
                 ModelState.AddModelError("", "School ID or Password is incorrect!");

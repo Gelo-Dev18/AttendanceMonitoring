@@ -28,7 +28,7 @@
         </div>
         <div class="card-body">
             <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27); font-size: 18px;">
-                Currently Assigned Subjects ():
+                Currently Assigned Subjects (@Model.DataCount):
             </h6>
             <br />
             <div class="table-responsive">
@@ -98,7 +98,7 @@
                         @foreach (var otherSection in Model.otherSectionWithSameGrade)
                         {                 
                             <div class="d-flex" style="font-size: 16px; color: black;">
-                                <input type="checkbox" name="targetSectionIds" value="@otherSection.Id" id="otherSection_@otherSection.Id"/>
+                                <input type="checkbox" class="sectionCheckbox" name="targetSectionIds" value="@otherSection.Id" id="otherSection_@otherSection.Id"/>
                                 Grade @otherSection.Grade.GradeLevel - @otherSection.SectionName
                             </div>
 
@@ -113,7 +113,7 @@
 
                 <br />
                 <div class="footer">
-                    <button class="btn btn-success" type="submit" id="SubmitCopySubject ">Copy Subject</button>
+                    <button class="btn btn-success" type="submit" id="SubmitCopySubject" disabled>Copy Subject</button>
                 </div>
                 </form>
             </div>

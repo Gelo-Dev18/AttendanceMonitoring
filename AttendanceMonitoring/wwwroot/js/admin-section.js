@@ -153,7 +153,7 @@ $(document).ready(function () {
             return;
         }
 
-        loadSpinner();
+        //loadSpinner();
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
@@ -165,12 +165,13 @@ $(document).ready(function () {
                     $('#ModalDelete').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
                     $('#ModalDelete').modal('hide');
                     showSuccessToast(response.message);
-                    //loadSpinner();
+                    loadSpinner();
                     setTimeout(function () {
                         location.reload();
                     }, 2000);
                 } else {
-                    alert('Could not delete Section');
+                    //    alert('Could not delete Section');
+                    showDangerToast(response.message);
                 }
                 //alert(response.message);
                 //location.reload();

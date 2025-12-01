@@ -142,7 +142,7 @@
             return;
         }
 
-        loadSpinner();
+        //loadSpinner();
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
@@ -154,12 +154,13 @@
                     $('#ModalDelete').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
                     $('#ModalDelete').modal('hide');
                     showSuccessToast(response.message);
-                    //loadSpinner();
+                    ////loadSpinner();
                     setTimeout(function () {
                         location.reload();
                     }, 2000);
                 } else {
-                    alert('Could not delete Grade');
+                    //    alert('Could not delete Grade');
+                    showDangerToast(response.message);
                 }
                 //alert(response.message);
                 //location.reload();

@@ -32,6 +32,7 @@ namespace AttendanceMonitoring.ViewModel
         [Required, MaxLength(30)]
         public string positionTitle { get; set; }
 
+        public int teacherCount { get; set; }
         public IFormFile? imageFile { get; set; }
     }
 }

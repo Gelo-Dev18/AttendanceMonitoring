@@ -29,7 +29,12 @@ $(document).ready(function () {
 
         $('#SaveAssignedSubject').prop('disabled', !anyChecked);
     });
- 
+
+    $(document).on('change', '.sectionCheckbox', function () {
+        const anyChecked = $('.sectionCheckbox:checked').length > 0;
+
+        $('#SubmitCopySubject').prop('disabled', !anyChecked);
+    })
 
     $(document).on('input', 'input[name="SearchString"]', function () {
         //Convert all letters to lowercase
@@ -194,9 +199,4 @@ $(document).ready(function () {
             }
         })
     });
-
-    
-    //$(document).on('change', '#selectedCategory', function () {
-    //    loadCategory();
-    //});
 });

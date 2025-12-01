@@ -14,9 +14,12 @@ namespace AttendanceMonitoring.Data
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Section> Sections { get; set; }
         public DbSet<Subject> Subjects { get; set; }
-        public DbSet<SectionSubject> SectionSubjects { get; set; } // Linking Table for Section and subject!
         public DbSet<Teacher> Teacher { get; set; }
-        //public DbSet<Student> Students { get; set; }
+        public DbSet<Student> Students { get; set; }
+        public DbSet<SectionSubject> SectionSubjects { get; set; } // Linking Table for Section and subject!
+
+        public DbSet<StudentSectionAssignment> StudentSectionAssignments { get; set; }
+        public DbSet<TeacherAssignment> TeacherAssignments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -29,19 +32,64 @@ namespace AttendanceMonitoring.Data
                 .HasForeignKey(s => s.GradesId)      //Foreign key
                 .OnDelete(DeleteBehavior.Restrict);  // ← IMPORTANT! Prevent cascade delete
 
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            ///// FOR SECTION SUBJECT ASSIGNMENT ///////
 
             modelBuilder.Entity<SectionSubject>()
                 .HasIndex(ss => new { ss.SectionId, ss.SubjectId })
                 .IsUnique();
+
             modelBuilder.Entity<SectionSubject>()
                 .HasOne(ss => ss.Section)
                 .WithMany(s => s.SectionSubjects)
-                .HasForeignKey(ss => ss.SectionId);
+                .HasForeignKey(ss => ss.SectionId)
+                .OnDelete(DeleteBehavior.Cascade); //Deletes assignment when section deleted
 
             modelBuilder.Entity<SectionSubject>()
                 .HasOne(ss => ss.Subject)
                 .WithMany(j => j.SectionSubjects)
-                .HasForeignKey(ss => ss.SubjectId);
+                .HasForeignKey(ss => ss.SubjectId)
+                .OnDelete(DeleteBehavior.Restrict); //To Prevent deletion when subject is already assigned
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            ///// FOR STUDENT ASSIGNMENT ///////
+
+            modelBuilder.Entity<StudentSectionAssignment>()
+                .HasIndex(ssa => new { ssa.StudentId, ssa.SectionId })
+                .IsUnique();
+
+
+            modelBuilder.Entity<StudentSectionAssignment>()
+                .HasOne(ssa => ssa.Student)
+                .WithMany(sa => sa.SectionAssignments)
+                .HasForeignKey(ssa => ssa.StudentId)
+                .OnDelete(DeleteBehavior.Cascade); //Deletes Student = delete assignment so that's why Cascade is okay.
+
+            modelBuilder.Entity<StudentSectionAssignment>()
+                .HasOne(ssa => ssa.Section)
+                .WithMany(sa => sa.StudentAssignments)
+                .HasForeignKey(ssa => ssa.SectionId)
+                .OnDelete(DeleteBehavior.Restrict); //Restrict delete so if section is accidentally delete, it will be block 
+                                                    //to protect students who are enrolled on a specific section that is being deleted
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            ///// FOR TEACHER ASSIGNMENT ///////
+
+            modelBuilder.Entity<TeacherAssignment>()
+                .HasIndex(ta => new { ta.TeacherId, ta.SectionSubjectId })
+                .IsUnique();
+
+            modelBuilder.Entity<TeacherAssignment>()
+                .HasOne(ta => ta.Teacher)
+                .WithMany(t => t.TeachingAssignments)
+                .HasForeignKey(ta => ta.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TeacherAssignment>()
+                .HasOne(ta => ta.SectionSubject)
+                .WithMany(t => t.TeacherAssignments)
+                .HasForeignKey(ta => ta.SectionSubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
 

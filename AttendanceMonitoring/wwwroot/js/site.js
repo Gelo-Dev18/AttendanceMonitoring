@@ -17,7 +17,8 @@ function showUpdateSuccessToast(message) {
     $('#updateSuccessToast').toast('show');
 }
 
-function showDangerToast() {
+function showDangerToast(message) {
+    $('#dangertoast-message').text(message);
     $('#dangerToast').toast('show');
 }
 
@@ -106,6 +107,16 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#AddModalFormBody').html(html);
+
+                //FOr select2 plugin
+                $('#sectionSelection').select2({
+                    placeholder: 'Select Grade and Section...',
+                    allowClear: true,
+                    width: '100%',
+                    minimumResultsForSearch: 0, // ALWAYS show search box
+                    dropdownParent: $('#AddModalForm'),// para gumana yung searchbox
+                    theme: 'bootstrap4'
+                });
                 checkOption(); //onchange function
 
             },
@@ -146,6 +157,16 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#EditModalBody').html(html);
+
+                //FOr select2 plugin
+                //$('#sectionSelection').select2({
+                //    placeholder: 'Select Grade and Section...',
+                //    allowClear: true,
+                //    width: '100%',
+                //    minimumResultsForSearch: 0, // ALWAYS show search box
+                //    dropdownParent: $('#EditModalForm'),// para gumana yung searchbox
+                //    theme: 'bootstrap4'
+                //});
             },
             error: function (xhr, status, error) {
                 console.error('Error loading edit modal:', error);

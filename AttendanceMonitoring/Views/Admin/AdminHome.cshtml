@@ -1,4 +1,6 @@
-﻿@{
+﻿@using AttendanceMonitoring.ViewModel;
+@model AdminHomeViewModel;
+@{
     ViewData["Title"] = "Admin Page";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
@@ -20,9 +22,11 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                            Teacher Lists
+                            Total Teachers
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @Model.TeacherCount
+                        </div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-address-card fa-2x text-gray-300"></i>
@@ -39,9 +43,11 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                            Student Lists
+                            Total Students
                         </div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            @Model.StudentCount
+                        </div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-user-friends fa-2x text-gray-300"></i>
@@ -58,11 +64,13 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                            Records
+                            Total Subjects
                         </div>
                         <div class="row no-gutters align-items-center">
                             <div class="col-auto">
-                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">0</div>
+                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                                    @Model.SubjectCount
+                                </div>
                             </div>
                             <!-- <div class="col">
                                 <div class="progress progress-sm mr-2">

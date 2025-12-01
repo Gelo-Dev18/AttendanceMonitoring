@@ -16,6 +16,7 @@ namespace AttendanceMonitoring.ViewModel
         public string? TVLProgram { get; set; }
         public Section Section { get; set; }
 
+        public int DataCount { get; set; }
         public List<SectionSubject> assignedList { get; set; } = new List<SectionSubject>();
         public List<Section> otherSectionWithSameGrade { get; set; } = new List<Section>();
 
