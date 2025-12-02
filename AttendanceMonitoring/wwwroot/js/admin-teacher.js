@@ -133,6 +133,38 @@
     });
     ///////////////////////////////////////////////////////////////////////////////
 
+    //Submit Function for Edit Teacher
+    $(document).on('click', '.assign-btn', function (e) {
+        e.preventDefault();
+
+        var teacherId = $(this).data("teacher-id");
+        var sectionSubjectId = $(this).data("section-subject-id");
+
+        $.ajax({
+            url: '/Admin/AssignTeacher',
+            type: 'POST',
+            data: { teacherId: teacherId, sectionSubjectId: sectionSubjectId },
+            //processData: false,
+            //contentType: false,
+            //dataType: 'json',
+            success: function (response) {
+
+                $('#AssignModal .modal-body').html(response);
+                $('#dataTable2').DataTable();
+
+                showUpdateSuccessToast("Assigned Successfully!");
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating user:', error);
+                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while updating the teacher.');
+            }
+        });
+    });
+    ///////////////////////////////////////////////////////////////////////////////
+
     $('#confirmDeleteButton').on('click', function (e) {
         e.preventDefault();
 
@@ -141,7 +173,7 @@
             return;
         }
 
-        loadSpinner();
+        //loadSpinner();
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
@@ -158,7 +190,7 @@
                         location.reload();
                     }, 2000);
                 } else {
-                    alert('Could not delete teacher');
+                    showDangerToast(response.message)
                 }
                 //alert(response.message);
                 //location.reload();
@@ -172,6 +204,33 @@
             }
         });
     });
-    ///////////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    $(document).on('click', '.removebtn', function (e) {
+        e.preventDefault();
+        //var button = $(this);
+        //var button = $(event.relatedTarget); // ginagamit lang kapag modal
+
+        var assignedToTeacherId = $(this).data('assign-id');
+
+        $.ajax({
+            url: '/Admin/RemoveAssignedToTeacher/' + assignedToTeacherId,
+            type: 'DELETE',
+            success: function (response) {
+                $('#currentlyAssigned').html(response);
+                $('#dataTable3').DataTable();
+
+                showUpdateSuccessToast("Remove Successfully");
+            },
+            error: function (xhr, status, error) {
+                console.error('Error remove assign:', error);
+                //    alert('Something went wrong. Please try again.');
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast(response);
+            }
+        });
+    });
 
 });

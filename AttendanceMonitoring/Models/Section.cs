@@ -13,5 +13,8 @@
         //Section Relationship (Many-to-Many relationship through SectionSubject) 
         public ICollection<SectionSubject> SectionSubjects { get; set; }
         public ICollection<StudentSectionAssignment> StudentAssignments { get; set; }
+        public ICollection<SecretaryAssignment> SecretaryAssignments { get; set; }
+
+
     }
 }

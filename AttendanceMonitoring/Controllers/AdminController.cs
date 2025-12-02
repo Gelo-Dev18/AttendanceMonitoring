@@ -994,8 +994,41 @@ namespace AttendanceMonitoring.Controllers
             {
                 return RedirectToAction("TeacherList", "Admin");
             }
+
+            ///<summary>
+            /// TWO QUERIES
+            /// </summary>
+            //// Get the IDs of SectionSubjects that are assigned to this teacher
+            //var teacherAssignment = await context.TeacherAssignments
+            //                        .Where(t => t.TeacherId == id)
+            //                        .ToListAsync();
+            //var sectionSubjectIds = teacherAssignment.Select(ta => ta.SectionSubjectId).ToList();
+
+            //// Fetch the complete SectionSubject details (with Subject, Section, Grade) 
+            //// that are CURRENTLY ASSIGNED to this teacher
+            //var sectionSubjectQuery = await context.SectionSubjects
+            //                        .Include(ss => ss.Subject)
+            //                        .Include(s => s.Section)
+            //                            .ThenInclude(g => g.Grade)
+            //                        .Where(ss => sectionSubjectIds.Contains(ss.Id))
+            //                        .OrderBy(ss => ss.SectionId)
+            //                        .ToListAsync();
+
+            ///<summary>
+            /// COMBINE QUERY FOR teacherAssignment and sectionSubjectQuery
+            /// </summary>
+            //Get all SectionSubjects assigned to this teacher with complete details
+            var teacherAssignment = await context.TeacherAssignments
+                                    .Include(ta => ta.SectionSubject)
+                                        .ThenInclude(ss => ss.Subject)
+                                    .Include(ta => ta.SectionSubject.Section)
+                                        .ThenInclude(s => s.Grade)
+                                    .Where(ta => ta.TeacherId == id)
+                                    .OrderBy(ta => ta.SectionSubject.SectionId)
+                                    .ToListAsync();
+
             //Manual mapping
-            var model = new EditTeacherViewModel()
+            var model = new ViewTeacherViewModel()
             {
                 Email = teacher.Email,
                 //UserName = teacher.Email,
@@ -1007,6 +1040,8 @@ namespace AttendanceMonitoring.Controllers
                 Sex = teacher.Sex,
                 positionTitle = teacher.positionTitle,
                 imageFilePath = teacher.imageFilePath,
+
+                teacherAssignments = teacherAssignment
             };
 
             ViewData["imageFileData"] = teacher.imageFileData;
@@ -1341,6 +1376,15 @@ namespace AttendanceMonitoring.Controllers
                 //return RedirectToAction("TeacherList", "Admin");
                 return Json(new { success = false, error = "Teacer does not found" });
             }
+
+            var isAssigned = await context.TeacherAssignments.AnyAsync(ia => ia.TeacherId == id);
+
+            if (isAssigned)
+            {
+                return Json(new { success = false, message = "Cannot delete teacher when already Assigned!" });
+
+            }
+
             //check kung may laman yung image yung user
             if (!string.IsNullOrEmpty(teacher.imageFilePath))
             {
@@ -1361,6 +1405,125 @@ namespace AttendanceMonitoring.Controllers
             return Json(new { success = true, message = "Teacher has been Deleted successfully" }); //JSON store and transport data from server side to client side
 
         }
+        [HttpGet]
+        public async Task<IActionResult> AssignTeacher(string teacherId)
+        {
+            //This excluded the assigned sectonsubject to a teacher by an specific section only
+            var assignedToTeacher = await context.TeacherAssignments
+                                    .Where(t => t.TeacherId == teacherId)
+                                    .Select(ss => ss.SectionSubjectId)
+                                    .ToListAsync();
+
+            var sectionSubjectQuery = await context.SectionSubjects
+                                    .Include(ss => ss.Subject)
+                                    .Include(s => s.Section)
+                                        .ThenInclude(g => g.Grade)
+                                    .Where(ss => !assignedToTeacher.Contains(ss.Id))
+                                    .OrderBy(ss => ss.SectionId)
+                                    .ToListAsync();
+
+            var model = new AssignTeacherViewModel()
+            {
+                TeacherId = teacherId,
+                SectionSubjects = sectionSubjectQuery,
+            };
+
+            return PartialView("_AssignTeacherPartial", model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AssignTeacher(string teacherId, int sectionSubjectId)
+        {
+            var teacher = await context.Users.FindAsync(teacherId);
+
+            if (teacher == null)
+            {
+                return Json(new { success = false, message = "Teacher Id Not Found!" });
+            }
+
+            var assigned = new TeacherAssignment()
+            {
+                TeacherId = teacherId,
+                SectionSubjectId = sectionSubjectId,
+                CreatedAt = DateTime.Now,
+
+
+            };
+
+            await context.TeacherAssignments.AddAsync(assigned);
+            await context.SaveChangesAsync();
+
+            //This excluded the assigned sectonsubject to a teacher by an specific section only
+            var assignedToTeacher = await context.TeacherAssignments
+                                    .Where(t => t.TeacherId == teacherId)
+                                    .Select(ss => ss.SectionSubjectId)
+                                    .ToListAsync();
+
+            var sectionSubjectQuery = await context.SectionSubjects
+                                    .Include(ss => ss.Subject)
+                                    .Include(s => s.Section)
+                                        .ThenInclude(g => g.Grade)
+                                    .Where(ss => !assignedToTeacher.Contains(ss.Id))
+                                    .OrderBy(ss => ss.SectionId)
+                                    .ToListAsync();
+
+            var model = new AssignTeacherViewModel()
+            {
+                TeacherId = teacherId,
+                SectionSubjects = sectionSubjectQuery,
+            };
+
+            return PartialView("_AssignTeacherPartial", model);
+
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> RemoveAssignedToTeacher(int id)
+        {
+            var teacherAssigned = await context.TeacherAssignments.FindAsync(id);
+
+            if (teacherAssigned == null)
+            {
+                return Json(new { success = true, error = "Id not Found!" });
+            }
+            var teacherId = teacherAssigned.TeacherId;
+
+            context.TeacherAssignments.Remove(teacherAssigned);
+            await context.SaveChangesAsync();
+
+            var teacher = await context.Users.FindAsync(teacherId);
+
+            var remainingAssignments = await context.TeacherAssignments
+                                       .Include(ta => ta.SectionSubject)
+                                            .ThenInclude(ss => ss.Section)
+                                                .ThenInclude(s => s.Grade)
+                                       .Include(ta => ta.SectionSubject.Subject)
+                                       .Where(ta => ta.TeacherId == teacherId)
+                                       .ToListAsync();
+
+            var model = new ViewTeacherViewModel()
+            {
+                Email = teacher.Email,
+                //UserName = teacher.Email,
+                SchoolId = teacher.SchoolId,
+                EmployeeId = teacher.EmployeeId,
+                FirstName = teacher.FirstName,
+                MiddleName = teacher.MiddleName,
+                LastName = teacher.LastName,
+                Sex = teacher.Sex,
+                positionTitle = teacher.positionTitle,
+                imageFilePath = teacher.imageFilePath,
+
+                teacherAssignments = remainingAssignments
+            };
+
+            ViewData["imageFileData"] = teacher.imageFileData;
+            //ViewData["imageFilePath"] = teacher.imageFilePath;
+            ViewData["CreatedAt"] = teacher.CreatedAt.ToString("MM/dd/yyyy");
+
+            return PartialView("_ViewTeacherPartial", model);
+        }
+
         public async Task<IActionResult> StudentList()
         {
             var Students = await context.Students   

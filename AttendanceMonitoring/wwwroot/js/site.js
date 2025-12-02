@@ -157,6 +157,7 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#EditModalBody').html(html);
+                //$('#dataTable2').DataTable();
 
                 //FOr select2 plugin
                 //$('#sectionSelection').select2({
@@ -181,6 +182,81 @@ $(document).ready(function () {
         hideBlurBackground();
     }); 
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //AssignModal
+    $('#AssignModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+
+        var url = button.data('url');
+        var title = button.data('title');
+        var teacherId = button.data('id');
+
+        var modal = $(this);
+
+        modal.find('#AssignModalLabel').text(title);
+        loadBlurBackground();
+        $.ajax({
+            url: url + teacherId,
+            type: 'GET',
+            data: { teacherId: teacherId },
+            success: function (html) {
+                modal.find('#AssignModalBody').html(html);
+                $('#dataTable2').DataTable();
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading add teacher modal:', error);
+                modal.find('#AssignModalBody').html('<p class="text-center">Failed to load modal body</p>');
+            }
+        });
+    });
+
+    $('#AssignModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    });
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //Triggers View Assign Modal
+    $('#ViewAssignModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+
+        userID = button.data('id');
+
+        var url = button.data('url');
+        var title = button.data('title');
+
+        var modal = $(this);
+        modal.find('#ViewAssignModalLabel').text(title);
+
+        loadBlurBackground();
+
+        if (!userID) {
+            alert('Id does not found');
+            return;
+        }
+
+        $.ajax({
+            url: url + userID,
+            type: 'GET',
+            success: function (html) {
+                modal.find('#ViewAssignModalBody').html(html);
+                $('#dataTable3').DataTable();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading edit modal:', error);
+                modal.find('#ViewAssignModalBody').html('<p class="text-center">Failed to Load modal body</p>');
+            }
+        });
+    });
+
+
+
+    $('#ViewAssignModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    }); 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -195,6 +271,8 @@ $(document).ready(function () {
         var modal = $(this);
 
         modal.find('#ViewModalLabel').text(title);
+
+
 
         loadBlurBackground();
         // Ipasa 'yung local variables sa function

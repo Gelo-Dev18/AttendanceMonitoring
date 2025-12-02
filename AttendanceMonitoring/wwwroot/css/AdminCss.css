@@ -89,3 +89,11 @@
     border-color: #bac8f3 !important;
     box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25) !important;
 }
+
+.dropdown-menu{
+    width: 100%;
+}
+
+.custom-dropdown{
+    min-width: 60px;
+}

@@ -17,9 +17,10 @@ namespace AttendanceMonitoring.Data
         public DbSet<Teacher> Teacher { get; set; }
         public DbSet<Student> Students { get; set; }
         public DbSet<SectionSubject> SectionSubjects { get; set; } // Linking Table for Section and subject!
-
         public DbSet<StudentSectionAssignment> StudentSectionAssignments { get; set; }
         public DbSet<TeacherAssignment> TeacherAssignments { get; set; }
+        public DbSet<SecretaryAssignment> SecretaryAssignments { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -71,6 +72,25 @@ namespace AttendanceMonitoring.Data
                 .HasForeignKey(ssa => ssa.SectionId)
                 .OnDelete(DeleteBehavior.Restrict); //Restrict delete so if section is accidentally delete, it will be block 
                                                     //to protect students who are enrolled on a specific section that is being deleted
+
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            ///// FOR STUDENT ASSIGNMENT ///////
+
+            modelBuilder.Entity<SecretaryAssignment>()
+                .HasIndex(sa => new { sa.SecretaryId, sa.SectionId })
+                .IsUnique();
+
+            modelBuilder.Entity<SecretaryAssignment>()
+                .HasOne(sa => sa.Secretary)
+                .WithMany(s => s.SecretariesAssignments)
+                .HasForeignKey(sa => sa.SecretaryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<SecretaryAssignment>()
+                .HasOne(sa => sa.Section)
+                .WithMany(s => s.SecretaryAssignments)
+                .HasForeignKey(sa => sa.SectionId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////
             ///// FOR TEACHER ASSIGNMENT ///////

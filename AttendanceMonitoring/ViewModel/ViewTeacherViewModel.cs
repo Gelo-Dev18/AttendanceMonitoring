@@ -3,8 +3,15 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AttendanceMonitoring.ViewModel
 {
-    public class EditTeacherViewModel
+    public class ViewTeacherViewModel
+
+
     {
+
+        public string TeacherId { get; set; }
+        public int SectionId { get; set; }
+
+
         [Required(ErrorMessage = "Email is Required!"), MaxLength(60)]
         [EmailAddress(ErrorMessage = "Use a valid email with an" + " '@' " + "sign")]
         public string Email { get; set; }
@@ -37,6 +44,7 @@ namespace AttendanceMonitoring.ViewModel
         public string? imageFilePath { get; set; }
 
         public List<TeacherAssignment> teacherAssignments { get; set; } = new List<TeacherAssignment>();
+        public List<SectionSubject> SectionSubjects { get; set; } = new List<SectionSubject>();
 
     }
 }

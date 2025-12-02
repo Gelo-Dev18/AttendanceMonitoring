@@ -1,0 +1,65 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model AssignTeacherViewModel;
+@{
+    ViewData["Title"] = "Assign Section";
+
+}
+
+
+@* <div class="card card-widget widget-user shadow" id="ViewTeacherModal"> *@
+<div class="card shadow mb-4" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h5 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">List of Grades and Sections</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
+                <thead>
+                    <tr style="color: #28282B">
+                        <th><strong>#</strong></th>
+                        <th><strong>Subject Description</strong></th>
+                        <th><strong>Category</strong></th>
+                        <th><strong>Action</strong></th>
+
+                    </tr>
+                </thead>
+                <tbody id="AvailableClass">
+                    @{
+                        var c = 1;
+                    }
+                    @foreach(var sectionSubject in Model.SectionSubjects)
+                    {
+                        <tr>
+                            <td><strong>@(c++)</strong></td>
+                            <td><strong>Grade @sectionSubject.Section.Grade.GradeLevel @sectionSubject.Section.SectionName @sectionSubject.Section.Track @sectionSubject.Section.TVLProgram </strong></td>
+
+                            @* <td><strong>@sectionSubject.SectionId</strong></td> *@
+                            <td><strong>@sectionSubject.Subject.SubjectDescription</strong></td>
+                            <td class="text-center">
+                                <button class="btn btn-outline-info remove-btn assign-btn" data-teacher-id="@Model.TeacherId" data-section-subject-id="@sectionSubject.Id" type="button">
+                                    Assign
+                                </button>
+                            </td>
+                        </tr>
+                    }                            
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+</div>
+
+
+@section Script {
+    @{
+        
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+        <script>
+            
+
+        </script>
+    }
+}

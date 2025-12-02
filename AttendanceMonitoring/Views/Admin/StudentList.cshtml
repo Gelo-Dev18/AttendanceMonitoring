@@ -72,19 +72,38 @@
                                     </strong>
                                 }                 
                                 </td>
-                            <td><strong>                                    
-                                    <button data-id="@students.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/ViewStudent/" data-title="View Student's Details">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
+                            <td>
+                                @* <button data-id="@students.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/ViewStudent/" data-title="View Student's Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
 
-                                    <button data-id="@students.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditModal" data-url="/Admin/EditStudent/" data-title="Edit Student's Details">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
+                                <button data-id="@students.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditModal" data-url="/Admin/EditStudent/" data-title="Edit Student's Details">
+                                    <i class="fas fa-edit"></i>
+                                </button>
 
-                                    <button data-id="@students.Id" type="button" class="btn btn-danger btn-circle delete-teacher-button" data-bs-toggle="modal" data-bs-target="#ModalDelete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>                                    
-                            </strong></td>
+                                <button data-id="@students.Id" type="button" class="btn btn-danger btn-circle delete-teacher-button" data-bs-toggle="modal" data-bs-target="#ModalDelete">
+                                    <i class="fas fa-trash"></i>
+                                </button>   *@
+                                    
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-outline-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Action
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <button data-id="@students.Id" type="button" class="btn btn-primary btn-circle dropdown-item" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/ViewStudent/" data-title="View Student's Details" title="View Student">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+
+                                        <button data-id="@students.Id" type="button" class="btn btn-primary btn-circle dropdown-item" data-bs-toggle="modal" data-bs-target="#EditModal" data-url="/Admin/EditStudent/" data-title="Edit Student's Details" title="Edit Student">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+
+                                        <button data-id="@students.Id" type="button" class="btn btn-danger btn-circle delete-teacher-button dropdown-item" data-bs-toggle="modal" data-bs-target="#ModalDelete" title="Delete Student">
+                                            <i class="fas fa-trash"></i>
+                                        </button>                                  
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     }
                     
