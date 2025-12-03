@@ -74,7 +74,7 @@ namespace AttendanceMonitoring.Data
                                                     //to protect students who are enrolled on a specific section that is being deleted
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////
-            ///// FOR STUDENT ASSIGNMENT ///////
+            ///// FOR SECRETARY ASSIGNMENT ///////
 
             modelBuilder.Entity<SecretaryAssignment>()
                 .HasIndex(sa => new { sa.SecretaryId, sa.SectionId })
@@ -84,7 +84,7 @@ namespace AttendanceMonitoring.Data
                 .HasOne(sa => sa.Secretary)
                 .WithMany(s => s.SecretariesAssignments)
                 .HasForeignKey(sa => sa.SecretaryId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<SecretaryAssignment>()
                 .HasOne(sa => sa.Section)

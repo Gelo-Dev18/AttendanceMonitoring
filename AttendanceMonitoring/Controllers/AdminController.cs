@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using NuGet.DependencyResolver;
 using System.Data;
 using System.Diagnostics.Metrics;
+using System.Linq;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -947,9 +948,19 @@ namespace AttendanceMonitoring.Controllers
 
         public async Task<IActionResult> SecretaryList()
         {
-            var secretary = await userManager.GetUsersInRoleAsync("Secretary");
 
-            return View(secretary);
+            var secretary = await userManager.GetUsersInRoleAsync("Secretary");
+            var secretaryIds = secretary.Select(s => s.Id).ToList();
+
+            var secretariesAssignGradeSection = await context.Users
+                .Where(u => secretaryIds.Contains(u.Id))
+                .Include(sa => sa.SecretariesAssignments)
+                    .ThenInclude(sn => sn.Section)
+                        .ThenInclude(g => g.Grade)
+                .OrderBy(s => s.Id)
+                .ToListAsync();
+
+            return View(secretariesAssignGradeSection);
         }
 
         [HttpGet] //Entity → ViewModel(for display/edit)
@@ -1056,9 +1067,31 @@ namespace AttendanceMonitoring.Controllers
             return PartialView("_AddTeacherPartial");
         }
 
-        public IActionResult AddSecretary()
+        [HttpGet]
+        public async Task<IActionResult> AddSecretary()
         {
-            return PartialView("_AddSecretaryPartial");
+            var availableGradeSection = await context.Sections
+                                                     .Include(g => g.Grade)
+                                                     .OrderBy(ga => ga.Grade.GradeLevel)
+                                                     .Select(ags => new { ags.Id, ags.Grade.GradeLevel, ags.SectionName, ags.Track, ags.TVLProgram })
+                                                     .ToListAsync();
+
+            var model = new SecretaryViewModel
+            {
+                AvailableGradeSection = availableGradeSection.Select(ags => new SelectListItem
+                {
+                    Value = ags.Id.ToString(),
+
+                    Text = ags.TVLProgram == null //condition
+                           ? $"Grade {ags.GradeLevel} - {ags.SectionName}, {ags.Track}" //if result is True
+                           : $"Grade {ags.GradeLevel} - {ags.SectionName}, {ags.Track} - {ags.TVLProgram}" //Else False
+
+                })
+                .Take(10)
+                .ToList()
+            };
+
+            return PartialView("_AddSecretaryPartial", model);
         }
 
         [HttpPost] //ViewModel → Entity (for saving to database)
@@ -1419,7 +1452,7 @@ namespace AttendanceMonitoring.Controllers
                                     .Include(s => s.Section)
                                         .ThenInclude(g => g.Grade)
                                     .Where(ss => !assignedToTeacher.Contains(ss.Id))
-                                    .OrderBy(ss => ss.SectionId)
+                                    .OrderBy(ss => ss.Section.Grade.GradeLevel)
                                     .ToListAsync();
 
             var model = new AssignTeacherViewModel()
@@ -1541,6 +1574,7 @@ namespace AttendanceMonitoring.Controllers
         {
             var availableGradeSection = await context.Sections
                                                      .Include(g => g.Grade)
+                                                     .OrderBy(ga => ga.Grade.GradeLevel)
                                                      .Select(ags => new { ags.Id, ags.Grade.GradeLevel, ags.SectionName, ags.Track, ags.TVLProgram })
                                                      .ToListAsync();
             var model = new StudentViewModel
@@ -1554,6 +1588,7 @@ namespace AttendanceMonitoring.Controllers
                            : $"Grade {ags.GradeLevel} - {ags.SectionName}, {ags.Track} - {ags.TVLProgram}" //Else False
 
                 })
+
                 .Take(10)
                 .ToList()
             };
@@ -1907,6 +1942,7 @@ namespace AttendanceMonitoring.Controllers
                 }
             }
 
+
             AppUser secretary = new AppUser()
             {
                 Email = model.Email,
@@ -1926,11 +1962,22 @@ namespace AttendanceMonitoring.Controllers
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(secretary, "Secretary");
+
+                var secretaryAssignment = new SecretaryAssignment
+                {
+                    SecretaryId = secretary.Id,
+                    SectionId = model.SectionId,
+                    CreatedAt = DateTime.Now
+                };
+
+                context.SecretaryAssignments.Add(secretaryAssignment);
+                await context.SaveChangesAsync();
+
                 return Json(new { success = true, message = "Secretary Added Successfully!" });
             }
             else
             {
-                foreach(var error in result.Errors)
+                foreach (var error in result.Errors)
                 {
                     if (error.Code == "DuplicateUserName")
                     {
@@ -1950,8 +1997,7 @@ namespace AttendanceMonitoring.Controllers
                 );
 
                 return Json(new { success = false, errors = errors });
-            }
-
+            }   
         }
 
         [HttpGet]
@@ -1964,6 +2010,13 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, error = "Secretary Not Found!" });
             }
 
+            //1. Nakuha na yung data sa database
+            var secretaryAssignment = await context.SecretaryAssignments
+                .Include(s => s.Section)
+                    .ThenInclude(g => g.Grade)
+                .Where(sc => sc.SecretaryId == id)
+                .FirstOrDefaultAsync();
+
             var model = new EditSecretaryViewModel()
             {
                 Email = secretary.Email,
@@ -1974,6 +2027,7 @@ namespace AttendanceMonitoring.Controllers
                 Sex = secretary.Sex,
                 imageFilePath = secretary.imageFilePath,
                 CreatedAt = secretary.CreatedAt,
+                secretaryClass = secretaryAssignment,
             };
 
             return PartialView("_ViewSecretaryPartial", model);
@@ -1989,8 +2043,27 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, error = "Secretary does not found" });
             }
 
+            //Retrieve all available Sections
+            var allSection = await context.Sections
+                    .Include(g => g.Grade)
+                .Select(ags => new { ags.Id, ags.Grade.GradeLevel, ags.SectionName, ags.Track, ags.TVLProgram })
+                .ToListAsync();
+
+            //Retrieve current student's assigned Grade and Section  to secretary
+            var studentsGradeSection = await context.SecretaryAssignments
+                .Where(si => si.SecretaryId == id)
+                .Select(s => s.SectionId)
+                .FirstOrDefaultAsync();
+
             var model = new EditSecretaryViewModel()
             {
+                AvailableGradeSection = allSection.Select(gs => new SelectListItem
+                {
+                    Value = gs.Id.ToString(),
+                    Text = $"Grade {gs.GradeLevel} {gs.SectionName} {gs.Track} {gs.TVLProgram}",
+                }).ToList(),
+
+                SectionId = studentsGradeSection,
                 Email = secretary.Email,
                 SchoolId = secretary.SchoolId,
                 FirstName = secretary.FirstName,
@@ -2041,6 +2114,18 @@ namespace AttendanceMonitoring.Controllers
                 ModelState.AddModelError("FirstName", "A secretary with this Full name is already existed");
                 ModelState.AddModelError("MiddleName", " ");
                 ModelState.AddModelError("LastName", " ");
+            }
+
+
+            //FindAsync() = used for primary key lookup lang(yung int Id ng SecretaryAssignment)
+            //FirstOrDefaultAsync() = used for filtering by any column(like SecretaryId which is the GUID)
+            //check muna if yung Id(secretary) sa AppUser is equals sa SecretaryId na nasa SecretaryAssignements Table
+            var secretaryAssigned = await context.SecretaryAssignments.FirstOrDefaultAsync(sa => sa.SecretaryId == id);
+
+            if (secretaryAssigned == null)
+            {
+                return Json(new { sucess = false, message = "Secretary assignment Id does not found" });
+
             }
 
             if (!ModelState.IsValid)
@@ -2139,6 +2224,12 @@ namespace AttendanceMonitoring.Controllers
                     }
                 }
             }
+
+            secretaryAssigned.SecretaryId = editSecretary.Id;
+            secretaryAssigned.SectionId = model.SectionId;
+
+            context.SecretaryAssignments.Update(secretaryAssigned);
+            await context.SaveChangesAsync();
 
             // No need ng gamitin ang SaveChangesAsync() kase Ang UserManager.UpdateAsync(), RemovePasswordAsync(), at AddPasswordAsync() ay automatically nag - save na sa database.
             //await context.SaveChangesAsync();

@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+﻿using AttendanceMonitoring.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 
 namespace AttendanceMonitoring.ViewModel
 {
@@ -14,7 +16,9 @@ namespace AttendanceMonitoring.ViewModel
         public IFormFile? imageFile{ get; set; }
         public string? imageFilePath { get; set; }
         public DateTime CreatedAt { get; set; }
-
+        public int SectionId { get; set; }
+        public List<SelectListItem>? AvailableGradeSection { get; set; }
+        public SecretaryAssignment? secretaryClass { get; set; }
 
     }
 }

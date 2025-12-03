@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AttendanceMonitoring.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace AttendanceMonitoring.ViewModel
 {
@@ -28,5 +30,11 @@ namespace AttendanceMonitoring.ViewModel
         public string Sex { get; set; }
 
         public IFormFile? imageFile { get; set; }
+        public int SectionId { get; set; }
+
+        public List<SelectListItem>? AvailableGradeSection { get; set; }
+
+
+
     }
 }
