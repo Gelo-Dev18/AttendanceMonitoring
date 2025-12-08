@@ -1,0 +1,60 @@
+﻿@using AttendanceMonitoring.ViewModel;
+@model EditAcademicPeriodViewModel;
+@{
+    ViewData["Title"] = "Edit Acamedic Period";
+}
+<style>
+    input::placeholder {
+        font-style: italic;
+    }
+
+    .form-group {
+        color: black;
+    }
+</style>
+
+<form id="EditAcademicPeriodForm" asp-action="EditAcademicPeriod" method="post">
+    @Html.AntiForgeryToken()
+    <div class="form-group">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    </div>
+    <div class="form-group">
+        <label asp-for="Year" class="form-label"><strong>Year</strong></label>
+        <input asp-for="Year" class="form-control" id="year" maxlength="9" placeholder="(2019-2020)" required>
+        <small class="form-text text-muted" style="font-style: italic;">
+            Enter the year in YYYY-YYYY format.
+        </small>
+        <span asp-validation-for="Year" class="text-danger validation-error-message"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="GradingPeriod" class="form-label"><strong>Grading Period</strong></label>
+        <select asp-for="GradingPeriod" class="form-control" required>
+            <option value="" selected>Choose...</option>
+            <option value="First">First Grading</option>
+            <option value="Second">Second Grading</option>
+            <option value="Third">Third Grading</option>
+            <option value="Fourth">Fourth Grading</option>
+        </select>
+        <span asp-validation-for="GradingPeriod" class="text-danger validation-error-message"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Status" class="form-label"><strong>Status</strong></label>
+        <select asp-for="Status" class="form-control" required>
+            <option value="" selected>Choose...</option>
+            <option value="0">Not yet Started</option>
+            <option value="1">Started</option>
+            <option value="2">Closed</option>
+        </select>
+    </div>
+    @* <input type="hidden" name="sourceSectionId" value="@Model.IsDefault" /> *@
+    <div class="modal-footer">
+        <button type="submit" class="btn btn-primary" id="SaveAcademicPeriod">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+    </div>
+</form>
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

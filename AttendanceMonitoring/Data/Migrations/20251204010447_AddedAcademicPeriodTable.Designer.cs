@@ -4,6 +4,7 @@ using AttendanceMonitoring.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AttendanceMonitoring.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251204010447_AddedAcademicPeriodTable")]
+    partial class AddedAcademicPeriodTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,9 +46,8 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("Year")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -151,69 +153,6 @@ namespace AttendanceMonitoring.Data.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("AttendanceMonitoring.Models.Attendance", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AcademicPeriodId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("AttendanceDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("AttendanceMarking")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ExcuseReason")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RecordedById")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("SecretaryAssignmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("TeacherAssignmentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AcademicPeriodId");
-
-                    b.HasIndex("RecordedById");
-
-                    b.HasIndex("SecretaryAssignmentId");
-
-                    b.HasIndex("TeacherAssignmentId");
-
-                    b.HasIndex("StudentId", "AttendanceDate", "TeacherAssignmentId", "SecretaryAssignmentId", "AcademicPeriodId")
-                        .IsUnique()
-                        .HasFilter("[TeacherAssignmentId] IS NOT NULL AND [SecretaryAssignmentId] IS NOT NULL");
-
-                    b.ToTable("Attendances", t =>
-                        {
-                            t.HasCheckConstraint("CK_Attendance_Assignment", "([TeacherAssignmentId] IS NOT NULL AND [SecretaryAssignmentId] IS NULL)OR ([TeacherAssignmentId] IS NULL AND [SecretaryAssignmentId] IS NOT NULL)");
-                        });
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Grade", b =>
@@ -618,47 +557,6 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("AttendanceMonitoring.Models.Attendance", b =>
-                {
-                    b.HasOne("AttendanceMonitoring.Models.AcademicPeriod", "AcademicPeriod")
-                        .WithMany("Attendances")
-                        .HasForeignKey("AcademicPeriodId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AttendanceMonitoring.Models.AppUser", "RecordedBy")
-                        .WithMany()
-                        .HasForeignKey("RecordedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AttendanceMonitoring.Models.SecretaryAssignment", "SecretaryAssignment")
-                        .WithMany("SecretaryAttendances")
-                        .HasForeignKey("SecretaryAssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("AttendanceMonitoring.Models.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("AttendanceMonitoring.Models.TeacherAssignment", "TeacherAssignment")
-                        .WithMany("TeacherAttendances")
-                        .HasForeignKey("TeacherAssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("AcademicPeriod");
-
-                    b.Navigation("RecordedBy");
-
-                    b.Navigation("SecretaryAssignment");
-
-                    b.Navigation("Student");
-
-                    b.Navigation("TeacherAssignment");
-                });
-
             modelBuilder.Entity("AttendanceMonitoring.Models.SecretaryAssignment", b =>
                 {
                     b.HasOne("AttendanceMonitoring.Models.AppUser", "Secretary")
@@ -797,11 +695,6 @@ namespace AttendanceMonitoring.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("AttendanceMonitoring.Models.AcademicPeriod", b =>
-                {
-                    b.Navigation("Attendances");
-                });
-
             modelBuilder.Entity("AttendanceMonitoring.Models.AppUser", b =>
                 {
                     b.Navigation("SecretariesAssignments");
@@ -812,11 +705,6 @@ namespace AttendanceMonitoring.Data.Migrations
             modelBuilder.Entity("AttendanceMonitoring.Models.Grade", b =>
                 {
                     b.Navigation("Sections");
-                });
-
-            modelBuilder.Entity("AttendanceMonitoring.Models.SecretaryAssignment", b =>
-                {
-                    b.Navigation("SecretaryAttendances");
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Section", b =>
@@ -841,11 +729,6 @@ namespace AttendanceMonitoring.Data.Migrations
             modelBuilder.Entity("AttendanceMonitoring.Models.Subject", b =>
                 {
                     b.Navigation("SectionSubjects");
-                });
-
-            modelBuilder.Entity("AttendanceMonitoring.Models.TeacherAssignment", b =>
-                {
-                    b.Navigation("TeacherAttendances");
                 });
 #pragma warning restore 612, 618
         }

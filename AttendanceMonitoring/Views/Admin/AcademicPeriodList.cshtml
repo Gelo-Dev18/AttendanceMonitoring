@@ -1,0 +1,93 @@
+﻿@{
+    ViewData["Title"] = "Academic Period List";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">Academic Period List</h1>
+<!-- <p class="mb-4">Table for Teachers Info</p> -->
+<!-- DataTales Example -->
+<div class="card shadow mb-4" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Academic Period Info</h6>
+        <button type="button" class="btn btn-success bg-gradient-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddSmallModalForm" data-url="/Admin/AddAcademicPeriod" data-title="Add Academic Period Details">
+            <span class="text">Add Academic Period</span>
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th><strong>#</strong></th>
+                        <th><strong>Year</strong></th>
+                        <th><strong>Grading Period</strong></th>
+                        <th><strong>System Default</strong></th>
+                        <th><strong>Attendance Status</strong></th>
+                        <th><strong>Action</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var i = 1;
+                    }
+                    @foreach(var AcademicPeriodList in Model)
+                    {
+                        <tr>
+                            <td><strong>@(i++)</strong></td>
+                            <td><strong>@AcademicPeriodList.Year</strong></td>
+                            <td><strong>@AcademicPeriodList.GradingPeriod Grading</strong></td>
+
+                            <td class="text-center">
+                                <strong>
+                                    @if(AcademicPeriodList.IsDefault == 0)
+                                    {
+                                        <button data-id="@AcademicPeriodList.Id" type="button" class="btn btn-secondary bg-gradient-secondary col-sm-4 btn-flat btn-sm px-1 py-0 make_default" data-bs-toggle="modal" data-bs-target="#ModalDefault">No</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-success btn-icon-split bg-gradient-success col-sm-4 btn-flat btn-sm px-1 py-0" >Yes</button>
+
+                                    }
+                                </strong>
+                            </td>
+
+                            <td class="text-center">
+                                <strong>
+                                    @if(AcademicPeriodList.Status == 0)
+                                    {
+                                        <span class="badge badge-secondary bg-gradient-secondary p-2">Not yet Started</span>
+                                    }else if(AcademicPeriodList.Status == 1)
+                                    {
+                                        <span class="badge badge-success bg-gradient-success p-2">Started</span>
+
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-danger bg-gradient-danger p-2">Closed</span>
+                                    }
+                                </strong>
+                            </td>
+                            <td class="text-center">
+                                <strong>
+                                    <button data-id="@AcademicPeriodList.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#EditSmallModal" data-url="/Admin/EditAcademicPeriod/" data-title="Edit Academic Period Details Detail's">
+                                        <i class="fas fa-edit"></i>@*Edit*@
+                                    </button>
+                                    <button data-id="@AcademicPeriodList.Id" type="button" class="btn btn-danger btn-circle" data-bs-toggle="modal" data-bs-target="#ModalDelete">
+                                        <i class="fas fa-trash"></i>@*Delete*@
+                                    </button>
+                                </strong>
+                            </td>
+                        </tr>
+                    }               
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="~/js/admin-academicperiod.js"></script>
+}
+

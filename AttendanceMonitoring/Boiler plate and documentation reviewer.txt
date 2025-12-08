@@ -1,0 +1,75 @@
+////////////////////////USING TRY CATCH AND TRANSACTION IN CRUD OPERATION////////////////////////
+🔥 MAIN RULE TO REMEMBER
+✔ If your action has 1 database operation → try/catch = optional (recommended).
+✔ If your action has 2+ database operations → try/catch = REQUIRED (with transaction).
+
+Your brain shortcut:
+
+Situation	Need try/catch?	Need transaction?
+1 SaveChangesAsync	Optional	No
+2+ SaveChangesAsync	YES	YES
+File upload + DB	YES	Optional
+Multi-table insert/update	YES	YES
+
+
+SUMMARY
+✔ Validation errors = OUTSIDE try
+
+di nagta-throw
+
+expected behavior
+
+no need transaction
+
+✔ Database operations = INSIDE try
+
+risky
+
+can throw
+
+need rollback
+
+✔ Transaction = ONLY IF more than 1 DB operation
+
+Student (add + assign section)
+
+SetDefaultAcademic (reset + set new one)
+
+✔ catch(DbUpdateException)
+
+errors galing sa database lang
+
+✔ catch(Exception)
+
+lahat ng errors sa mundo
+
+fallback
+////////////////////////////////////////////////////////////////////////////////////////////////////
+Kelan ginagamit ang try/catch?
+Simple Explanation:
+
+Pag may code na maaaring mag-throw ng error → try/catch.
+
+Examples:
+
+Saving to database
+
+Saving files (like your image)
+
+Calling external APIs
+
+Reading/writing files
+
+Anything asynchronous
+
+Any code na hindi mo kontrolado fully
+
+Why use try/catch?
+
+Para hindi crashing ang web app
+
+Para ma-handle ang error ng maayos
+
+Para ma-rollback ang transaction kung may mali
+
+Para mabigyan mo ng clear error message ang user

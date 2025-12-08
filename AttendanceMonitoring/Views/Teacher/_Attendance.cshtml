@@ -1,0 +1,202 @@
+﻿@using AttendanceMonitoring.ViewModel.Teacher;
+@model AttendanceViewModel;
+@{
+    ViewData["Title"] = "Teacher Page";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+<style>
+    .list-group-item.active {
+        background-color: #004943 !important; /* Bootstrap green */
+        border-color: #004943 !important;
+        color: white !important;
+    }
+    input[type="radio"]{
+        transform: scale(1.5);
+    }
+</style>
+<div class="col-lg-12">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="list-group">
+                @if (Model.teacherClass != null && Model.teacherClass.Any())
+                {
+                    @foreach (var teacherClass in Model.teacherClass)
+                    {
+                        //Dito na yung SelectedClass na galing sa controller. So kapag may selected na class, dun palang mag kakaroon ng Laman yung null na students(List<StudentSectionAssignment> students = null;)
+                        var isActive = Model.SelectedClassId == teacherClass.Id;
+
+                        //Razor helper method : @Url.Action
+                        // @Url.Action with href (Full Page Reload)
+                        @* <a href="@Url.Action("_Attendance", "Teacher", new {selectedClassId = teacherClass.Id} )"
+                            class="list-group-item list-group-item-action card shadow mb-4 card-outline border-bottom-success card-body @(isActive ? "active" : "")">
+                            Grade @teacherClass.SectionSubject.Section.Grade.GradeLevel
+                            @teacherClass.SectionSubject.Section.SectionName
+                        </a> *@
+
+                        //asp-action / asp-controller - Asp.Net Core -Tag Helpers = SAME THING FOR RAZOR HELPER METHOD TO FULL PAGE RELOAD, ONLY DIFFERENT SYNTAX
+                        <a asp-action="_Attendance" asp-controller="Teacher"  asp-route-selectedClassId="@teacherClass.Id"
+                           class="list-group-item list-group-item-action card shadow mb-4 card-outline border-bottom-success card-body @(isActive ? "active" : "")">
+                            Grade @teacherClass.SectionSubject.Section.Grade.GradeLevel
+                            @teacherClass.SectionSubject.Section.SectionName
+                            @teacherClass.SectionSubject.Section.Track
+                            @teacherClass.SectionSubject.Section.TVLProgram
+                            @teacherClass.SectionSubject.Subject.SubjectDescription
+                        </a>
+                        
+                    }   
+                }
+                else
+                {
+                <div class="list-group-item list-group-item-action">
+                        <p><strong>No Assignments yet</strong></p>
+                    </div>
+                }
+            </div>          
+        </div>
+        <div class="col-md-9">
+            @* <div class="card shadow mb-4" style=""> *@
+
+            <div class="card shadow mb-4 card-outline border-left-success">
+                <div class="card-header">
+                    <b>Attendance for Academic Year: 2025-2026(First Grading)</b>
+                    <!-- <div class="card-tools">
+                        Submit Evaluation Button
+                        <button class="btn btn-sm btn-flat btn-primary bg-gradient-primary mx-1 mt-2" form="manage-evaluation" id="submit-btn" disabled>Submit Evaluation</button>
+                    </div> -->
+                </div>
+                <div class="card-body">
+                    
+                    @if (Model.Students != null && Model.Students.Any())
+                    {
+
+
+                        <fieldset class="border border-success p-2 w-100">
+                            <legend class="w-auto">Attendance Marking</legend>
+                            <h4><strong>P</strong> = Present, <strong>A</strong> = Absent, <strong>L</strong> = Late, <strong>E</strong> = Excuse</h4>
+
+                        </fieldset>
+                        <form id="manage-evaluation" method="post" asp-action="SaveAttendance">
+                            <input type="hidden" name="StudentId" value="">
+                            <input type="hidden" name="RecordedById" value="">
+                            <input type="hidden" name="AcademicPeriodId" value="">
+                            <input type="hidden" name="AttendanceDate" value="">
+
+                            <div class="clear-fix mt-2"></div>
+
+                            <div class="table-responsive">
+                                <table class="table table-condensed">
+                                    <thead>
+                                        <tr class="bg-gradient-secondary" style="color: white;">
+                                            <th class="p-1"><b>List of Students</b></th>
+                                            <th class="text-center" style="font-size: 13px;">
+                                                <br>
+                                                Present
+                                            </th>
+                                            <th class="text-center" style="font-size: 13px;">
+                                                <br>
+                                                Absent
+                                            </th>
+                                            <th class="text-center" style="font-size: 13px;">
+                                                <br>
+                                                Late
+                                            </th>
+                                            <th class="text-center" style="font-size: 13px;">
+                                                <br>
+                                                Excuse
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="tr-sortable">
+                                    @{
+                                        var attendanceOptions = new[]
+                                        {
+                                            new{Value = "Present", Label = "Present"},
+                                            new{Value = "Late", Label = "Label"},
+                                            new{Value = "Absent", Label = "Label"},
+                                            new{Value = "Excuse", Label = "Excuse"}
+                                        };
+                                    }
+                                    @foreach( var studentAssignment in Model.Students)
+                                    {
+                                        var studentId = studentAssignment.StudentId;
+
+                                        <tr class="bg-white">
+                                            <td class="p-1" width="40%">
+                                                @studentAssignment.Student.FirstName
+                                                @studentAssignment.Student.MiddelName
+                                                @studentAssignment.Student.LastName
+                                                <input type="hidden" name="" value="">
+                                            </td>
+
+                                            @foreach(var options in attendanceOptions)
+                                            {   
+                                            <td class="text-center" style="">
+                                                @* <div class="icheck-success d-inline"> *@
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="Attendace_@studentId" id="@(options.Value.ToLower())_@studentId" value="@options.Value">
+                                                    <label class="form-check-label" for="@(options.Value.ToLower())_@studentId"></label>
+                                                </div>                                         
+                                            </td>
+                                            }
+                                            @*
+                                            <td class="text-center">
+                                                <div class="icheck-success d-inline">
+                                                    <input type="radio" name="" id="" value="2">
+                                                    <label for=""></label>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="icheck-success d-inline">
+                                                    <input type="radio" name="" id="" value="3">
+                                                    <label for=""></label>
+                                                </div>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="icheck-success d-inline">
+                                                    <input type="radio" name="" id="" value="4">
+                                                    <label for=""></label>
+                                                </div>
+                                            </td>
+                                            *@
+                                        </tr>
+                                    }
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Add a comment box for evaluators -->
+                        <div class="form-group">
+                            <label for="comments"><strong>Remarks </strong></label>
+                            <textarea name="comments" id="comments" class="form-control" rows="4" placeholder="Enter any remarks here..." required></textarea>
+
+                            <div class="card-tools" style="text-align: right;">
+                                <!-- Submit Evaluation Button -->
+                                <button class="btn btn-sm btn-flat btn-success bg-gradient-success mx-1 mt-2" form="manage-evaluation" id="submit-btn" disabled>Submit Attendance</button>
+                            </div>
+                        </div>
+
+                        </form>
+                    }
+                    else if (Model.SelectedClassId.HasValue)
+                    {
+                        <h3 class="text-center">
+                            No Students assigned to this section yet
+                        </h3>
+                    }
+                    else
+                    {
+                        <div class="list-group-item list-group-item-action shadow mb-4 card-outline border-bottom-success card-body">
+                            Please Select Class to conduct Attendance
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@* @section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+} *@

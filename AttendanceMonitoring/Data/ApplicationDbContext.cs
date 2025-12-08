@@ -11,6 +11,9 @@ namespace AttendanceMonitoring.Data
         {
         }
         //public DbSet<AttendanceMonitoring.Models.Student> Student { get; set; } = default!;
+
+        public DbSet<AcademicPeriod> AcademicPeriods { get; set; }
+        public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Section> Sections { get; set; }
         public DbSet<Subject> Subjects { get; set; }
@@ -111,7 +114,77 @@ namespace AttendanceMonitoring.Data
                 .HasForeignKey(ta => ta.SectionSubjectId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            ///////////////////////////////////////////////////////////////////////////////////////////////////
+            ///// FOR TEACHER ASSIGNMENT ///////
+            ///
+
+            //ALWAYS CONFIGURE FOREIGN KEY IF A CLASS HAS A FOREIGN KEY (EX.Class Attendance has public int Academic Period - public virtual AcademicPeriod AcademicPeriod
+            //foreign keys to Student table
+            modelBuilder.Entity<Attendance>()
+                .HasOne(a => a.Student)
+                .WithMany()
+                .HasForeignKey(a => a.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //foreign keys to AppUser table
+            modelBuilder.Entity<Attendance>()
+                .HasOne(a => a.RecordedBy)
+                .WithMany()
+                .HasForeignKey(a => a.RecordedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //foreign keys to AppUser table
+            modelBuilder.Entity<Attendance>()
+                .HasOne(a => a.AcademicPeriod)
+                .WithMany(ap => ap.Attendances) //(e.g., "Get all attendances for School Year 2024-2025")
+                .HasForeignKey(a => a.AcademicPeriodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Secretary Assignment Relationship
+            modelBuilder.Entity<Attendance>()
+                .HasOne(a => a.SecretaryAssignment)
+                .WithMany(sa => sa.SecretaryAttendances)
+                .HasForeignKey(a => a.SecretaryAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Teacher Assignment Relationship
+            modelBuilder.Entity<Attendance>()
+                .HasOne(a => a.TeacherAssignment)
+                .WithMany(ta => ta.TeacherAttendances)
+                .HasForeignKey(a => a.TeacherAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //Unique index - prevent duplicate attendance on same day
+            ///❌ You CANNOT have 2 attendance records with:
+            ///Same StudentId
+            ///Same AttendanceDate
+            ///Same AcademicPeriodId
+            ///AND same TeacherAssignment or SecretaryAssignment
+            modelBuilder.Entity<Attendance>()
+                .HasIndex(a => new
+                {
+                    a.StudentId,
+                    a.AttendanceDate,
+                    a.TeacherAssignmentId,
+                    a.SecretaryAssignmentId,
+                    a.AcademicPeriodId
+                })
+                .IsUnique();
+
+            //↑This filter ensures unique constraint workds properly with nullable columns
+
+            //Check Constraint - ensure EXACTLY ONE assignment (Teacher or Secretary not both)
+            //Ensure na Exacly one person lang ang recorded na attendance
+            modelBuilder.Entity<Attendance>()
+                .ToTable(b => b.HasCheckConstraint(
+                    "CK_Attendance_Assignment",
+                    "([TeacherAssignmentId] IS NOT NULL AND [SecretaryAssignmentId] IS NULL)" +
+                    "OR ([TeacherAssignmentId] IS NULL AND [SecretaryAssignmentId] IS NOT NULL)"
+                    )
+                );
         }
 
     }
+
 }
+

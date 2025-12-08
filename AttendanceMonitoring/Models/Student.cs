@@ -20,6 +20,8 @@ namespace AttendanceMonitoring.Models
         public byte[]? imageFileData { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        //Direct relationship: One-to-Many(Student → StudentSectionAssignment)
+        //Overall pattern: Many-to-Many (Student ↔ Section through linking table)
         public ICollection<StudentSectionAssignment> SectionAssignments { get; set; }
     }
 }

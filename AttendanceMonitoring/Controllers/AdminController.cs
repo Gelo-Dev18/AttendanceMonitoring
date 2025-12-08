@@ -74,6 +74,195 @@ namespace AttendanceMonitoring.Controllers
             return View(adminHome);
         }
 
+        public async Task<IActionResult> AcademicPeriodList()
+        {
+            var AcademicPeriodList = await context.AcademicPeriods
+                                    .OrderBy(ap => ap.Year)
+                                    .ToListAsync();
+            return View(AcademicPeriodList);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAcademicPeriod(AcademicPeriodViewModel model)
+        {
+            bool yearExisted = await context.AcademicPeriods.AnyAsync(ap => ap.Year == model.Year && ap.GradingPeriod == model.GradingPeriod);
+
+            if (yearExisted)
+            {
+                ModelState.AddModelError("Year", "Academic Year is already existed with the same grading Period");
+                ModelState.AddModelError("GradingPeriod","");
+
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+
+            var AcademicPeriod = new AcademicPeriod()
+            {
+                Year = model.Year,
+                GradingPeriod = model.GradingPeriod,
+                CreatedAt = DateTime.Now,
+                IsDefault = model.IsDefault = 0, //default to 0 . 0 = NO, 1 = YES
+                Status = model.Status = 1, ////default to 0 . 0 = NOT YET STARTED, 1 = STARTED, 2 = CLOSED
+            };
+
+
+            await context.AddAsync(AcademicPeriod);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Academic Period successfully added!" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetDefaultAcademic (int id)
+        {
+            var setDefaultAcademic = await context.AcademicPeriods.FindAsync(id);
+
+            if (setDefaultAcademic == null)
+            {
+                return Json(new { success = false, error = "Id Not Found!" });
+            }
+
+            // Use a database transaction to ensure both updates succeed or fail together
+            //READ Boiler plate and documentation reviewer.txt for more information about try catch and database transaction
+            using (var transaction = await context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    //Find the current default item and change its status to 0( 0 is equals to NO)
+                    var currentDefault = await context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+                    if (currentDefault != null)
+                    {
+                        currentDefault.IsDefault = 0;
+                        context.AcademicPeriods.Update(currentDefault);
+                    }
+
+                    //Find the Academic Period to be the new default and set its status to 1 (1 is equals to YES)
+                    var newDefault = await context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.Id == id);
+                    if (newDefault != null)
+                    {
+                        newDefault.IsDefault = 1;
+                        context.AcademicPeriods.Update(newDefault);
+                    }
+
+                    await context.SaveChangesAsync();
+                    await transaction.CommitAsync();// All good → commit transaction // <— this makes the changes permanent // Para syang save button 
+
+                    return Json(new { success = true, message = "Academic Period set default!" });
+                }
+                //catch(Exception ex) //use Exception General — kahit anong error, kahit hindi database
+                catch (DbUpdateException dbEx) // use DbUpdatedException for specific error na galing sa database
+                                              // dbEx is variable. Optional sya. ginagamit lang kung gustong  basahin details ng error.
+                {
+                    await transaction.RollbackAsync(); // Something failed → rollback
+                    return Json(new { success = false, error = "An error occurred while updating the default Academic Period" });
+
+                }
+            }
+            
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditAcademicPeriod(int id)
+        {
+            var academicPeriod = await context.AcademicPeriods.FindAsync(id);
+
+            if (academicPeriod == null)
+            {
+                return Json(new { success = false, error = "Id Not Found!" });
+
+            }
+
+
+
+            var model = new EditAcademicPeriodViewModel()
+            {
+                GradingPeriod = academicPeriod.GradingPeriod,
+                Year = academicPeriod.Year,
+                Status = academicPeriod.Status,
+                IsDefault = academicPeriod.IsDefault
+            };
+
+            return PartialView("_EditAcademicPeriodPartial", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAcademicPeriod(int id, EditAcademicPeriodViewModel model)
+        {
+            var editacademicPeriod = await context.AcademicPeriods.FindAsync(id);
+
+            if (editacademicPeriod == null)
+            {
+                return Json(new { success = false, error = "Id Not Found!" });
+
+            }
+
+            bool yearExisted = await context.AcademicPeriods.AnyAsync(ap => ap.Year == model.Year && ap.GradingPeriod == model.GradingPeriod && ap.Id != id);
+
+            if (yearExisted)
+            {
+                ModelState.AddModelError("Year", "Academic Year is already existed with the same grading Period");
+                ModelState.AddModelError("GradingPeriod", "");
+
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            try
+            {
+                editacademicPeriod.GradingPeriod = model.GradingPeriod;
+                editacademicPeriod.Year = model.Year;
+                editacademicPeriod.Status = model.Status;
+
+                context.AcademicPeriods.Update(editacademicPeriod);
+                await context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Academic Period Deleted Successfully!" });
+
+
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Something went wrong" });
+            }
+
+        }
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAcademicPeriod(int id)
+        {
+            var AcademicId = await context.AcademicPeriods.FindAsync(id);
+
+            if(AcademicId == null)
+            {
+                return Json(new { success = false, error = "Id Not Found!" });
+
+            }
+
+            context.AcademicPeriods.Remove(AcademicId);
+            await context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Academic Period Deleted Successfully!" });
+
+        }
+
         public async Task<IActionResult> SubjectList()
         {
             var subjectList = await context.Subjects
@@ -92,6 +281,10 @@ namespace AttendanceMonitoring.Controllers
             return View(GradeList);
         }
 
+        public async Task<IActionResult> AddAcademicPeriod()
+        {
+            return PartialView("_AddAcademicPeriodPartial");
+        }
         public async Task<IActionResult> AddSubject()
         {
             return PartialView("_AddSubjectPartial");

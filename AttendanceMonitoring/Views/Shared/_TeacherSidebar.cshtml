@@ -1,25 +1,27 @@
 ﻿@{
-    var isUserSectionActive = Html.IsActive("Admin", "TeacherList", "StudentList", "SecretaryList") == "active";
-    var isGradeAndSectionActive = Html.IsActive("Admin", "GradeList", "SectionList") == "active";
+    var isUserSectionActive = Html.IsActive("Teacher", "TeacherList", "StudentList", "SecretaryList") == "active";
+    var isGradeAndSectionActive = Html.IsActive("Teacher", "GradeList", "SectionList") == "active";
 }
 <!-- Sidebar -->
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center " href="@Url.Action("AdminHome", "Admin")">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center " href="@Url.Action("TeacherHome", "Teacher")">
         <div class="sidebar-brand-icon">
             <!-- <i class="fas fa-laugh-wink"></i> -->
             <i class="fas fa-home"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">Admin Dashboard</div>
+        <div class="sidebar-brand-text mx-3">Teacher Dashboard</div>
     </a>
 
     <!-- Divider -->
     <hr class="sidebar-divider my-0">
-    <!-- Nav Item - Dashboard --> 
-                                      @*Url.Action and Html.ActionLink(IsACtive) are helper method*@
-    <li class="nav-item  @Html.IsActive("Admin", "AdminHome")">@*Dito nauna ang Controller name bago action name depende sa pag set mo sa custom method mo na IsActive*@
-        <a class="nav-link" href="@Url.Action("AdminHome", "Admin")">@*Action name muna bago controllername kapag Url.Action ang gamit, default to*@
+    <!-- Nav Item - Dashboard -->
+    @*Url.Action and Html.ActionLink(IsACtive) are helper method*@
+    <li class="nav-item  @Html.IsActive("Teacher", "TeacherHome")">
+        @*Dito nauna ang Controller name bago action name depende sa pag set mo sa custom method mo na IsActive*@
+        <a class="nav-link" href="@Url.Action("TeacherHome", "Teacher")">
+            @*Action name muna bago controllername kapag Url.Action ang gamit, default to*@
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
@@ -33,21 +35,14 @@
         Interface
     </div>
 
-    <!-- Nav Item - Academic Period List -->
-    <li class="nav-item @Html.IsActive("Admin", "AcademicPeriodList")">
-        <a class="nav-link" href="@Url.Action("AcademicPeriodList", "Admin")">
-            <i class="fas fa-calendar"></i>
-            <span>Academic Period</span>
+    <!-- Nav Item - Conduct Attendance -->
+    <li class="nav-item @Html.IsActive("Teacher", "_Attendance")">
+        <a class="nav-link" href="@Url.Action("_Attendance", "Teacher")">
+            <i class="fa fa-book">‌</i>
+            <span>Attendance</span>
         </a>
     </li>
 
-    @* <!-- Nav Item - Grade & Section -->
-    <li class="nav-item @Html.IsActive("Admin", "GradeAndSectionList")">
-        <a class="nav-link" href="@Url.Action("GradeAndSectionList", "Admin")">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <span>Grade & Section</span>
-        </a>
-    </li> *@
 
     <!-- Nav Item - Grade And Section -->
     <li class="nav-item @(isGradeAndSectionActive ? "active" : "")">
@@ -59,37 +54,35 @@
         <div id="collapseTwo01" class="collapse @(isGradeAndSectionActive ? "show" : "")" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Class Components:</h6>
-                <a class="collapse-item @Html.IsActive("Admin", "GradeList")" href="@Url.Action("GradeList", "Admin")">Grade List</a>
-                <a class="collapse-item @Html.IsActive("Admin", "SectionList")" href="@Url.Action("SectionList", "Admin")">Section List</a>
+                <a class="collapse-item @Html.IsActive("Teacher", "GradeList")" href="@Url.Action("GradeList", "Teacher")">Grade List</a>
+                <a class="collapse-item @Html.IsActive("Teacher", "SectionList")" href="@Url.Action("SectionList", "Teacher")">Section List</a>
             </div>
         </div>
     </li>
 
     <!-- Nav Item - Subjects -->
-    <li class="nav-item @Html.IsActive("Admin", "SubjectList")">
-        <a class="nav-link" href="@Url.Action("SubjectList", "Admin")">
+    <li class="nav-item @Html.IsActive("Teacher", "SubjectList")">
+        <a class="nav-link" href="@Url.Action("SubjectList", "Teacher")">
             <i class="fa fa-book">‌</i>
             <span>Subjects</span>
         </a>
     </li>
-
 
     <!-- Nav Item - USERS -->
     <li class="nav-item @(isUserSectionActive ? "active" : "")">
         <a class="nav-link collapsed @(isUserSectionActive ? "active" : "")" href="#" data-toggle="collapse" data-target="#collapseTwo"
            aria-expanded="true" aria-controls="collapseTwo">
             <i class="fas fa-users"></i>
-            <span>User List</span> 
+            <span>User List</span>
         </a>
         <div id="collapseTwo" class="collapse @(isUserSectionActive ? "show" : "")" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">User Components:</h6>
-                <a class="collapse-item @Html.IsActive("Admin", "TeacherList")" href="@Url.Action("TeacherList", "Admin")">Teacher List</a>
                 <a class="collapse-item @Html.IsActive("Admin", "StudentList")" href="@Url.Action("StudentList", "Admin")">Student List</a>
                 <a class="collapse-item @Html.IsActive("Admin", "SecretaryList")" href="@Url.Action("SecretaryList", "Admin")">Secretary List</a>
             </div>
         </div>
-    </li> 
+    </li>
 
     <!-- Nav Item - REPORTS -->
     <li class="nav-item">
@@ -116,34 +109,6 @@
         System Settings
     </div>
 
-    <!-- Nav Item - Pages Collapse Menu -->
-    <!-- <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
-            aria-expanded="true" aria-controls="collapsePages">
-            <i class="fas fa-fw fa-folder"></i>
-            <span>Pages</span>
-        </a>
-        <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Login Screens:</h6>
-                <a class="collapse-item" href="login.html">Login</a>
-                <a class="collapse-item" href="register.html">Register</a>
-                <a class="collapse-item" href="forgot-password.html">Forgot Password</a>
-                <div class="collapse-divider"></div>
-                <h6 class="collapse-header">Other Pages:</h6>
-                <a class="collapse-item" href="404.html">404 Page</a>
-                <a class="collapse-item" href="blank.html">Blank Page</a>
-            </div>
-        </div>
-    </li> -->
-    <!-- Nav Item - Charts -->
-    <li class="nav-item">
-        <a class="nav-link" href="#">
-            <i class="fas fa-fw fa-cog"></i>
-            <span>Backup & Restore</span>
-        </a>
-    </li>
-
     <!-- Divider -->
     <hr class="sidebar-divider d-none d-md-block">
 
@@ -151,4 +116,4 @@
     <div class="text-center d-none d-md-inline">
         <button class="rounded-circle border-0" id="sidebarToggle"></button>
     </div>
-</ul> 
+</ul>

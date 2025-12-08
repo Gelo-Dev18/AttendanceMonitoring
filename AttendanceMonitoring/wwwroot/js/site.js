@@ -85,6 +85,37 @@ $(document).ready(function () {
         }
     });
 
+    $(document).on('input', '#year', function () {
+        let value = $(this).val();
+
+        value = value.replace(/[^0-9\-]/g, '');
+
+
+        // Split the input into year parts (e.g., "2024-")
+        const yearParts = value.split('-');
+
+        // Auto-generate the next year if the first year has 4 digits and the hyphen is not present
+        if (yearParts[0].length === 4 && !isNaN(yearParts[0]) && yearParts.length === 1) {
+            const nextYear = parseInt(yearParts[0]) + 1; // Add 1 to the year
+            value = yearParts[0] + '-' + nextYear; // Auto-fill the second year
+        }
+
+        // Limit the second year to 4 digits if it exists
+        if (yearParts[1] && yearParts[1].length > 4) {
+            yearParts[1] = yearParts[1].slice(0, 4); // Truncate the second year
+        }
+
+        // Limit the total input to 9 characters (YYYY-YYYY)
+        if (value.length > 9) {
+            value = value.slice(0, 9);
+        }
+
+
+        $(this).val(value);
+
+
+    });
+
     ///////////////////////////////////////////////////////////////////////////////
 
     //Pag Binago  yung dropdown  mag-enable/disable yung TVL input
@@ -117,6 +148,8 @@ $(document).ready(function () {
                     dropdownParent: $('#AddModalForm'),// para gumana yung searchbox
                     theme: 'bootstrap4'
                 });
+
+
                 checkOption(); //onchange function
 
             },
@@ -131,6 +164,7 @@ $(document).ready(function () {
         hideBlurBackground();
     });
 
+    
     //////////////////////////////////////////////////////////////////////////////
 
     //Triggers Edit Modal
@@ -296,6 +330,20 @@ $(document).ready(function () {
     });
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    //Triggers ModalDelete
+    $('#ModalDefault').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        userID = button.data('id');
+
+        loadBlurBackground();
+    });
+
+    $('#ModalDefault').on('hide.bs.modal', function (event) {
+        hideBlurBackground();
+    });
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     //Add Small Modal Form
     $('#AddSmallModalForm').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
@@ -312,6 +360,7 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#AddSmallModalFormBody').html(html);
+                
             },
             error: function (xhr, status, error) {
                 console.error('Error loading add teacher modal:', error);
@@ -324,6 +373,7 @@ $(document).ready(function () {
         hideBlurBackground();
     });
 
+    
     //Add Small Modal Form
     $('#AssignForm').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
