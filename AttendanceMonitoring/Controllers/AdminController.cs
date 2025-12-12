@@ -112,7 +112,7 @@ namespace AttendanceMonitoring.Controllers
                 GradingPeriod = model.GradingPeriod,
                 CreatedAt = DateTime.Now,
                 IsDefault = model.IsDefault = 0, //default to 0 . 0 = NO, 1 = YES
-                Status = model.Status = 1, ////default to 0 . 0 = NOT YET STARTED, 1 = STARTED, 2 = CLOSED
+                Status = model.Status = 0, ////default to 0 . 0 = NOT YET STARTED, 1 = STARTED, 2 = CLOSED
             };
 
 

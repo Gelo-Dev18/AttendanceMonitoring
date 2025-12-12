@@ -1,23 +1,23 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AttendanceMonitoring.ViewModel.Teacher
+namespace AttendanceMonitoring.ViewModel.Secretary
 {
-    public class SaveAttendanceViewModel
+    public class SecretarySaveAttendanceViewModel
     {
         [Required]
-        public int AcademicPeriodId{ get; set; }
+        public int AcademicPeriodId { get; set; }
 
         [Required]
         public DateTime AttendanceDate { get; set; }
 
         // Either TeacherAssignmentId OR SecretaryAssignmentId
-        public int? TeacherAssignmentId { get; set; }
-        //public int? SecretaryAssignmentId { get; set; }
+        //public int? TeacherAssignmentId { get; set; }
+        public int? SecretaryAssignmentId { get; set; }
 
         //Dictionary: StudentId -> AttendanceMarking
         // Example: { "STU001": "Present", "STU002": "Absent", "STU003": "Late" }
         ///to store and manage a collection of key-value pairs 
-        [Required] 
+        [Required]
         public Dictionary<int, string> StudentAttendance { get; set; } = new Dictionary<int, string>();
 
         [Required]
@@ -31,6 +31,5 @@ namespace AttendanceMonitoring.ViewModel.Teacher
 
         [MaxLength(500)]
         public string? Remarks { get; set; }
-
     }
 }
