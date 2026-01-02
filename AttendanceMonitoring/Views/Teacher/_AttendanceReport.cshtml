@@ -1,0 +1,328 @@
+﻿@using AttendanceMonitoring.ViewModel.Teacher;
+@model AttendanceReportViewModel;
+
+@{
+    ViewData["Title"] = "Attendance Report";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+@* <style>
+    .active-item{
+        color: forestgreen;
+        font-weight: bold;
+        background: #d4edda;
+    }
+</style> *@
+<!--PAGE HEADER-->
+@* <div class="page-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-0"><i class="fa fa-calendar mr-2"></i>Student Attendance Report</h1>
+            <p class="mb-0 mt-2 opacity-75" id="pageSubtitle">Select filters to view attendance</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <button class="btn btn-light me-2" id="exportBtn"><i class="fas fa-download me-2"></i>Export</button>
+            <button class="btn btn-outline-light" id="refreshBtn"><i class="fas fa-sync me-2"></i>Refresh</button>
+        </div>
+    </div>
+</div> *@
+
+<div class="card border-left-success shadow h-100 py-2 mb-3">
+    <div class="card-body">
+        <div class="row no-gutters align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0"><i class="fa fa-calendar mr-2"></i>Student Attendance Report</h1>
+                <p class="mb-0 mt-2 opacity-75" id="pageSubtitle">
+                    Track and monitor student attendance
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <button class="btn btn-light me-2" id="exportBtn"><i class="fas fa-download me-2"></i>Export</button>
+                <button class="btn btn-light" id="refreshBtn"><i class="fas fa-sync me-2"></i>Refresh</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <form method="get" asp-action="_AttendanceReport" asp-controller="Teacher">
+        <div class="row align-items-end" style="color: black;">
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold"><strong>Select Academic Period</strong></label>
+                <select id="academicYear" asp-for="SelectedAcademicPeriod" asp-items="@Model.academicPeriod" class="form-control" required>
+                    <option value="" selected>Select</option>
+                    @* @foreach(var year in Model.academicPeriod)
+                    {
+                        <option value="@year.Value" class="@(year.Text.Contains("Active")?"active-item": "")">
+                            @year.Text
+                        </option>
+                    } *@
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold"><strong>Select  Assigned Class</strong></label>
+                <select asp-for="SelectedTeacherAssignment" asp-items="@Model.teacherClass" class="form-control" id="gradeFilter" name="teacherAssignment" required>
+                    <option value="" selected>Select</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold"><strong>Date Range</strong></label>
+                <div class="input-group">
+                    <input type="date" class="form-control" id="startDate" asp-for="StartDate" value="@(Model.StartDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.AddDays(-0).ToString("yyyy-MM-dd"))">
+
+                    <span class="input-group-text">to</span>
+                    <input type="date" class="form-control" id="endDate" asp-for="EndDate" value="@(Model.EndDate?.ToString("yyyy-MM-dd") ?? DateTime.Now.ToString("yyyy-MM-dd"))">
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <button class="btn btn-primary w-100" id="applyFilter">
+                    <i class="fas fa-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-12">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1" ></i>
+                    Selected range: <strong id="dateRangeInfo" style="color:black;"></strong>
+                </small>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Summary Cards -->
+@* <div class="row" id="summarySection" style=""> *@
+@if(Model.StudentAttendance != null && Model.StudentAttendance.Any())
+{
+    //Calculate overall Statistics
+    var totalStudents = Model.StudentAttendance.Count();
+    var allDays = Model.StudentAttendance.SelectMany(s => s.DailyAttendance).ToList(); //kunin ang collection sa loob ng collection para i-turn into one flat list.
+    var presentCount = allDays.Count(d => d == "P");
+    var lateCount = allDays.Count(d => d == "L");
+    var totalRecords = allDays.Count(d => d != "-");//Count all days with marking, ignore the "-" cause it symbolizes null or no attendance
+    var overallRate = totalRecords > 0
+        ? Math.Round(((double)(presentCount + lateCount * 0.5) / totalRecords) * 100) //user Math.Round to rounds the decimal number into the neareast wholenumner to avoid 83.333%
+        : 0;
+    
+    //Fetch the student's attendance that is perfect Present marking
+    var perfectAttendance = Model.StudentAttendance.Count(s =>
+        s.DailyAttendance.All(d => d == "P") &&
+        s.DailyAttendance.All(d => d != "-")
+    );
+
+    var needsAttention = Model.StudentAttendance.Where(s =>
+    {
+        var absents = s.DailyAttendance.Count(d => d == "A");
+        var total = s.DailyAttendance.Count(d => d != "-");
+        var rate = total > 0 ? //if yung total is greater than 0 compute the rate else,set rate to 0
+        ((double)(s.DailyAttendance.Count(d => d == "P") + s.DailyAttendance.Count(d => d == "L") * 0.5) / total) * 100 : 0; //Combine the total of Present and absent then divide to total of days then multiple to 100, ": 0" mean if total is 0, no attendance rate so 0%
+        return absents >= 3 || rate < 70; //Kahit alin s dalawa ang nameet, returns false para maflagged if needed naba ng attention yung bata
+    }).ToList();
+
+    @* <div class="row g-4 mb-4" id="summarySection" style="display: none;"> *@
+    <div class="row" id="summarySection" style="">
+
+        <div class="col-md-3 mb-4">
+            <div class="card summary-card border-left-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="stats-number text-primary" id="totalStudents">@totalStudents</p>
+                            <p class="stats-label mb-0">Total Students</p>
+                        </div>
+                        <i class="fas fa-users summary-icon text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card summary-card border-left-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="stats-number text-success" id="attendanceRate">@overallRate%</p>
+                            <p class="stats-label mb-0">Attendance Rate</p>
+                        </div>
+                        <i class="fas fa-chart-line summary-icon text-success"></i>
+                    </div>
+                    <div class="progress progress-thin mt-2">
+                        <div class="progress-bar bg-success" id="attendanceProgressBar" style="width: @overallRate%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card summary-card border-left-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="stats-number text-warning" id="perfectAttendance">@perfectAttendance</p>
+                            <p class="stats-label mb-0">Perfect Attendance</p>
+                        </div>
+                        <i class="fas fa-star summary-icon text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card summary-card border-left-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="stats-number text-danger" id="needsAttention">@needsAttention.Count</p>
+                            <p class="stats-label mb-0">Needs Attention</p>
+                        </div>
+                        <i class="fas fa-exclamation-triangle summary-icon text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Students Needing Attention Alert -->
+    @if (needsAttention.Any())
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" id="alertSection">
+            <h5 class="alert-heading">
+                <i class="fas fa-exclamation-circle me-2"></i>Students Needing Attention
+            </h5>
+            <div class="alert-students" id="alertStudentsList">
+                <ul class="mb-0">
+                    @foreach(var student in needsAttention)
+                    {
+                        var absents = student.DailyAttendance.Count(d => d == "A");
+                        var lates = student.DailyAttendance.Count(d => d == "L");
+                        var total = student.DailyAttendance.Count(d => d != "-");
+                        var rate = total > 0
+                            ? Math.Round(((double)(student.DailyAttendance.Count(d => d == "P") + lates * 0.5) / total) * 100)
+                            : 0;
+                        
+                        <li>
+                            <strong>@student.StudentName</strong> -
+                            @absents absence@(absents > 1 ? "s" : "")
+                            @if(lates > 0)
+                            {
+                                <text>, @lates late arrival@(lates > 1 ? "s" : "")</text>
+                            }
+                            (@rate% attendance)
+                        </li>
+
+                    }
+                </ul>
+            </div>
+            @* <button type="button" class="btn-close" data-bs-dismiss="alert"></button> *@
+        </div>
+    }
+}
+
+
+
+
+<!-- Attendance Table -->
+<div class="card shadow h-100 py-2 mb-3">
+    <div class="card-body">
+        <div class="attendance-table">
+            <div class="table-responsive">
+                <table class="table table-custom table-bordered table-hover table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th class="student-name">Student Name</th>
+                            @if(Model.DateRange != null && Model.DateRange.Any())
+                            {
+                                @foreach (var date in Model.DateRange)
+                                {
+                                    <th class="date-header text-center">
+                                        @date.ToString("ddd")<br />
+                                        @date.ToString("MMM d")
+                                    </th>
+                                }
+                                <th class="text-center">Summary</th>
+
+                            }
+                            else
+                            {
+                                <th class="text-center">Summary</th>
+                            }                                       
+                        </tr>
+                    </thead>
+                    <tbody class="text-center">
+                        @if(Model.StudentAttendance != null && Model.StudentAttendance.Any())
+                        {
+                            @foreach (var student in Model.StudentAttendance)
+                            {
+                                //Calculate Stats
+                                var presentCount = student.DailyAttendance.Count(d => d == "P");
+                                var lateCount = student.DailyAttendance.Count(d => d == "L");
+                                var absentCount = student.DailyAttendance.Count(d => d == "A");
+                                var cuttingCount = student.DailyAttendance.Count(d => d == "C");
+                                var exuseCount = student.DailyAttendance.Count(d => d == "E");
+                                var totalDays = student.DailyAttendance.Count(d => d != "-");
+                                var rate = totalDays > 0
+                                ? Math.Round(((double)(presentCount + lateCount * 0.5) / totalDays) * 100)
+                                : 0;
+                                var rateColor = rate == 100 ? "text-success" :
+                                                rate >= 90 ? "text-info" : 
+                                                rate >= 70 ? "text-warning" : "text-danger";
+
+                                <tr>
+                                    <td class="student-name text-start">@student.StudentName</td>
+                                    @foreach (var marking in student.DailyAttendance)
+                                    {
+                                        var badgeClass = marking == "P" ? "bg-success" :
+                                                        marking == "L" ? "bg-warning text-dark" :
+                                                        marking == "A" ? "bg-danger" :
+                                                        marking == "C" ? "bg-info" :
+                                                        marking == "E" ? "bg-primary" : "bg-secondary";
+
+                                        <td class="text-center">
+                                            <span class="badge attendance-badge @badgeClass">@marking</span>
+                                        </td>
+                                    }
+                                    <td class="text-center fw-bold @rateColor">
+                                        @rate%<br>
+                                        <small class="text-muted">
+                                            (P:@presentCount L:@lateCount A:@absentCount C:@cuttingCount E:@exuseCount)
+                                        </small>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else if(Model.SelectedTeacherAssignment.HasValue && Model.StartDate.HasValue && Model.EndDate.HasValue)
+                        {
+                            <tr>
+                                <td colspan="100%" class="empty-state">
+                                    <i class="fas fa-inbox"></i>
+                                    <h5>No Data Found</h5>
+                                    <p>No Attedance records for the selected filters</p>
+                                </td>
+                        </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="100%" class="empty-state">
+                                    <i class="fas fa-filter"></i>
+                                    <h5>No Data Yet</h5>
+                                    <p>Please select Class and Date Range, then click "Apply Filter"</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Legend -->
+<div class="mt-3 text-center text-white mb-2">
+    <span class="badge bg-success me-2">P = Present</span>
+    <span class="badge bg-warning text-dark me-2">L = Late</span>
+    <span class="badge bg-danger me-2">A = Absent</span>
+    <span class="badge bg-info me-2">C = Cutting</span>
+    <span class="badge bg-primary me-2">E = Excuse</span>
+    <span class="badge bg-secondary"> = No Data</span>
+</div>
+
+@section Scripts {
+    <script src="~/js/teacher-report.js"></script>
+}

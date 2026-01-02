@@ -8,8 +8,11 @@ namespace AttendanceMonitoring.ViewModel.Teacher
         public List<TeacherAssignment> teacherClass { get; set; } = new List<TeacherAssignment>();
         public List<StudentSectionAssignment> Students { get; set; } = new List<StudentSectionAssignment>();
         public int? SelectedClassId { get; set; }
+        public int? SectionSubjectId { get; set; } //1. BAGO
+
 
         public int? TeacherAssignmentId { get; set; }
+        public int SubjectId { get; set; }
         public int CurrentAcademicPeriodId { get; set; }
         public string YearLevel { get; set; }
         public string GradingPeriod { get; set; }

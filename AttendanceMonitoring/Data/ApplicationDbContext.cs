@@ -154,6 +154,15 @@ namespace AttendanceMonitoring.Data
                 .HasForeignKey(a => a.TeacherAssignmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Attendance>()
+                .HasOne(a => a.SectionSubject)
+                .WithMany(ss => ss.SectionSubjectAttendance)
+                .HasForeignKey(a => a.SectionSubjectId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            //modelBuilder.Entity<Attendance>()
+            //    .HasOne(a => a.Su)
+
             //Unique index - prevent duplicate attendance on same day
             ///❌ You CANNOT have 2 attendance records with:
             ///Same StudentId

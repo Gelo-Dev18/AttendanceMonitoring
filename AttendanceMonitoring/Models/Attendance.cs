@@ -14,8 +14,11 @@
         public int StudentId { get; set; }
         public string RecordedById { get; set; }// Recorded by (Teacher or Secretary)
 
+        //public int SubjectId { get; set; }
+
         public int? TeacherAssignmentId { get; set; }
         public int? SecretaryAssignmentId { get; set; }
+        public int? SectionSubjectId { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
@@ -34,7 +37,7 @@
         public virtual TeacherAssignment TeacherAssignment { get; set; }
         public virtual AcademicPeriod AcademicPeriod { get; set; }
         public virtual SecretaryAssignment SecretaryAssignment { get; set; } //SINGLE - One Attendance links to ONE secretaryAssignment so ICollection didn't use
-
+        public virtual SectionSubject SectionSubject { get; set; }
         //public virtual ICollection<SecretaryAssignment> SecretaryAssignments { get; set; } // Didn't use cause it is a collection. Sa SecretaryASssignments Class to gagamitin
                                                                                            //Kase One SecretaryAssingnemnt has Many Attendances
         

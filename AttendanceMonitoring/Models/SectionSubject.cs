@@ -12,5 +12,6 @@
         public Subject Subject { get; set; } //Navigation Property
 
         public ICollection<TeacherAssignment> TeacherAssignments { get; set; }
+        public ICollection<Attendance> SectionSubjectAttendance { get; set; }
     }
 }

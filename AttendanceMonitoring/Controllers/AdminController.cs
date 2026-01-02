@@ -1883,7 +1883,7 @@ namespace AttendanceMonitoring.Controllers
         public async Task<IActionResult> EditStudent(int id)
         {
             var student = await context.Students.FindAsync(id);
-
+                
             if (student == null)
             {
                 return Json(new { success = false, message = "Student does not exist" });
@@ -1907,7 +1907,7 @@ namespace AttendanceMonitoring.Controllers
                     Value = gs.Id.ToString(),
                     Text = $"Grade {gs.GradeLevel} {gs.SectionName} {gs.Track} {gs.TVLProgram}",
                 }).ToList(),
-
+                    
                 SectionId = studentsGradeSection,
                 LRN = student.LRN,
                 FirstName = student.FirstName,

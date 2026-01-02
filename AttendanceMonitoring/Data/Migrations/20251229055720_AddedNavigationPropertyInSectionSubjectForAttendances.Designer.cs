@@ -4,6 +4,7 @@ using AttendanceMonitoring.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AttendanceMonitoring.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229055720_AddedNavigationPropertyInSectionSubjectForAttendances")]
+    partial class AddedNavigationPropertyInSectionSubjectForAttendances
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -643,7 +646,7 @@ namespace AttendanceMonitoring.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.SectionSubject", "SectionSubject")
-                        .WithMany("SectionSubjectAttendance")
+                        .WithMany("SectionSubjectAttendances")
                         .HasForeignKey("SectionSubjectId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -842,7 +845,7 @@ namespace AttendanceMonitoring.Data.Migrations
 
             modelBuilder.Entity("AttendanceMonitoring.Models.SectionSubject", b =>
                 {
-                    b.Navigation("SectionSubjectAttendance");
+                    b.Navigation("SectionSubjectAttendances");
 
                     b.Navigation("TeacherAssignments");
                 });

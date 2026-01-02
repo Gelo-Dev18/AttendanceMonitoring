@@ -63,7 +63,7 @@ $(document).ready(function () {
                         document.getElementById('SaveAttendanceForm').reset();
 
                         //remove active class
-                        var activeItems = document.querySelectorAll('#selectedValue .actve');
+                        var activeItems = document.querySelectorAll('#selectedValue .active');
                         activeItems.forEach(function (item) {
                             item.classList.remove('active');
                         });

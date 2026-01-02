@@ -5,7 +5,7 @@
     Layout = "~/Views/Shared/_SecretaryLayout.cshtml";
 }
 <style>
-    .item-active {
+    .list-group-item.active {
         background-color: #004943 !important; /* Bootstrap green */
         border-color: #004943 !important;
         color: white !important;
@@ -38,8 +38,30 @@
 <div class="col-lg-12">
     <div class="row">
         <div class="col-md-3">
-            @* <div class="list-group" id="selectedValue"> *@
-                @if (Model.SecretaryClass != null)
+            <div class="list-group" id="selectedValue">
+                @if (Model.SecretaryClass != null && Model.SecretaryClass.Any())
+                {
+                    @foreach (var secretaryClass in Model.SecretaryClass)
+                    {
+                        //Dito na yung SelectedClass na galing sa controller. So kapag may selected na class, dun palang mag kakaroon ng Laman yung null na students(List<StudentSectionAssignment> students = null;)
+                        var isActive = Model.SelectedSubjectId == secretaryClass.Id;
+
+                        //asp-action / asp-controller - Asp.Net Core -Tag Helpers = SAME THING FOR RAZOR HELPER METHOD TO FULL PAGE RELOAD, ONLY DIFFERENT SYNTAX
+                        <a asp-action="_Attendance" asp-controller="Secretary" asp-route-selectedSubjectId="@secretaryClass.Id"
+                           class="list-group-item list-group-item-action card shadow mb-4 card-outline border-bottom-success card-body @(isActive ? "active" : "")">
+                            Grade @secretaryClass.Section.Grade.GradeLevel
+                            @secretaryClass.Section.SectionName
+                            @secretaryClass.Section.Track
+                            @secretaryClass.Section.TVLProgram
+                            
+                                @secretaryClass.Subject.SubjectDescription
+                            
+                        </a>
+
+                    }
+                }
+                //Nabago
+                @* @if (Model.SecretaryClass != null)
                 {
                     <div class="card shadow mb-4 card-outline border-bottom-success card-body item-active">
                        
@@ -50,14 +72,14 @@
                         
                     </div>
                     
-                }
+                } *@
                 else
                 {
                     <div class="list-group-item list-group-item-action">
                         <p><strong>No Assignments yet</strong></p>
                     </div>
                 }
-            @* </div> *@
+            </div>
         </div>
         <div class="col-md-9">
             @* <div class="card shadow mb-4" style=""> *@
@@ -79,14 +101,15 @@
                             <h4><strong>P</strong> = Present, <strong>A</strong> = Absent, <strong>L</strong> = Late, <strong>E</strong> = Excuse</h4>
 
                         </fieldset>
-                        <form id="SaveAttendanceForm" method="post" asp-action="SaveAttendance" asp-controller="Teacher">
+                        <form id="SaveAttendanceForm" method="post" asp-action="SaveAttendance" asp-controller="Secretary">
                             <input type="hidden" name="SecretaryAssignmentId" value="@Model.SecretaryAssignmentId">
                             <input type="hidden" name="AcademicPeriodId" value="@Model.CurrentAcademicPeriodId">
+                            <input type="hidden" name="SectionSubjectId" value="@Model.SelectedSubjectId">
                             <input type="hidden" name="AttendanceDate" value="@DateTime.Now.ToString("MM/dd/yyyy hh:mm tt")">
 
                             <div class="clear-fix mt-2"></div>
 
-                            <div class="table-responsive">
+                            <div class="table-responsive">  
                                 <table class="table table-condensed">
                                     <thead>
                                         <tr class="bg-gradient-secondary" style="color: white;">

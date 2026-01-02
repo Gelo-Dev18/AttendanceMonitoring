@@ -97,3 +97,157 @@
 .custom-dropdown{
     min-width: 60px;
 }
+
+/*FOR TEACHER DASHBOARD*/
+.page-header {
+    background: linear-gradient(135deg,rgba(26, 61, 17, 1) 3%, rgba(45, 122, 57, 1) 55%, rgba(76, 224, 138, 1) 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,1);
+}
+
+.filter-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.summary-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+.summary-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+/*ATTENDANCE TABLE*/
+.attendance-table {
+    background: white;
+/*    border-radius: 8px;*/
+    box-shadow: 0 1px 2px rgba(0,0,0,1);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.table-custom thead th {
+    background-color: #568F87;
+    color: white;
+    border: none;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.student-name {
+    font-weight: 600;
+    color: #333;
+    min-width: 150px;
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 5;
+}
+
+.table tbody tr:hover .student-name {
+    background-color: #f8f9fa;
+}
+
+.attendance-badge {
+    min-width: 60px;
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    cursor: pointer;
+    transition: transform 0.2s; /* ADD: For hover effect */
+    color: white;
+}
+
+    .attendance-badge:hover {
+        transform: scale(1.1); /* ADD: Hover zoom effect */
+    }
+
+.date-header {
+    min-width: 80px;
+    font-size: 0.85rem;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.stats-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.filter-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.alert-students {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.progress-thin {
+    height: 8px;
+}
+
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #6c757d;
+}
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+/* ADD: Summary Cards */
+/*.summary-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+.summary-icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}*/
+
+
+

@@ -8,7 +8,12 @@ namespace AttendanceMonitoring.ViewModel.Secretary
         //public List<SecretaryAssignment> secretaryClass { get; set; } = new List<SecretaryAssignment>();
         // For Teacher (multiple classes)
         //public List<TeacherAssignment>? TeacherClasses { get; set; }
-        public SecretaryAssignment? SecretaryClass { get; set; }//single object cause secretary has only 1 assignment
+        //nabago
+        //public SecretaryAssignment? SecretaryClass { get; set; }//single object cause secretary has only 1 assignment
+        public List<SectionSubject> SecretaryClass { get; set; } = new List<SectionSubject>();
+        public int? SelectedSubjectId { get; set; } //bago
+        public int? SectionSubjectId { get; set; }
+        public int SubjectId { get; set; }
         public List<StudentSectionAssignment> Students { get; set; } = new List<StudentSectionAssignment>();
         public int? SecretaryAssignmentId { get; set; }
         public int CurrentAcademicPeriodId { get; set; }

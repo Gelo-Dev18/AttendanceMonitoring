@@ -14,6 +14,7 @@ namespace AttendanceMonitoring.ViewModel.Secretary
         //public int? TeacherAssignmentId { get; set; }
         public int? SecretaryAssignmentId { get; set; }
 
+
         //Dictionary: StudentId -> AttendanceMarking
         // Example: { "STU001": "Present", "STU002": "Absent", "STU003": "Late" }
         ///to store and manage a collection of key-value pairs 
@@ -23,8 +24,8 @@ namespace AttendanceMonitoring.ViewModel.Secretary
         [Required]
         public Dictionary<int, string> ExcuseReason { get; set; } = new Dictionary<int, string>();
 
-        public int? SelectedClassId { get; set; }
-
+        public int? SelectedSubjectId { get; set; }
+        public int? SectionSubjectId { get; set; }
 
         //[MaxLength(500)]
         //public string? ExcuseReason { get; set; }

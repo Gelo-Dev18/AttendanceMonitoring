@@ -43,6 +43,13 @@
         </a>
     </li>
 
+    <!-- Nav Item - Attendance Report -->
+    <li class="nav-item @Html.IsActive("Teacher", "_AttendanceReport")">
+        <a class="nav-link" href="@Url.Action("_AttendanceReport", "Teacher")">
+            <i class="fa fa-calendar">‌</i>
+            <span>Attendance Report</span>
+        </a>
+    </li>
 
     <!-- Nav Item - Grade And Section -->
     <li class="nav-item @(isGradeAndSectionActive ? "active" : "")">

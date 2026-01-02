@@ -4,6 +4,7 @@ using AttendanceMonitoring.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AttendanceMonitoring.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229062044_RemoveSectionSubjectIdInAttendanceAndItsNavigationProperty")]
+    partial class RemoveSectionSubjectIdInAttendanceAndItsNavigationProperty
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -187,9 +190,6 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<int?>("SecretaryAssignmentId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("SectionSubjectId")
-                        .HasColumnType("int");
-
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
@@ -206,8 +206,6 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasIndex("RecordedById");
 
                     b.HasIndex("SecretaryAssignmentId");
-
-                    b.HasIndex("SectionSubjectId");
 
                     b.HasIndex("TeacherAssignmentId");
 
@@ -642,11 +640,6 @@ namespace AttendanceMonitoring.Data.Migrations
                         .HasForeignKey("SecretaryAssignmentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("AttendanceMonitoring.Models.SectionSubject", "SectionSubject")
-                        .WithMany("SectionSubjectAttendance")
-                        .HasForeignKey("SectionSubjectId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("AttendanceMonitoring.Models.Student", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
@@ -663,8 +656,6 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Navigation("RecordedBy");
 
                     b.Navigation("SecretaryAssignment");
-
-                    b.Navigation("SectionSubject");
 
                     b.Navigation("Student");
 
@@ -842,8 +833,6 @@ namespace AttendanceMonitoring.Data.Migrations
 
             modelBuilder.Entity("AttendanceMonitoring.Models.SectionSubject", b =>
                 {
-                    b.Navigation("SectionSubjectAttendance");
-
                     b.Navigation("TeacherAssignments");
                 });
 

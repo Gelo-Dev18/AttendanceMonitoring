@@ -1,12 +1,13 @@
 using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
+using AttendanceMonitoring.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args); //logging
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -40,6 +41,7 @@ builder.Services.AddRazorPages()
     .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 builder.Services.AddAntiforgery(o => o.HeaderName = "XSRF-TOKEN");
 
+builder.Services.AddHostedService<AttendanceResetService>();
 //
 //builder.Services.ConfigureApplicationCookie(options =>
 //{

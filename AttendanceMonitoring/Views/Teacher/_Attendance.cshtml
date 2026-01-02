@@ -49,7 +49,7 @@
                     @foreach (var teacherClass in Model.teacherClass)
                     {
                         //Dito na yung SelectedClass na galing sa controller. So kapag may selected na class, dun palang mag kakaroon ng Laman yung null na students(List<StudentSectionAssignment> students = null;)
-                        var isActive = Model.SelectedClassId == teacherClass.Id;
+                        var isActive = Model.SelectedClassId == teacherClass.SectionSubject.Id;
 
                         //Razor helper method : @Url.Action
                         // @Url.Action with href (Full Page Reload)
@@ -60,7 +60,7 @@
                         </a> *@
 
                         //asp-action / asp-controller - Asp.Net Core -Tag Helpers = SAME THING FOR RAZOR HELPER METHOD TO FULL PAGE RELOAD, ONLY DIFFERENT SYNTAX
-                        <a asp-action="_Attendance" asp-controller="Teacher"  asp-route-selectedClassId="@teacherClass.Id"
+                        <a asp-action="_Attendance" asp-controller="Teacher"  asp-route-selectedClassId="@teacherClass.SectionSubject.Id"
                            class="list-group-item list-group-item-action card shadow mb-4 card-outline border-bottom-success card-body @(isActive ? "active" : "")">
                             Grade @teacherClass.SectionSubject.Section.Grade.GradeLevel
                             @teacherClass.SectionSubject.Section.SectionName
@@ -101,7 +101,9 @@
                         </fieldset>
                         <form id="SaveAttendanceForm" method="post" asp-action="SaveAttendance" asp-controller="Teacher">
                             <input type="hidden" name="TeacherAssignmentId" value="@Model.TeacherAssignmentId">
+                            @* <input type="hidden" name="" value=""/> *@
                             <input type="hidden" name="AcademicPeriodId" value="@Model.CurrentAcademicPeriodId">
+                            <input type="hidden" name="SelectedClassId" value="@Model.SelectedClassId">
                             <input type="hidden" name="AttendanceDate" value="@DateTime.Now.ToString("MM/dd/yyyy hh:mm tt")">
 
                             <div class="clear-fix mt-2"></div>
@@ -133,7 +135,7 @@
                                                 </th>
                                             </tr>
                                         </thead>
-                                        <tbody class="tr-sortable">
+                                    <tbody class="tr-sortable">
                                         @* @{
                                             var attendanceOptions = new[]
                                             {
