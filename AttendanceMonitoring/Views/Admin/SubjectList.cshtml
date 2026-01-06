@@ -1,4 +1,8 @@
-﻿@{
+﻿@*For views that need Count, indexing:*@
+@model List<Subject> // bago
+@* For views that ONLY loop:
+html@model IEnumerable<Subject> *@
+@{
     ViewData["Title"] = "Subject List";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }

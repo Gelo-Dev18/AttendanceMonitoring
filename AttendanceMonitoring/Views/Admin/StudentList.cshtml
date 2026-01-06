@@ -44,7 +44,7 @@
                         <tr>
                             <td><strong>@(i++)</strong></td>
                             <td><strong>@students.LRN</strong></td>
-                            <td><strong>@students.FirstName @students.MiddelName @students.LastName</strong></td>
+                            <td><strong>@students.LastName, @students.FirstName @students.MiddelName </strong></td>
                             <td><strong>@students.Sex</strong></td>
                             <td>
                                 @if(@students.SectionAssignments.FirstOrDefault()?.Section?.Track == null)

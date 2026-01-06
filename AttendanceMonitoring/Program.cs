@@ -17,6 +17,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+builder.Services.AddScoped<DatabaseBackupService>();// Backup Service
+
 builder.Services.AddDefaultIdentity<AppUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;

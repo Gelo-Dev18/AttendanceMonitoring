@@ -1,5 +1,6 @@
 ﻿using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
+using AttendanceMonitoring.Services;
 using AttendanceMonitoring.ViewModel;
 using Humanizer;
 using Microsoft.AspNetCore.Authorization;
@@ -36,13 +37,17 @@ namespace AttendanceMonitoring.Controllers
         private readonly ApplicationDbContext context;
         private readonly IWebHostEnvironment environment; //Accessing Static Files: Use WebRootPath to locate static files like images, CSS, or JavaScript stored in the wwwroot directory.
 
+        //For Backup And Restore Feature
+        private readonly DatabaseBackupService backupService;
+        private readonly ILogger<AdminController> logger;
         //private readonly UserManager<IdentityUser> _userManager;
 
         // **Dependency Injection = How the service is provided** to your controller
         //constructor           //parameters
         //Dependency Injection
         //eto mismo yung parameter: signInManager, tapos object dn sya pero yung laman nya, example if yung parameter is name then ang object is 'Juan'
-        public AdminController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment)
+        public AdminController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment,
+                                DatabaseBackupService backupService, ILogger<AdminController> logger)
         {
             // so you can use them in any method inside the controller.
             // eto nayung ininject sa conrstructor
@@ -53,7 +58,9 @@ namespace AttendanceMonitoring.Controllers
             this.context = context;
             this.environment = environment;
 
-            //this._userManager = _userManager;
+            //For Backup And Restore Feature
+            this.backupService = backupService;
+            this.logger = logger;
         }
 
         //[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
@@ -551,7 +558,7 @@ namespace AttendanceMonitoring.Controllers
                 subjectQuery = subjectQuery.Where(c => c.Category == category);
             }
 
-            var subjectList = await subjectQuery.Take(10).ToListAsync();
+            var subjectList = await subjectQuery.ToListAsync();
 
 
             var model = new AssignSubjectViewModel()
@@ -2453,10 +2460,102 @@ namespace AttendanceMonitoring.Controllers
 
             return Json(new { sucesss = true, message = "Secretary Deleted Successfully!" });
         }
-       
+
+        /// <summary>
+        /// BACKUP AND RESTORE FEAUTRE
+        /// </summary>
+        /// <returns></returns>
+
+        // Shows backup page with list of existing backups
+        [HttpGet]
+        public IActionResult BackupAndRestore()
+        {
+            try
+            {
+                //Get list of all backups
+                var backups = backupService.GetAllBackups();
+
+                return View(backups);
+            }catch(Exception ex)
+            {
+                logger.LogError(ex, "Failed to load backup page");
+                TempData["ErrorMessage"] = "Failed to load backups. Please try again.";
+                //Json(new { success = false, message = "Failed to load backups. Please try again." });
+                return View(new List<BackupFileInfo>());
+            }
+        }
+
+        //Creats a new backup
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateBackup()
+        {
+            try
+            {
+                string backupFileName = await backupService.CreateBackupAsync();
+               
+                logger.LogInformation("Backup created: {FileName}", backupFileName);
+                //return Json(new { success = true, message = $"Backup created successfully! File: {backupFileName}" });
+                //logger.LogInformation("Backup created: {FileName}", backupFileName);
+            }catch(Exception ex)
+            {
+                logger.LogError(ex, "Backup Creation failed");
+                //TempData["ErrorMessage"] = "Failed to create backup. Please check server logs.";
+
+                //return Json(new { success = false, message = "Failed to create backup. Please check server logs." });
+            }
+            return RedirectToAction(nameof(BackupAndRestore)); ////Use only if Tempdata is used
+        }
+
+        //Downloads a backup file
+        [HttpGet]
+        public IActionResult DownloadBackup(string filename)
+        {
+            try
+            {
+                //Validate filename first
+                if (string.IsNullOrEmpty(filename))
+                {
+                    return BadRequest("FileName is Required!");
+                    //return Json(new { success = false, message = "FileName is Required!" });
+                }
+
+                //Get full file path(validation happens inside service)
+                string filePath = backupService.GetBackupFilePath(filename);
+
+                //check if file exists
+                if (!System.IO.File.Exists(filePath))
+                {
+                    TempData["ErrorMessage"] = "Backup file not found";
+                    return RedirectToAction(nameof(BackupAndRestore));
+                    //return Json(new { success = false, message = "Backup file not found" });
+                }
+
+                //Read file bytes
+                byte[] fileBytes = System.IO.File.ReadAllBytes(filePath);
+
+                //Return file to user's browser (triggers download)
+                return File(fileBytes, "application/octet-stream", filename); //application/octet-stream save the data to a file
+
+            }
+            catch(ArgumentException ex)
+            {
+                logger.LogWarning(ex, "Invalid filename attempt: {FileName}", filename);
+                return BadRequest("Invalid filename");
+                //return Json(new { success = false, message = "Invalid filename" });
+            }
+            catch(Exception ex)
+            {
+                logger.LogError(ex, "Download failed for: {Filename}", filename);
+                TempData["ErrorMessage"] = "Failed to download backup";
+                return RedirectToAction(nameof(BackupAndRestore));
+            }
+        }
+
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();
+
             return RedirectToAction("Login", "Login");
 
         }
