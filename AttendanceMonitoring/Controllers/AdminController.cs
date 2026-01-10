@@ -2552,6 +2552,63 @@ namespace AttendanceMonitoring.Controllers
             }
         }
 
+        //[HttpGet]
+        //public async Task<IActionResult> RestoreDatabase()
+        //{
+
+        //}
+        //Restore Database
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestoreDatabase(string backupFileName)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(backupFileName))
+                {
+                    TempData["ErrorMEssage"] = "Please select a backup file to restore";
+                    return RedirectToAction(nameof(BackupAndRestore));
+
+                }
+                //return warning about user. If it is null it will return Unknown
+                logger.LogWarning(
+                    "RESTORE INITIATED by user: {User}, Backup: {Backup}",
+                    //?. means, null-conditaional operator means User.Identity is not null, it returns the value of `Name`
+                                        //?? means, it checks the left side(User.Identity) is null. it returns "Unknown"
+                    User.Identity?.Name ?? "Unknown", 
+                    backupFileName
+                );
+
+                var result = await backupService.RestoreDatabaseAsync(backupFileName);
+
+                //Success message
+                TempData["SuccessMessage"] = $@"
+                    Database restored Sucessfully!
+
+                    Restored From: {result.RestoredFrom}
+                    Safely backup created: {result.SafetyBackupCreated}
+
+                    All data hase been restored to the state from the selected backup.
+                ";
+
+                logger.LogWarning(
+                    "RESTORED COMPLETED - User: {User}, From: {Backup}, Safety: {Safety}",
+                    User.Identity?.Name ?? "Unknown", 
+                    result.RestoredFrom,
+                    result.SafetyBackupCreated
+                );
+            }
+            catch(Exception ex)
+            {
+                logger.LogError(ex, "RESTORE FAILED - User: {User}, Backup: {Backup}",
+                User.Identity?.Name ?? "Unknown",
+                backupFileName);
+
+                TempData["ErrorMessage"] = $"Failed to restore DataBase: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(BackupAndRestore));
+        }
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();

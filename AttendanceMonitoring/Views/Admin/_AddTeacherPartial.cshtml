@@ -64,6 +64,7 @@
     <div class="col-6 form-group">
         <label asp-for="imageFile" class="form-label"><strong>Upload Image </strong>(Optional)</label>
         <div class="custom-file">
+            <!-- No Need for type="file" if imageFile is IFormFile. It automatically rendered-->
             <input asp-for="imageFile" class="custom-file-input">
             <label asp-for="imageFile" class="custom-file-label" for="imageFile">Choose file</label>
             <span asp-validation-for="imageFile" class="text-danger"></span>
