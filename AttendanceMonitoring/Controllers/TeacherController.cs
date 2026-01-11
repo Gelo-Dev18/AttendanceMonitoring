@@ -61,11 +61,14 @@ namespace AttendanceMonitoring.Controllers
 
                 return Json(new { success = false, errors = overallErrors });
             }
+            //Check if academic status is not yet started or closed
+            //var AcademicStatus = await context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.Status == 1);
 
             var today = DateTime.Today;
 
             //Get Current default academic period
-            var currentAcademicPeriod = await context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+            var currentAcademicPeriod = await context.AcademicPeriods
+                .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
 
             //Exclude student that already has an attendance record
             var alreadyRecordedAttendance = await context.Attendances
@@ -160,7 +163,9 @@ namespace AttendanceMonitoring.Controllers
                 Students = students, //students in selected class(null)
                 TeacherAssignmentId = selectedClassId,
                 SectionSubjectId = selectedClassId, //1. BAGO
+                //AcademicStatusId = currentAcademicPeriod?.Status ?? - 1, for debugging
                 CurrentAcademicPeriodId = currentAcademicPeriod?.Id ?? 1,
+                IsStarted = currentAcademicPeriod?.Status == 1,
                 YearLevel = currentAcademicPeriod.Year,
                 GradingPeriod = currentAcademicPeriod.GradingPeriod
             };

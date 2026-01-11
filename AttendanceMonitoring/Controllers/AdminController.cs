@@ -807,6 +807,7 @@ namespace AttendanceMonitoring.Controllers
             // With 'new' (pulls only what we need):
             var availableGrades = await context.Grades
                 .Select(g => new { g.Id, g.GradeLevel }) //Only gets id and GradeLevel
+                .OrderBy(g => g.GradeLevel)
                 .ToListAsync();
 
                 

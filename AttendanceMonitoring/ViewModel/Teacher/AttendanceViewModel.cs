@@ -13,6 +13,9 @@ namespace AttendanceMonitoring.ViewModel.Teacher
 
         public int? TeacherAssignmentId { get; set; }
         public int SubjectId { get; set; }
+        public int AcademicStatusId { get; set; }
+        public bool IsStarted { get; set; }
+
         public int CurrentAcademicPeriodId { get; set; }
         public string YearLevel { get; set; }
         public string GradingPeriod { get; set; }

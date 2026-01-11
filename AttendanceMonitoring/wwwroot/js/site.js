@@ -53,6 +53,17 @@ function loadViewModal(url, userID, modal) {
     });
 }
 
+//function checkGrade() {
+//    const selectElement = $('#gradeId');
+//    const inputElement = $('#TVLInput');
+
+//    if (selectElement.val() === '11') {
+//        inputElement.prop('disabled', false);
+//    } else {
+//        inputElement.prop('disabled', true).val('');
+//    }
+//}
+
 function checkOption() {
     const selectElement = $('#categoryId');
     const inputElement = $('#TVLInput');
@@ -117,6 +128,8 @@ $(document).ready(function () {
     });
 
     ///////////////////////////////////////////////////////////////////////////////
+    //$(document).on('change', '#gradeId', checkGrade); //handle onchange using jqeury so no need onchange inside html tags
+    //$(document).on('change', '#trackId', checkGrade);
 
     //Pag Binago  yung dropdown  mag-enable/disable yung TVL input
     $(document).on('change', '#categoryId', checkOption); //handle onchange using jqeury so no need onchange inside html tags

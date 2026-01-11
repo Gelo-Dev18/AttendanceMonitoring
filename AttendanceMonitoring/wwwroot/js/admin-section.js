@@ -1,4 +1,16 @@
-﻿function checkOption() {
+﻿function checkGrade() {
+    const selectElement = document.getElementById('gradeId');
+    const inputElement = document.getElementById('trackId');
+
+    if (selectElement.value === '6' || selectElement.value === '7') {
+        inputElement.disabled = false;
+    } else {
+        inputElement.disabled = true;
+        inputElement.value = '';
+    }
+}
+
+function checkOption() {
     const selectElement = document.getElementById('trackId');
     const inputElement = document.getElementById('TVLInput');
 
@@ -9,7 +21,8 @@
         inputElement.value = ''; //Optional clear the input field
     }
 }
-
+$(document).on('change', '#gradeId', checkGrade); //handle onchange using jqeury so no need onchange inside html tags
+$(document).on('change', '#trackId', checkGrade);
 $(document).ready(function () {
     $(document).on('submit', '#AddSectionForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
