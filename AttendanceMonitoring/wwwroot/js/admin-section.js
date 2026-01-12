@@ -23,6 +23,7 @@ function checkOption() {
 }
 $(document).on('change', '#gradeId', checkGrade); //handle onchange using jqeury so no need onchange inside html tags
 $(document).on('change', '#trackId', checkGrade);
+
 $(document).ready(function () {
     $(document).on('submit', '#AddSectionForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.

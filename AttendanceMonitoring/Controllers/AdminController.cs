@@ -263,6 +263,12 @@ namespace AttendanceMonitoring.Controllers
 
             }
 
+            var hasRecord = await context.AcademicPeriods.AnyAsync(ap => ap.Id == id);
+
+            if (hasRecord)
+            {
+                return Json(new { success = false, message = "Cannot Delete Academic year when has already a record!" });
+            }
             context.AcademicPeriods.Remove(AcademicId);
             await context.SaveChangesAsync();
 
@@ -416,6 +422,7 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, message = "Cannot delete Subject when already Assigned!" });
 
             }
+
 
             context.Subjects.Remove(DeleteSubject);
             await context.SaveChangesAsync();
@@ -978,13 +985,14 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, error = "Section does not exist!" });
             }
 
-            var hasStudentAssigned = await context.StudentSectionAssignments.AnyAsync(ssa => ssa.SectionId == id);
-
+            //var hasStudentAssigned = await context.StudentSectionAssignments.AnyAsync(ssa => ssa.SectionId == id);
+            var hasStudentAssigned = await context.SectionSubjects.AnyAsync(ss => ss.SectionId == id);
             if (hasStudentAssigned)
             {
                 return Json(new { success = false, message = "Cannot Delete if students are already enrolled to this Class" });
 
             }
+
             context.Sections.Remove(Section);
             await context.SaveChangesAsync();
 

@@ -98,15 +98,18 @@ $(document).ready(function () {
 
     $(document).on('input', '#year', function () {
         let value = $(this).val();
+        const cursorPostion = this.selectionStart;
+        const previousValue = $(this).data('previousValue') || '';
 
         value = value.replace(/[^0-9\-]/g, '');
-
-
         // Split the input into year parts (e.g., "2024-")
         const yearParts = value.split('-');
 
+        //Only auto-generate if use is typing
+        const isTyping = value.length > previousValue.length;
+
         // Auto-generate the next year if the first year has 4 digits and the hyphen is not present
-        if (yearParts[0].length === 4 && !isNaN(yearParts[0]) && yearParts.length === 1) {
+        if (yearParts[0].length === 4 && !isNaN(yearParts[0]) && yearParts.length === 1 && isTyping) {
             const nextYear = parseInt(yearParts[0]) + 1; // Add 1 to the year
             value = yearParts[0] + '-' + nextYear; // Auto-fill the second year
         }
@@ -114,6 +117,7 @@ $(document).ready(function () {
         // Limit the second year to 4 digits if it exists
         if (yearParts[1] && yearParts[1].length > 4) {
             yearParts[1] = yearParts[1].slice(0, 4); // Truncate the second year
+            value = yearParts.join('-');
         }
 
         // Limit the total input to 9 characters (YYYY-YYYY)
@@ -123,7 +127,7 @@ $(document).ready(function () {
 
 
         $(this).val(value);
-
+        $(this).data('previousValue', value);
 
     });
 
