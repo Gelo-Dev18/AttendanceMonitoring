@@ -1,4 +1,5 @@
 ﻿using AttendanceMonitoring.Data;
+using AttendanceMonitoring.Helper;
 using AttendanceMonitoring.Models;
 using AttendanceMonitoring.Services;
 using AttendanceMonitoring.ViewModel;
@@ -2477,12 +2478,19 @@ namespace AttendanceMonitoring.Controllers
 
         // Shows backup page with list of existing backups
         [HttpGet]
-        public IActionResult BackupAndRestore()
+        public async Task<IActionResult> BackupAndRestore(PaginatedRequest request)
         {
             try
             {
                 //Get list of all backups
-                var backups = backupService.GetAllBackups();
+                //var backups = backupService.GetAllBackups();
+                var backups = await backupService.GetPaginated(
+                        request.PageNumber, 
+                        PaginatedRequest.ITEM_PER_PAGE,
+                        request.SearchKeyword ??  string.Empty
+                        );
+
+                backups.SearchKeyword = request.SearchKeyword;
 
                 return View(backups);
             }catch(Exception ex)
@@ -2618,6 +2626,7 @@ namespace AttendanceMonitoring.Controllers
 
             return RedirectToAction(nameof(BackupAndRestore));
         }
+
         public async Task<IActionResult> Logout()
         {
             await signInManager.SignOutAsync();

@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AttendanceMonitoring.Helper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 
 namespace AttendanceMonitoring.Services
@@ -314,7 +316,7 @@ namespace AttendanceMonitoring.Services
                         using (var command = new SqlCommand(multiUserSql, connection))
                         {
                             command.CommandTimeout = 300;
-                            await command.ExecuteNonQueryAsync();
+                            await command.ExecuteNonQueryAsync();   
                         }
                     }
                 }
@@ -346,7 +348,36 @@ namespace AttendanceMonitoring.Services
                 throw new Exception(errorMessage, ex);
             }
         }
+        public async Task<PaginatedResult<BackupFileInfo>> GetPaginated(int page, int pageSize, string searchKeyword = null)
+        {
+            var files = Directory.GetFiles(_backupDirectory, "*.bak");
+
+            var backupFiles = GetAllBackups();
+
+            if(!string.IsNullOrEmpty(searchKeyword))
+            {
+                backupFiles = backupFiles
+                    .Where(b => b.FileName.Contains(searchKeyword, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+            var totalCount = backupFiles.Count;
+
+            var records = backupFiles
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            return new PaginatedResult<BackupFileInfo>
+            {
+                Result = records,
+                Page = page,
+                TotalCount = (int)Math.Ceiling(totalCount / (double)pageSize)
+                //TotalCount = totalCount
+            };
+        }
     } 
+
+    
 
     //Simple class to hold backup file info
 

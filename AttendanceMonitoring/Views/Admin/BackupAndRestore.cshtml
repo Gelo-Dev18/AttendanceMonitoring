@@ -1,5 +1,6 @@
 ﻿@using AttendanceMonitoring.Services
-@model List<BackupFileInfo>
+@* @model List<BackupFileInfo> *@
+@model PaginatedResult<BackupFileInfo>
 
 @{
     ViewData["Title"] = "Backup and Restore";
@@ -87,9 +88,21 @@
     </div>
 
     <div class="card-body">
-        @if (Model != null && Model.Any())
+        @if (Model.Result != null && Model.Result.Any())
         {
+
+            @* <div class="row">
+                
+            </div> *@
             <div class="table-responsive">
+                <div class="mb-2 d-flex justify-content-end">
+                    <form asp-action="BackupAndRestore" method="get">
+                        <div class="input-group">
+                            <input type="text" name="s" class="form-control" value="@Model.SearchKeyword"/>
+                            <button type="submit" class="btn btn-success">search</button>
+                        </div>
+                    </form>
+                </div>
                 <table class="table table-striped table-hover">
 
                     <thead class="table-dark">
@@ -110,7 +123,7 @@
                     </thead>
 
                     <tbody>
-                        @foreach(var backup in Model)
+                        @foreach(var backup in Model.Result)
                         {
                             <tr>
                                 <td>
@@ -137,15 +150,48 @@
                         }
                     </tbody>
                 </table>
+                <nav>
+                    <ul class="pagination justify-content-end">
+                        <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-route-p="@(Model.Page - 1)">Previous</a>
+                        </li>
+                        @for(var pageNumber = 1; pageNumber <= Model.TotalCount; pageNumber++)
+                        {
+                            if(pageNumber == Model.Page)
+                            {
+                                <li class="page-item active">
+                                    <span class="page-link">@pageNumber</span>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@pageNumber">@pageNumber</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(Model.Page == Model.TotalCount ? "disabled" : "")">
+                            <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.Page + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
 
             <div class="alert alert-info mt-3">
                 <i class="fas fa-lightbulb"></i>
-                <strong>Total Backups:</strong> @Model.Count backup file(s) available
+                <strong>Total Backups:</strong> @Model.TotalCount backup file(s) available
             </div>
         }
         else
         {
+            <div class="mb-2 d-flex justify-content-end">
+                <form asp-action="BackupAndRestore" method="get">
+                    <div class="input-group">
+                        <input type="text" name="s" class="form-control" value="@Model.SearchKeyword" />
+                        <button type="submit" class="btn btn-success">search</button>
+                    </div>
+                </form>
+            </div>
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle"></i>
                 <strong>No backups found.</strong> Create your first backup using the button above!
@@ -176,30 +222,20 @@
             <p class="mb-0">
                 <strong>⚠️ Only restore if you are CERTAIN you want to lose all recent changes!</strong>
             </p>
-            <br />
-            <div class="form-group">
-                <div class="custom-file">
-                    <label class="custom-file-label" for="">Choose file</label>
-                    <input class="custom-file-input" accept=".bak">
-                </div>  
-            </div>
-            <br />
+            @* <br />
             <!-- TO BE IMPLEMENTED-->
             <div class="form-group">
                 <div class="custom-file">
                     <input type="file" class="custom-file-input" id="restoreFile" accept=".bak">
                     <label class="custom-file-label" for="restoreFile">Choose file</label>
                 </div>
-            </div>
-            @* <button type="button" class="btn btn-success btn-icon-split" >
-                <span class="text">Add Teacher</span>
-            </button> *@
+            </div> *@
         </div>
-        @if(Model != null && Model.Any())
+        @if(Model.Result != null && Model.Result.Any())
         {
             <h6 class="mt-3">Select Backup to Restore:</h6>
             <div class="table-responsive">
-                <table class="table table-bordered">
+                <table class="table table-striped table-hover">
                     <thead class="table-dark">
                         <tr>
                             <th>Backup File</th>
@@ -209,7 +245,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach(var backup in Model)
+                        @foreach(var backup in Model.Result)
                         {
                             <tr>
                                 <td>
@@ -233,6 +269,31 @@
                         }
                     </tbody>
                 </table>
+                <nav>
+                    <ul class="pagination justify-content-end">
+                        <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-route-p="@(Model.Page - 1)">Previous</a>
+                        </li>
+                        @for (var pageNumber = 1; pageNumber <= Model.TotalCount; pageNumber++)
+                        {
+                            if (pageNumber == Model.Page)
+                            {
+                                <li class="page-item active">
+                                    <span class="page-link">@pageNumber</span>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@pageNumber">@pageNumber</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(Model.Page == Model.TotalCount ? "disabled" : "")">
+                            <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.Page + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         }
         else
