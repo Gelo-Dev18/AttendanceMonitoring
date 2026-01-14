@@ -1,7 +1,8 @@
 ﻿@using AttendanceMonitoring.Services
+@using AttendanceMonitoring.ViewModel
 @* @model List<BackupFileInfo> *@
-@model PaginatedResult<BackupFileInfo>
-
+@* @model PaginatedResult<BackupFileInfo> *@
+@model BackupViewModel
 @{
     ViewData["Title"] = "Backup and Restore";
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
@@ -88,7 +89,7 @@
     </div>
 
     <div class="card-body">
-        @if (Model.Result != null && Model.Result.Any())
+        @if (Model.PaginatedBackups.Result != null && Model.PaginatedBackups.Result.Any())
         {
 
             @* <div class="row">
@@ -123,7 +124,7 @@
                     </thead>
 
                     <tbody>
-                        @foreach(var backup in Model.Result)
+                        @foreach(var backup in Model.PaginatedBackups.Result)
                         {
                             <tr>
                                 <td>
@@ -152,12 +153,12 @@
                 </table>
                 <nav>
                     <ul class="pagination justify-content-end">
-                        <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
-                            <a class="page-link" asp-route-p="@(Model.Page - 1)">Previous</a>
+                        <li class="page-item @(Model.PaginatedBackups.Page == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-route-p="@(Model.PaginatedBackups.Page - 1)">Previous</a>
                         </li>
-                        @for(var pageNumber = 1; pageNumber <= Model.TotalCount; pageNumber++)
+                        @for (var pageNumber = 1; pageNumber <= Model.PaginatedBackups.TotalCount; pageNumber++)
                         {
-                            if(pageNumber == Model.Page)
+                            if (pageNumber == Model.PaginatedBackups.Page)
                             {
                                 <li class="page-item active">
                                     <span class="page-link">@pageNumber</span>
@@ -170,8 +171,8 @@
                                 </li>
                             }
                         }
-                        <li class="page-item @(Model.Page == Model.TotalCount ? "disabled" : "")">
-                            <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.Page + 1)">Next</a>
+                        <li class="page-item @(Model.PaginatedBackups.Page == Model.PaginatedBackups.TotalCount ? "disabled" : "")">
+                            <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.PaginatedBackups.Page + 1)">Next</a>
                         </li>
                     </ul>
                 </nav>
@@ -179,7 +180,7 @@
 
             <div class="alert alert-info mt-3">
                 <i class="fas fa-lightbulb"></i>
-                <strong>Total Backups:</strong> @Model.TotalCount backup file(s) available
+                <strong>Total Backups:</strong> @Model.PaginatedBackups.TotalCount backup file(s) available
             </div>
         }
         else
@@ -231,7 +232,7 @@
                 </div>
             </div> *@
         </div>
-        @if(Model.Result != null && Model.Result.Any())
+        @if(Model.RecentBackupsForRestore != null && Model.RecentBackupsForRestore.Any())
         {
             <h6 class="mt-3">Select Backup to Restore:</h6>
             <div class="table-responsive">
@@ -245,7 +246,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach(var backup in Model.Result)
+                        @foreach(var backup in Model.RecentBackupsForRestore)
                         {
                             <tr>
                                 <td>
@@ -269,31 +270,7 @@
                         }
                     </tbody>
                 </table>
-                <nav>
-                    <ul class="pagination justify-content-end">
-                        <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
-                            <a class="page-link" asp-route-p="@(Model.Page - 1)">Previous</a>
-                        </li>
-                        @for (var pageNumber = 1; pageNumber <= Model.TotalCount; pageNumber++)
-                        {
-                            if (pageNumber == Model.Page)
-                            {
-                                <li class="page-item active">
-                                    <span class="page-link">@pageNumber</span>
-                                </li>
-                            }
-                            else
-                            {
-                                <li class="page-item">
-                                    <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@pageNumber">@pageNumber</a>
-                                </li>
-                            }
-                        }
-                        <li class="page-item @(Model.Page == Model.TotalCount ? "disabled" : "")">
-                            <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.Page + 1)">Next</a>
-                        </li>
-                    </ul>
-                </nav>
+                
             </div>
         }
         else

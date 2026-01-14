@@ -348,6 +348,16 @@ namespace AttendanceMonitoring.Services
                 throw new Exception(errorMessage, ex);
             }
         }
+        //BAGO
+        public List<BackupFileInfo> GetRecentBackups(int count = 10)
+        {
+            var allBackups = GetAllBackups();
+
+            return allBackups
+                .Take(count)
+                .ToList();
+                
+        }
         public async Task<PaginatedResult<BackupFileInfo>> GetPaginated(int page, int pageSize, string searchKeyword = null)
         {
             var files = Directory.GetFiles(_backupDirectory, "*.bak");

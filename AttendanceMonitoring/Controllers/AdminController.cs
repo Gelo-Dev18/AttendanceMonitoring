@@ -2491,8 +2491,17 @@ namespace AttendanceMonitoring.Controllers
                         );
 
                 backups.SearchKeyword = request.SearchKeyword;
+                //BAGO//////////////////////
+                var recentForRestore = backupService.GetRecentBackups(10);
 
-                return View(backups);
+                var viewmodel = new BackupViewModel
+                {
+                    PaginatedBackups = backups,
+                    RecentBackupsForRestore = recentForRestore,
+                    SearchKeyword = backups.SearchKeyword
+                };
+                ///////////////////////////////////////
+                return View(viewmodel);
             }catch(Exception ex)
             {
                 logger.LogError(ex, "Failed to load backup page");
