@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static NuGet.Packaging.PackagingConstants;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Globalization;
 
 namespace AttendanceMonitoring.Controllers
 {
@@ -153,7 +154,13 @@ namespace AttendanceMonitoring.Controllers
                         currentDefault.IsDefault = 0;
                         context.AcademicPeriods.Update(currentDefault);
                     }
-
+                    //After Setting the default, set the status to be close
+                    var currentStatus = await context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.Status == 1);
+                    if (currentStatus != null)
+                    {
+                        currentStatus.Status = 2;
+                        context.AcademicPeriods.Update(currentStatus);
+                    }
                     //Find the Academic Period to be the new default and set its status to 1 (1 is equals to YES)
                     var newDefault = await context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.Id == id);
                     if (newDefault != null)
@@ -1368,6 +1375,13 @@ namespace AttendanceMonitoring.Controllers
                     }
 
                 }
+                //To Capitalize every first letter of word when inserting data
+                TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+                string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+                string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+                string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
+
                 //Map from viewmodel to entity
                 AppUser teacher = new AppUser()
                 {
@@ -1375,9 +1389,9 @@ namespace AttendanceMonitoring.Controllers
                     UserName = model.Email,
                     SchoolId = model.SchoolId,
                     EmployeeId = model.EmployeeId,
-                    FirstName = model.FirstName,
-                    MiddleName = model.MiddleName,
-                    LastName = model.LastName,
+                    FirstName = formattedFirstName,
+                    MiddleName = formattedMiddleName,
+                    LastName = formattedLastName,
                     Sex = model.Sex,
                     positionTitle = model.positionTitle,
                     imageFileData = saveImageData,
@@ -1548,13 +1562,21 @@ namespace AttendanceMonitoring.Controllers
                 editTeacher.imageFilePath = saveImagePath;
                 editTeacher.imageFileData = saveImageData;
             }
+
+            //To Capitalize every first letter of word when inserting data
+            TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+            string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+            string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
+
             //Map ViewModel -> Entity(update existing entity)
             editTeacher.Email = model.Email; //From ViewModel To Entity
             editTeacher.SchoolId = model.SchoolId;
             editTeacher.EmployeeId = model.EmployeeId;
-            editTeacher.FirstName = model.FirstName;
-            editTeacher.MiddleName = model.MiddleName;
-            editTeacher.LastName = model.LastName;
+            editTeacher.FirstName = formattedFirstName;
+            editTeacher.MiddleName = formattedMiddleName;
+            editTeacher.LastName = formattedLastName;
             editTeacher.Sex = model.Sex;
             editTeacher.positionTitle = model.positionTitle;
 
@@ -1799,7 +1821,7 @@ namespace AttendanceMonitoring.Controllers
 
                 })
 
-                .Take(10)
+                //.Take(10)
                 .ToList()
             };
 
@@ -1868,18 +1890,26 @@ namespace AttendanceMonitoring.Controllers
                 }
             }
 
+            //To Capitalize every first letter of word when inserting data
+            TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+            string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddelName.ToLower());
+            string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
+
             var student = new Student
             {
                 LRN = model.LRN,
-                FirstName = model.FirstName,
-                MiddelName = model.MiddelName,
-                LastName = model.LastName,
+                FirstName = formattedFirstName,
+                MiddelName = formattedMiddleName,
+                LastName = formattedLastName,
                 Sex = model.Sex,
                 imageFileData = saveImageData,
                 imageFilePath = saveImagePath,
                 CreatedAt = DateTime.Now
             };
 
+            
             context.Students.Add(student);
             await context.SaveChangesAsync();
 
@@ -2026,10 +2056,17 @@ namespace AttendanceMonitoring.Controllers
                 editStudent.imageFileData = saveImageData;
             }
 
+            //To Capitalize every first letter of word when inserting data
+            TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+            string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddelName.ToLower());
+            string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
+
             editStudent.LRN = model.LRN; 
-            editStudent.FirstName = model.FirstName;
-            editStudent.MiddelName = model.MiddelName;
-            editStudent.LastName = model.LastName;
+            editStudent.FirstName = formattedFirstName;
+            editStudent.MiddelName = formattedMiddleName;
+            editStudent.LastName = formattedLastName;
             editStudent.Sex = model.Sex;
 
             context.Students.Update(editStudent);
@@ -2152,15 +2189,21 @@ namespace AttendanceMonitoring.Controllers
                 }
             }
 
+            //To Capitalize every first letter of word when inserting data
+            TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+            string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+            string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
             AppUser secretary = new AppUser()
             {
                 Email = model.Email,
                 UserName = model.Email,
                 SchoolId = model.SchoolId,
-                FirstName = model.FirstName,
-                MiddleName = model.MiddleName,
-                LastName = model.LastName,
+                FirstName = formattedFirstName,
+                MiddleName = formattedMiddleName,
+                LastName = formattedLastName,
                 Sex = model.Sex,
                 imageFileData = saveImageData,
                 imageFilePath = saveImagePath,
@@ -2226,6 +2269,7 @@ namespace AttendanceMonitoring.Controllers
                     .ThenInclude(g => g.Grade)
                 .Where(sc => sc.SecretaryId == id)
                 .FirstOrDefaultAsync();
+
 
             var model = new EditSecretaryViewModel()
             {
@@ -2390,11 +2434,18 @@ namespace AttendanceMonitoring.Controllers
                 editSecretary.imageFileData = saveImageData;
             }
 
+            //To Capitalize every first letter of word when inserting data
+            TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+            string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+            string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
+
             editSecretary.Email = model.Email;
             editSecretary.SchoolId = model.SchoolId;
-            editSecretary.FirstName = model.FirstName;
-            editSecretary.MiddleName = model.MiddleName;
-            editSecretary.LastName = model.LastName;
+            editSecretary.FirstName = formattedFirstName;
+            editSecretary.MiddleName = formattedMiddleName;
+            editSecretary.LastName = formattedLastName;
             editSecretary.Sex = model.Sex;
 
             var result = await userManager.UpdateAsync(editSecretary);
@@ -2471,6 +2522,180 @@ namespace AttendanceMonitoring.Controllers
             return Json(new { sucesss = true, message = "Secretary Deleted Successfully!" });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> AttendanceReport(string? SelectedTeacher,
+                                                            int? SelectedAcademicPeriod,
+                                                            int? SelectedTeacherAssignment, //selected  Class
+                                                            DateTime? StartDate, //Date range start
+                                                            DateTime? EndDate)
+        {
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+            //get Current Academic Period
+            var currentAcademicPeriod = await context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+
+            // Get all available Academic period
+            var allAcademicPeriod = await context.AcademicPeriods
+                                    .OrderBy(ap => ap.Year)
+                                    .ToListAsync();
+            //Get all teacher list
+            var allTeacher = await userManager.GetUsersInRoleAsync("Teacher");
+
+            //Check if teacher is selected
+            List<SelectListItem> teacherClass = new List<SelectListItem>();
+
+            if (!string.IsNullOrEmpty(SelectedTeacher))
+            {
+                teacherClass = await context.TeacherAssignments
+                                .Include(ta => ta.SectionSubject)
+                                    .ThenInclude(ss => ss.Subject)
+                                .Include(sn => sn.SectionSubject.Section)
+                                    .ThenInclude(g => g.Grade)
+                                .Where(s => s.TeacherId == SelectedTeacher)
+                                .OrderBy(s => s.SectionSubject.Section.Grade.GradeLevel)
+                                .Select(tc => new SelectListItem
+                                {
+                                    Value = tc.Id.ToString(),
+                                    Text = $"Grade {tc.SectionSubject.Section.Grade.GradeLevel} {tc.SectionSubject.Section.SectionName} {tc.SectionSubject.Section.Track} {tc.SectionSubject.Section.TVLProgram} {tc.SectionSubject.Subject.SubjectDescription}",
+                                })
+                                .ToListAsync();
+            }
+
+            List<AdminAttendanceReportData> studentAttendance = new List<AdminAttendanceReportData>();
+            List<DateTime> dateRange = new List<DateTime>();
+            //Check all filters
+            if (SelectedAcademicPeriod.HasValue && !string.IsNullOrEmpty(SelectedTeacher) && SelectedTeacherAssignment.HasValue && StartDate.HasValue && EndDate.HasValue)
+            {
+                var selectedClass = await context.TeacherAssignments
+                                .Include(ta => ta.SectionSubject)
+                                    .ThenInclude(ss => ss.Subject)
+                                .Include(sn => sn.SectionSubject.Section)
+                                    .ThenInclude(g => g.Grade)
+                                .Where(s => s.TeacherId == SelectedTeacher)
+                                .FirstOrDefaultAsync(tc => tc.Id == SelectedTeacherAssignment.Value);
+
+                if (selectedClass != null)
+                {
+                    var sectionId = selectedClass.SectionSubject.SectionId;
+                    var sectionSubjectId = selectedClass.SectionSubject.Id;
+
+                    for(var date = StartDate.Value; date <= EndDate.Value; date = date.AddDays(1))
+                    {
+                        dateRange.Add(date);
+                    }
+
+                    var students = await context.StudentSectionAssignments
+                                    .Include(ssa => ssa.Student)
+                                    .Where(ssa => ssa.SectionId == sectionId)
+                                    .OrderBy(ssa => ssa.Student.LastName)
+                                    .ToListAsync();
+
+                    var attendanceRecord = await context.Attendances
+                                            .Where(a => a.SectionSubjectId == sectionSubjectId
+                                                    && a.AttendanceDate.Date >= StartDate.Value.Date
+                                                    && a.AttendanceDate.Date <= EndDate.Value.Date
+                                                    && a.AcademicPeriod.Id == SelectedAcademicPeriod.Value)
+                                            .ToListAsync();
+                    //Builder Report Data
+                    foreach(var student in students)
+                    {
+                        var studentData = new AdminAttendanceReportData
+                        {
+                            StudentId = student.StudentId,
+                            StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                            DailyAttendance = new List<string>()
+                        };
+
+                        foreach(var date in dateRange)
+                        {
+                            var attendance = attendanceRecord
+                                .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                                                && ar.AttendanceDate.Date == date.Date);
+
+                            if(attendance != null)
+                            {
+                                studentData.DailyAttendance.Add(
+                                    attendance.AttendanceMarking == "Present" ? "P" :
+                                    attendance.AttendanceMarking == "Late" ? "L" :
+                                    attendance.AttendanceMarking == "Absent" ? "A" :
+                                    attendance.AttendanceMarking == "Cutting" ? "C" :
+                                    attendance.AttendanceMarking == "Excuse" ? "E" : "-"
+                                );
+                            }
+                            else
+                            {
+                                studentData.DailyAttendance.Add("-");
+                            }
+                        }
+
+                        if(studentData.DailyAttendance.Any(d => d != "-"))
+                        {
+                            studentAttendance.Add(studentData);
+                        }
+
+                    }
+                }
+
+            }
+
+            var model = new AdminAttendanceReportViewModel()
+            {
+                teacherList = allTeacher.Select(at => new SelectListItem
+                {
+                    Value = at.Id.ToString(),
+                    Text = $"{at.FirstName} {at.MiddleName} {at.LastName} - {at.positionTitle}",
+
+                }).ToList(),
+
+                teacherClass = teacherClass,    
+
+                academicPeriod = allAcademicPeriod.Select(aap => new SelectListItem
+                {
+                    Value = aap.Id.ToString(),
+                    Text = $"{aap.Year} - {aap.GradingPeriod} Grading " + (aap.IsDefault == 1 ? "✓ Active" : ""),
+                }).ToList(),
+
+                SelectedAcademicPeriod = SelectedAcademicPeriod,
+                SelectedTeacher = SelectedTeacher,
+                SelectedTeacherAssignment = SelectedTeacherAssignment,
+                StudentAttendance = studentAttendance,
+                DateRange = dateRange,
+                StartDate = StartDate,
+                EndDate = EndDate
+            };
+
+            return View(model);
+        }
+        //FOr ajax for teacherclass dropdown when selecting specific teacher
+        [HttpGet]
+        public async Task<JsonResult> GetTeacherAssignments(string teacherId)
+        {
+            var teacherClass = await context.TeacherAssignments
+                                .Include(ta => ta.SectionSubject)
+                                    .ThenInclude(ss => ss.Subject)
+                                .Include(sn => sn.SectionSubject.Section)
+                                    .ThenInclude(g => g.Grade)
+                                .Where(s => s.TeacherId == teacherId)
+                                .OrderBy(s => s.SectionSubject.Section.Grade.GradeLevel)
+                                .Select(tc => new
+                                {
+                                    Value = tc.Id.ToString(),
+                                    Text = $"Grade {tc.SectionSubject.Section.Grade.GradeLevel} {tc.SectionSubject.Section.SectionName} {tc.SectionSubject.Section.Track} {tc.SectionSubject.Section.TVLProgram} {tc.SectionSubject.Subject.SubjectDescription}",
+                                })
+                                .ToListAsync();
+
+            return Json(teacherClass);
+
+        }
+
         /// <summary>
         /// BACKUP AND RESTORE FEAUTRE
         /// </summary>
@@ -2492,7 +2717,7 @@ namespace AttendanceMonitoring.Controllers
 
                 backups.SearchKeyword = request.SearchKeyword;
                 //BAGO//////////////////////
-                var recentForRestore = backupService.GetRecentBackups(10);
+                var recentForRestore = backupService.GetRecentBackups(5);
 
                 var viewmodel = new BackupViewModel
                 {
@@ -2578,11 +2803,6 @@ namespace AttendanceMonitoring.Controllers
             }
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> RestoreDatabase()
-        //{
-
-        //}
         //Restore Database
         [HttpPost]
         [ValidateAntiForgeryToken]

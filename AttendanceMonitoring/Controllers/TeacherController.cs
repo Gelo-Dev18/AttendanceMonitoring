@@ -70,6 +70,9 @@ namespace AttendanceMonitoring.Controllers
             var currentAcademicPeriod = await context.AcademicPeriods
                 .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
 
+            var hasAnyAssignments = await context.TeacherAssignments
+                         .AnyAsync(ta => ta.TeacherId == teacherId);
+
             //Exclude student that already has an attendance record
             var alreadyRecordedAttendance = await context.Attendances
                                             .Where(a => a.RecordedById == teacherId && a.AcademicPeriod == currentAcademicPeriod && a.AttendanceDate.Date == today)
@@ -87,7 +90,9 @@ namespace AttendanceMonitoring.Controllers
                 .OrderBy(s => s.SectionSubject.Section.Grade) 
                 .ToListAsync();
 
-            if (TeachersClass != null)
+            bool isAttendanceFinished = false;
+
+            if (TeachersClass != null && TeachersClass.Any())
             {
                 //1.Create List to store classes that should be removed
                 var classesToRemove = new List<TeacherAssignment>();
@@ -128,6 +133,15 @@ namespace AttendanceMonitoring.Controllers
                 {
                     TeachersClass.Remove(classToRemove);
                 }
+                if (!TeachersClass.Any())
+                {
+                    isAttendanceFinished = true;
+                }
+
+            }
+            else if (hasAnyAssignments)
+            {
+                isAttendanceFinished = true;
             }
 
             ///Initialize students variable as null (wala pang value) 
@@ -155,7 +169,7 @@ namespace AttendanceMonitoring.Controllers
                         .ToListAsync();
                 }
             }
-            
+
             var model = new AttendanceViewModel()
             {
                 teacherClass = TeachersClass, //all teacher's class
@@ -167,7 +181,8 @@ namespace AttendanceMonitoring.Controllers
                 CurrentAcademicPeriodId = currentAcademicPeriod?.Id ?? 1,
                 IsStarted = currentAcademicPeriod?.Status == 1,
                 YearLevel = currentAcademicPeriod.Year,
-                GradingPeriod = currentAcademicPeriod.GradingPeriod
+                GradingPeriod = currentAcademicPeriod.GradingPeriod,
+                IsAttendanceFinished = isAttendanceFinished
             };
 
             return View(model);
@@ -337,7 +352,7 @@ namespace AttendanceMonitoring.Controllers
                     //                    .Where(sa => sa.Section.Id == sectionId)
                     //                    .FirstOrDefaultAsync();
 
-                    //Get attendanc Record
+                    //Get attendance Record
                     var attendanceRecord = await context.Attendances
                                             .Where(a => //a.TeacherAssignmentId != null
                                                     //&& a.SecretaryAssignmentId == teacherAssignment.Value

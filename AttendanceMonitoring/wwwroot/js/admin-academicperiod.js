@@ -191,6 +191,7 @@
 
                     $('#ModalDefault').off('hide.bs.modal');// for quick fix only //Para i-disable ang blur effect for hiding modal
                     $('#ModalDefault').modal('hide');
+                    loadSpinner();
                     showSuccessToast(response.message);
                     ////loadSpinner();
                     setTimeout(function () {

@@ -54,7 +54,20 @@
         <div class="row">
             <div class="col-md-3">
                 <div class="list-group" id="selectedValue">
-                    @if (Model.teacherClass != null && Model.teacherClass.Any())
+                    @* DEBUG - DELETE LATER *@
+                    @* <div style="background: yellow; padding: 10px; margin: 10px;">
+                        <strong>DEBUG INFO:</strong><br />
+                        teacherClass is null: @(Model.teacherClass == null)<br />
+                        teacherClass count: @(Model.teacherClass?.Count ?? 0)<br />
+                        IsAttendanceFinished: @Model.IsAttendanceFinished<br />
+                    </div> *@
+                    @if(Model.IsAttendanceFinished)
+                    {
+                    <div class="card shadow mb-4 card-outline border-bottom-success card-body">
+                        You finished conducting Attendance
+                    </div>
+                    }
+                    else if (Model.teacherClass != null && Model.teacherClass.Any())
                     {
                         @foreach (var teacherClass in Model.teacherClass)
                         {

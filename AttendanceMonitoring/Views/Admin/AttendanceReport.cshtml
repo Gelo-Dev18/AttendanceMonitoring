@@ -1,68 +1,47 @@
-﻿@using AttendanceMonitoring.ViewModel.Teacher;
-@model AttendanceReportViewModel;
+﻿@using AttendanceMonitoring.ViewModel;
+@model AdminAttendanceReportViewModel;
 
 @{
     ViewData["Title"] = "Attendance Report";
-    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
-@* <style>
-    .active-item{
-        color: forestgreen;
-        font-weight: bold;
-        background: #d4edda;
-    }
-</style> *@
-<!--PAGE HEADER-->
-@* <div class="page-header">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <h1 class="mb-0"><i class="fa fa-calendar mr-2"></i>Student Attendance Report</h1>
-            <p class="mb-0 mt-2 opacity-75" id="pageSubtitle">Select filters to view attendance</p>
-        </div>
-        <div class="col-md-4 text-md-end mt-3 mt-md-0">
-            <button class="btn btn-light me-2" id="exportBtn"><i class="fas fa-download me-2"></i>Export</button>
-            <button class="btn btn-outline-light" id="refreshBtn"><i class="fas fa-sync me-2"></i>Refresh</button>
-        </div>
-    </div>
-</div> *@
 
 <div class="card border-left-success shadow h-100 py-2 mb-3">
     <div class="card-body">
         <div class="row no-gutters align-items-center">
             <div class="col-md-8">
-                <h1 class="mb-0"><i class="fa fa-calendar mr-2"></i>Student Attendance Report</h1>
+                <h1 class="mb-0"><i class="fa fa-calendar mr-2"></i>Overall Attendance Report</h1>
                 <p class="mb-0 mt-2 opacity-75" id="pageSubtitle">
                     Track and monitor student attendance
                 </p>
             </div>
-            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            @* <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <button class="btn btn-light me-2" id="exportBtn"><i class="fas fa-download me-2"></i>Export</button>
                 <button class="btn btn-light" id="refreshBtn"><i class="fas fa-sync me-2"></i>Refresh</button>
-            </div>
+            </div> *@
         </div>
     </div>
 </div>
-
 <!-- Filter Section -->
 <div class="filter-section">
-    <form method="get" asp-action="_AttendanceReport" asp-controller="Teacher">
+    <form method="get" asp-action="AttendanceReport" asp-controller="Admin">
         @* @Html.AntiForgeryToken() *@
         <div class="row align-items-end" style="color: black;">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
                 <label class="form-label fw-bold"><strong>Select Academic Period</strong></label>
                 <select id="academicYear" asp-for="SelectedAcademicPeriod" asp-items="@Model.academicPeriod" class="form-control" required>
                     <option value="" selected>Select</option>
-                    @* @foreach(var year in Model.academicPeriod)
-                    {
-                        <option value="@year.Value" class="@(year.Text.Contains("Active")?"active-item": "")">
-                            @year.Text
-                        </option>
-                    } *@
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold"><strong>Select Teacher</strong></label>
+                <select id="allTeacher" asp-for="SelectedTeacher" asp-items="@Model.teacherList" class="form-control" required>
+                    <option value="" selected>Select</option>
                 </select>
             </div>
             <div class="col-md-4 mb-3">
                 <label class="form-label fw-bold"><strong>Select  Assigned Class</strong></label>
-                <select asp-for="SelectedTeacherAssignment" asp-items="@Model.teacherClass" class="form-control" id="gradeFilter" name="teacherAssignment" required>
+                <select asp-for="SelectedTeacherAssignment" asp-items="@Model.teacherClass" class="form-control" id="gradeFilter" required>
                     <option value="" selected>Select</option>
                 </select>
             </div>
@@ -84,7 +63,7 @@
         <div class="row mt-2">
             <div class="col-12">
                 <small class="text-muted">
-                    <i class="fas fa-info-circle me-1" ></i>
+                    <i class="fas fa-info-circle me-1"></i>
                     Selected range: <strong id="dateRangeInfo" style="color:black;"></strong>
                 </small>
             </div>
@@ -94,7 +73,7 @@
 
 <!-- Summary Cards -->
 @* <div class="row" id="summarySection" style=""> *@
-@if(Model.StudentAttendance != null && Model.StudentAttendance.Any())
+@if (Model.StudentAttendance != null && Model.StudentAttendance.Any())
 {
     //Calculate overall Statistics
     var totalStudents = Model.StudentAttendance.Count();
@@ -105,7 +84,7 @@
     var overallRate = totalRecords > 0
         ? Math.Round(((double)(presentCount + lateCount * 0.5) / totalRecords) * 100) //user Math.Round to rounds the decimal number into the neareast wholenumner to avoid 83.333%
         : 0;
-    
+
     //Fetch the student's attendance that is perfect Present marking
     var perfectAttendance = Model.StudentAttendance.Count(s =>
         s.DailyAttendance.All(d => d == "P") &&
@@ -189,19 +168,19 @@
             </h5>
             <div class="alert-students" id="alertStudentsList">
                 <ul class="mb-0">
-                    @foreach(var student in needsAttention)
+                    @foreach (var student in needsAttention)
                     {
                         var absents = student.DailyAttendance.Count(d => d == "A");
                         var lates = student.DailyAttendance.Count(d => d == "L");
                         var total = student.DailyAttendance.Count(d => d != "-");
                         var rate = total > 0
-                            ? Math.Round(((double)(student.DailyAttendance.Count(d => d == "P") + lates * 0.5) / total) * 100)
-                            : 0;
-                        
+                        ? Math.Round(((double)(student.DailyAttendance.Count(d => d == "P") + lates * 0.5) / total) * 100)
+                        : 0;
+
                         <li>
                             <strong>@student.StudentName</strong> -
                             @absents absence@(absents > 1 ? "s" : "")
-                            @if(lates > 0)
+                            @if (lates > 0)
                             {
                                 <text>, @lates late arrival@(lates > 1 ? "s" : "")</text>
                             }
@@ -216,9 +195,6 @@
     }
 }
 
-
-
-
 <!-- Attendance Table -->
 <div class="card shadow h-100 py-2 mb-3">
     <div class="card-body">
@@ -228,7 +204,7 @@
                     <thead>
                         <tr>
                             <th class="student-name">Student Name</th>
-                            @if(Model.DateRange != null && Model.DateRange.Any())
+                            @if (Model.DateRange != null && Model.DateRange.Any())
                             {
                                 @foreach (var date in Model.DateRange)
                                 {
@@ -243,11 +219,11 @@
                             else
                             {
                                 <th class="text-center">Summary</th>
-                            }                                       
+                            }
                         </tr>
                     </thead>
                     <tbody class="text-center">
-                        @if(Model.StudentAttendance != null && Model.StudentAttendance.Any())
+                        @if (Model.StudentAttendance != null && Model.StudentAttendance.Any())
                         {
                             @foreach (var student in Model.StudentAttendance)
                             {
@@ -262,18 +238,18 @@
                                 ? Math.Round(((double)(presentCount + lateCount * 0.5) / totalDays) * 100)
                                 : 0;
                                 var rateColor = rate == 100 ? "text-success" :
-                                                rate >= 90 ? "text-info" : 
-                                                rate >= 70 ? "text-warning" : "text-danger";
+                                rate >= 90 ? "text-info" :
+                                rate >= 70 ? "text-warning" : "text-danger";
 
                                 <tr>
                                     <td class="student-name text-start">@student.StudentName</td>
                                     @foreach (var marking in student.DailyAttendance)
                                     {
                                         var badgeClass = marking == "P" ? "bg-success" :
-                                                        marking == "L" ? "bg-warning text-dark" :
-                                                        marking == "A" ? "bg-danger" :
-                                                        marking == "C" ? "bg-info" :
-                                                        marking == "E" ? "bg-primary" : "bg-secondary";
+                                        marking == "L" ? "bg-warning text-dark" :
+                                        marking == "A" ? "bg-danger" :
+                                        marking == "C" ? "bg-info" :
+                                        marking == "E" ? "bg-primary" : "bg-secondary";
 
                                         <td class="text-center">
                                             <span class="badge attendance-badge @badgeClass">@marking</span>
@@ -288,7 +264,7 @@
                                 </tr>
                             }
                         }
-                        else if(Model.SelectedTeacherAssignment.HasValue && Model.StartDate.HasValue && Model.EndDate.HasValue)
+                        else if (!string.IsNullOrEmpty(Model.SelectedTeacher) && Model.SelectedTeacherAssignment.HasValue && Model.StartDate.HasValue && Model.EndDate.HasValue )
                         {
                             <tr>
                                 <td colspan="100%" class="empty-state">
@@ -296,7 +272,7 @@
                                     <h5>No Data Found</h5>
                                     <p>No Attedance records for the selected filters</p>
                                 </td>
-                        </tr>
+                            </tr>
                         }
                         else
                         {
@@ -325,5 +301,5 @@
 </div>
 
 @section Scripts {
-    <script src="~/js/teacher-report.js"></script>
+    <script src="~/js/admin-report.js"></script>
 }
