@@ -1,5 +1,6 @@
 ﻿using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
+using AttendanceMonitoring.Services;
 using AttendanceMonitoring.ViewModel.Secretary;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -20,14 +21,41 @@ namespace AttendanceMonitoring.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IWebHostEnvironment _environment;
-
-        public SecretaryController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment)
+        private readonly IActivityLogService _logService;
+        public SecretaryController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment, IActivityLogService logService)
         {
             this._signInManager = signInManager;
             this._userManager = userManager;
             this._context = context;
             this._environment = environment;
+            _logService = logService;
         }
+
+        private string GetCurrentUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+        public string GetCurrentUsername()
+        {
+            return User.Identity.Name;
+        }
+        public async Task<int> GetCurrentUserSchoolId()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            return user.SchoolId;
+        }
+        public async Task<(string userId, string userName, int schoolId)> GetCurrentUserInfo()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            return (userId, user.UserName, user.SchoolId);
+        }
+
         public IActionResult SecretaryHome()
         {
             return View();
@@ -399,7 +427,26 @@ namespace AttendanceMonitoring.Controllers
         }
         public async Task<IActionResult> Logout()
         {
+            //var user = await _userManager.GetUserAsync(User);
+
+            //var userId = user?.Id;
+            //var schoolId = user?.SchoolId ?? 0;
+            //var username = user?.UserName;
+
+            var userInfo = await GetCurrentUserInfo();
+
             await _signInManager.SignOutAsync();
+
+            await _logService.LogActivity(
+                actionType: "Logout",
+                entityName: "User",
+                entityId: userInfo.userId,
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.userName} logged out successfully!",
+                username: userInfo.userName
+            );
+
             return RedirectToAction("Login", "Login");
 
         }

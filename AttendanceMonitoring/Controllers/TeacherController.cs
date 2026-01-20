@@ -1,5 +1,6 @@
 ﻿using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
+using AttendanceMonitoring.Services;
 using AttendanceMonitoring.ViewModel.Teacher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -20,14 +21,16 @@ namespace AttendanceMonitoring.Controllers
         private readonly UserManager<AppUser> userManager;
         private readonly ApplicationDbContext context;
         private readonly IWebHostEnvironment environment;
+        private readonly IActivityLogService logService;
 
-        public TeacherController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment)
+        public TeacherController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment, IActivityLogService logService)
         {
             
             this.signInManager = signInManager;
             this.userManager = userManager;
             this.context = context;
             this.environment = environment;
+            this.logService = logService;
 
         }
 
@@ -434,7 +437,24 @@ namespace AttendanceMonitoring.Controllers
 
         public async Task<IActionResult> Logout()
         {
+            var user = await userManager.GetUserAsync(User);
+
+            var userId = user?.Id;
+            var schoolId = user?.SchoolId ?? 0;
+            var username = user?.UserName;
+
             await signInManager.SignOutAsync();
+
+            await logService.LogActivity(
+                actionType: "Logout",
+                entityName: "User",
+                entityId: userId,
+                userId: userId,
+                schoolId: schoolId,
+                details: $"User {username} logged out successfully!",
+                username: username
+            );
+
             return RedirectToAction("Login", "Login");
         }
     }

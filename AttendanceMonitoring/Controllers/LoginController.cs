@@ -1,10 +1,12 @@
 ﻿using AttendanceMonitoring.Models;
+using AttendanceMonitoring.Services;
 using AttendanceMonitoring.ViewModel;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.Security.Claims;
 
 namespace AttendanceMonitoring.Controllers
 {
@@ -12,13 +14,17 @@ namespace AttendanceMonitoring.Controllers
     {
         private readonly SignInManager<AppUser> signInManager;
         private readonly UserManager<AppUser> userManager;
+        private readonly IActivityLogService _logService;
+        
 
         //Dependency Injection
-        public LoginController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager)
+        public LoginController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, IActivityLogService logService)
         {
             this.signInManager = signInManager;
             this.userManager = userManager;
+            this._logService = logService;
         }
+
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]// para hind ma cache ng browser ang login page. Means makakatulong para pag nag back button tapos naka logged in is hindi pupunta ng login page
         public IActionResult Login()
         {
@@ -166,6 +172,21 @@ namespace AttendanceMonitoring.Controllers
 
                 if (result.Succeeded)
                 {
+                    //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var userId = user.Id;  // or User.FindFirstValue(ClaimTypes.NameIdentifier)
+                    var username = user.UserName;
+                    var schoolId = user.SchoolId;
+
+                    await _logService.LogActivity(
+                           actionType: "Login",  // Changed to "Login" since result.Succeeded
+                           entityName: "User",
+                           entityId: userId,
+                           userId: userId,
+                           schoolId: schoolId,
+                           details: $"User {username} logged in successfully",
+                           username: username
+                    );
+
                     if (await userManager.IsInRoleAsync(user, "Admin"))
                         return RedirectToAction("AdminHome", "Admin");
                     if (await userManager.IsInRoleAsync(user, "Teacher"))
@@ -173,6 +194,7 @@ namespace AttendanceMonitoring.Controllers
                     if (await userManager.IsInRoleAsync(user, "Secretary"))
                         return RedirectToAction("SecretaryHome", "Secretary");
 
+                                   
                     //return RedirectToAction("Index", "Login");
                     return RedirectToAction("Index", "Home");
 

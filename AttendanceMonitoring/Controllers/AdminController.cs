@@ -23,6 +23,8 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static NuGet.Packaging.PackagingConstants;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Globalization;
+using System.Security.Claims;
+using AttendanceMonitoring.Contracts;
 
 namespace AttendanceMonitoring.Controllers
 {
@@ -42,6 +44,9 @@ namespace AttendanceMonitoring.Controllers
         //For Backup And Restore Feature
         private readonly DatabaseBackupService backupService;
         private readonly ILogger<AdminController> logger;
+
+        private readonly IActivityLogService logService;
+        private readonly IActivityLogRepository _repo; //For Pagination
         //private readonly UserManager<IdentityUser> _userManager;
 
         // **Dependency Injection = How the service is provided** to your controller
@@ -49,7 +54,7 @@ namespace AttendanceMonitoring.Controllers
         //Dependency Injection
         //eto mismo yung parameter: signInManager, tapos object dn sya pero yung laman nya, example if yung parameter is name then ang object is 'Juan'
         public AdminController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment,
-                                DatabaseBackupService backupService, ILogger<AdminController> logger)
+                                DatabaseBackupService backupService, ILogger<AdminController> logger, IActivityLogService logService, IActivityLogRepository repo)
         {
             // so you can use them in any method inside the controller.
             // eto nayung ininject sa conrstructor
@@ -63,8 +68,42 @@ namespace AttendanceMonitoring.Controllers
             //For Backup And Restore Feature
             this.backupService = backupService;
             this.logger = logger;
+            this.logService = logService;
+            this._repo = repo;
         }
 
+        /// <summary>
+        /// HELPER METHODS
+        /// </summary>
+        /// <returns></returns>
+
+        protected string GetCurrentUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        protected string GetCurrentUsername()
+        {
+            return User.Identity.Name;
+        }
+
+        protected async Task<int> GetCurrentUserSchoolId()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await userManager.FindByIdAsync(userId);
+
+            return user.SchoolId;
+        }
+
+        protected async Task<(string userId, string username, int schoolId)> GetCurrentUserInfo()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await userManager.FindByIdAsync(userId);
+
+            return (userId, user.UserName, user.SchoolId);
+        }
         //[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
         //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminHome()
@@ -114,7 +153,6 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, errors = overallErrors });
             }
 
-
             var AcademicPeriod = new AcademicPeriod()
             {
                 Year = model.Year,
@@ -124,9 +162,20 @@ namespace AttendanceMonitoring.Controllers
                 Status = model.Status = 0, ////default to 0 . 0 = NOT YET STARTED, 1 = STARTED, 2 = CLOSED
             };
 
-
             await context.AddAsync(AcademicPeriod);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Added",
+                entityName: "AcademicPeriod",
+                entityId: AcademicPeriod.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} Added new academic period",
+                username: userInfo.username
+            );
 
             return Json(new { success = true, message = "Academic Period successfully added!" });
         }
@@ -1913,6 +1962,7 @@ namespace AttendanceMonitoring.Controllers
             context.Students.Add(student);
             await context.SaveChangesAsync();
 
+
             var sectionAssignment = new StudentSectionAssignment
             {
                 StudentId = student.Id,
@@ -2856,9 +2906,40 @@ namespace AttendanceMonitoring.Controllers
             return RedirectToAction(nameof(BackupAndRestore));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ActivityLogs(PaginatedRequest request)
+        {
+
+            var activityLogs = await _repo.GetPaginated(
+                    request.PageNumber, 
+                    PaginatedRequest.ITEM_PER_PAGE,
+                    request.SearchKeyword ?? string.Empty
+                    );
+            activityLogs.SearchKeyword = request.SearchKeyword;
+
+            return View(activityLogs);
+        }
         public async Task<IActionResult> Logout()
         {
+            //Get the current user
+            //var user = await userManager.GetUserAsync(User);
+
+            //var userId = user?.Id;
+            //var schoolId = user?.SchoolId ?? 0;
+            //var username = user?.UserName;
+
+            var userinfo = await GetCurrentUserInfo();
             await signInManager.SignOutAsync();
+
+            await logService.LogActivity(
+                actionType: "Logout",
+                entityName: "User",
+                entityId: userinfo.userId,
+                userId: userinfo.userId,
+                schoolId: userinfo.schoolId,
+                details: $"User {userinfo.username} logged out successfully!",
+                username: userinfo.username
+            );
 
             return RedirectToAction("Login", "Login");
 

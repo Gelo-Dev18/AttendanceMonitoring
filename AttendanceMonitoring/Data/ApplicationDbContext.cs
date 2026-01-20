@@ -1,18 +1,24 @@
 ﻿using AttendanceMonitoring.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Security.Claims;
 
 namespace AttendanceMonitoring.Data
 {
     public class ApplicationDbContext : IdentityDbContext<AppUser>
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor httpContextAccessor)
             : base(options)
         {
+            _httpContextAccessor = httpContextAccessor;
         }
         //public DbSet<AttendanceMonitoring.Models.Student> Student { get; set; } = default!;
 
         public DbSet<AcademicPeriod> AcademicPeriods { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
         public DbSet<Attendance> Attendances { get; set; }
         public DbSet<Grade> Grades { get; set; }
         public DbSet<Section> Sections { get; set; }
@@ -24,6 +30,88 @@ namespace AttendanceMonitoring.Data
         public DbSet<TeacherAssignment> TeacherAssignments { get; set; }
         public DbSet<SecretaryAssignment> SecretaryAssignments { get; set; }
 
+        
+        //public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        //{
+        //    var userId = GetCurrentUserId();
+        //    var schoolId = GetCurrentSchoolId();
+
+        //    //var username = _httpContextAccessor.HttpContext?.User?.Identity?.Name ?? "System";
+        //    var entries = ChangeTracker.Entries()
+        //        .Where(e => e.State == EntityState.Added ||
+        //                    e.State == EntityState.Modified ||
+        //                    e.State == EntityState.Deleted)
+        //        .ToList();
+
+        //    foreach(var entry in entries)
+        //    {
+        //        var log = new ActivityLog
+        //        {
+        //            UserId = userId,
+        //            SchoolId = schoolId,
+        //            ActionType = entry.State.ToString(),
+        //            EntityName = entry.Entity.GetType().Name,
+        //            EntityId = GetPrimaryKeyValue(entry),
+        //            Details = GetChangeDetails(entry),
+        //            TimeActivityCommited = DateTime.UtcNow,
+        //            CreatedAt = DateTime.UtcNow
+        //        };
+
+        //        ActivityLogs.Add(log);
+        //    }
+
+        //    return await base.SaveChangesAsync(cancellationToken);
+
+        //}
+
+        //private string GetCurrentUserId()
+        //{
+        //    var user = _httpContextAccessor.HttpContext?.User;
+        //    if(user == null)
+        //    {
+        //        return "System";
+        //    }
+
+        //    return user.FindFirstValue(ClaimTypes.NameIdentifier) ?? "System";
+        //}
+
+        //private int GetCurrentSchoolId()
+        //{
+        //    var user = _httpContextAccessor.HttpContext?.User;
+        //    var schoolIdClaim = user?.FindFirstValue("SchoolId");
+
+        //    //return user.FindFirstValue("SchoolId") ?? "N/A";
+        //    //convert string to int
+        //    return int.TryParse(schoolIdClaim, out var schoolId) ? schoolId : 0;
+        //}
+        //private string GetPrimaryKeyValue(EntityEntry entry)
+        //{
+        //    var key = entry.Properties.FirstOrDefault(p => p.Metadata.IsPrimaryKey());
+        //    return key?.CurrentValue?.ToString() ?? "Unknown";
+        //}
+        //private string GetChangeDetails(EntityEntry entry)
+        //{
+        //    if(entry.State == EntityState.Added)
+        //    {
+        //        return "New record Added";
+        //    }
+
+        //    if(entry.State == EntityState.Deleted)
+        //    {
+        //        return "Record Deleted";
+        //    }
+
+        //    var changes = new List<string>();
+        //    foreach(var property in entry.Properties)
+        //    {
+        //        if (property.IsModified)
+        //        {
+        //            changes.Add($"{property.Metadata.Name}: '{property.OriginalValue}' → '{property.CurrentValue}'");
+        //        }
+        //    }
+
+        //    return string.Join(", ", changes);
+        //}
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

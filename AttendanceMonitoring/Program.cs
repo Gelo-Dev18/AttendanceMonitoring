@@ -1,5 +1,7 @@
+using AttendanceMonitoring.Contracts;
 using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
+using AttendanceMonitoring.Repositories;
 using AttendanceMonitoring.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -11,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args); //logging
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+//builder.Services.AddHttpContextAccessor(); //Override SaveCHangesAsync for activity logs
+
+builder.Services.AddScoped<IActivityLogService, ActivityLogServices>(); //For manual use of loggin activity
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -18,6 +23,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddScoped<DatabaseBackupService>();// Backup Service
+
+builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
+builder.Services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
+
 
 builder.Services.AddDefaultIdentity<AppUser>(options =>
 {

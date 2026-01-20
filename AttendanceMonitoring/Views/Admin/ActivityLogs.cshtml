@@ -1,0 +1,137 @@
+﻿@using AttendanceMonitoring.ViewModel
+@model PaginatedResult<ActivityLog>
+@{
+    ViewData["Title"] = "Activity Logs";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h1 class="h3 mb-2 text-gray-800">Activity Logs</h1>
+
+<div class="card shadow mb-4">
+    <div class="card-header" >
+        <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">
+            <i class="fas fa-list"></i> Table for Activity log's Info
+        </h6>
+    </div>
+
+    <div class="card-body">
+        @if (Model.Result != null && Model.Result.Any())
+        {
+            <div class="table-responsive">
+                <div class="mb-2 d-flex justify-content-end">
+                    <form asp-action="ActivityLogs" method="get">
+                        <div class="input-group">
+                            <input type="text" name="s" class="form-control" value="@Model.SearchKeyword" />
+                            <button type="submit" class="btn btn-success">search</button>
+                        </div>
+                    </form>
+                </div>
+                <table class="table table-bordered">
+
+                    <thead class="">
+                        <tr>
+                            <th>
+                                #
+                            </th>
+                            <th>
+                                <i class="fas fa-file"></i> Action Type
+                            </th>
+                            <th>
+                                <i class="fas fa-calendar"></i> Details
+                            </th>
+                            <th>
+                                <i class="fas fa-hdd"></i> School Id
+                            </th>
+                            <th class="text-center">
+                                <i class="fas fa-cog"></i> Time Committed
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @{
+                            var c = 1;
+                        }
+                        @foreach (var activityLog in Model.Result)
+                        {
+                            <tr>
+                                <td><strong>@(c++)</strong></td>
+                                <td>
+                                    <i class="text-primary"></i>
+                                    <strong>@activityLog.ActionType</strong>
+                                </td>
+                                <td>
+                                    @activityLog.Details
+                                </td>
+                                <td>
+                                    <span class="text-danger">
+                                        @activityLog.SchoolId
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="">
+                                        @activityLog.TimeActivityCommited.ToString("MMMM dd, yyyy hh:mm tt")
+                                    </span>
+                                </td>
+                                @* <td class="text-center">
+                                    <a asp-action="DownloadBackup"
+                                       asp-route-fileName="@backup.FileName"
+                                       class="btn btn-success"
+                                       title="Download this backup">
+                                        <i class="fas fa-download"></i>Download
+                                    </a>
+                                </td> *@
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <nav>
+                    <ul class="pagination justify-content-end">
+                        <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-route-p="@(Model.Page - 1)">Previous</a>
+                        </li>
+                        @for (var pageNumber = 1; pageNumber <= Model.TotalCount; pageNumber++)
+                        {
+                            if (pageNumber == Model.Page)
+                            {
+                                <li class="page-item active">
+                                    <span class="page-link">@pageNumber</span>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@pageNumber">@pageNumber</a>
+                                </li>
+                            }
+                        }
+                        <li class="page-item @(Model.Page == Model.TotalCount ? "disabled" : "")">
+                            <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.Page + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            @* <div class="alert alert-info mt-3">
+                <i class="fas fa-lightbulb"></i>
+                <strong>Total Backups:</strong> @Model.PaginatedBackups.TotalCount backup file(s) available
+            </div> *@
+        }
+        else
+        {
+            <div class="mb-2 d-flex justify-content-end">
+                <form asp-action="ActivityLogs" method="get">
+                    <div class="input-group">
+                        <input type="text" name="s" class="form-control" value="@Model.SearchKeyword" />
+                        <button type="submit" class="btn btn-success">search</button>
+                    </div>
+                </form>
+            </div>
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>No activity logs found.</strong> Make sure activity exists
+            </div>
+        }
+    </div>
+</div>
