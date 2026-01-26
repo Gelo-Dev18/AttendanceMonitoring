@@ -1,15 +1,20 @@
 ﻿using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Models;
 using AttendanceMonitoring.Services;
+using AttendanceMonitoring.ViewModel;
 using AttendanceMonitoring.ViewModel.Teacher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Packaging.Signing;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace AttendanceMonitoring.Controllers
 {
@@ -25,7 +30,7 @@ namespace AttendanceMonitoring.Controllers
 
         public TeacherController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, ApplicationDbContext context, IWebHostEnvironment environment, IActivityLogService logService)
         {
-            
+
             this.signInManager = signInManager;
             this.userManager = userManager;
             this.context = context;
@@ -33,7 +38,206 @@ namespace AttendanceMonitoring.Controllers
             this.logService = logService;
 
         }
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            var userId = GetCurrentUserId();
+            var user = await userManager.FindByIdAsync(userId);
 
+            //Automatic na set this viewbag to all methods/actions
+            ViewBag.UserLastName = user?.LastName ?? "User";
+            ViewBag.UserProfilePic = user?.imageFilePath ?? "default-avatar.png";
+
+            await next(); // continue to the actual action
+        }
+        protected string GetCurrentUserId()
+        {
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        protected string GetCurrentUsername()
+        {
+            return User.Identity.Name;
+        }
+
+        protected async Task<int> GetCurrentUserSchoolId()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await userManager.FindByIdAsync(userId);
+
+            return user.SchoolId;
+        }
+
+        protected async Task<(string userId, string username, int schoolId)> GetCurrentUserInfo()
+        {
+            var userId = GetCurrentUserId();
+
+            var user = await userManager.FindByIdAsync(userId);
+
+            return (userId, user.UserName, user.SchoolId);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManageTeacherAccount()
+        {
+            var user = await userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return Json(new { success = false, message = "Cannot find user" });
+            }
+
+            var model = new TeacherManageAccountViewModel()
+            {
+                LRN = user.SchoolId,
+                FirstName = user.FirstName,
+                MiddleName = user.MiddleName,
+                LastName = user.LastName,
+                Sex = user.Sex,
+                PositionTitle = user.positionTitle,
+                imageFilePath = user.imageFilePath
+
+            };
+            return PartialView("_TeacherManageAccount", model);
+        }
+
+        [HttpPost] //Route Parameter
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ManageTeacherAccount(string id, TeacherManageAccountViewModel model)
+        {
+            var editTeacher = await context.Users.FindAsync(id);
+
+            if (editTeacher == null)
+            {
+                return Json(new { success = false, message = "User id could not found!" });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+            }
+
+            try
+            {
+
+                string? saveImagePath = null;
+                byte[]? saveImageData = null;
+
+                if (model.imageFile != null)
+                {
+                    string newFile = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                    newFile += Path.GetExtension(model.imageFile.FileName);
+
+                    string imageFullPath = environment.WebRootPath + "/ProfilePic/" + newFile;
+
+                    using (var stream = System.IO.File.Create(imageFullPath))
+                    {
+                        await model.imageFile.CopyToAsync(stream);
+                    }
+
+                    if (!string.IsNullOrEmpty(editTeacher.imageFilePath))
+                    {
+                        string oldImageFullPath = environment.WebRootPath + "/ProfilePic" + editTeacher.imageFilePath;
+
+                        if (oldImageFullPath != null)
+                        {
+                            System.IO.File.Delete(oldImageFullPath);
+                        }
+                    }
+
+                    saveImagePath = newFile;
+
+                    using (var inputStream = model.imageFile.OpenReadStream())
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await inputStream.CopyToAsync(memoryStream);
+                        saveImageData = memoryStream.ToArray();
+                    }
+
+                    editTeacher.imageFilePath = saveImagePath;
+                    editTeacher.imageFileData = saveImageData;
+                }
+
+                //Capitalize every firsy letter
+                TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+                string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+                string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName?.ToLower() ?? ""); //ang .ToTitleCase is hindi tumatanggap ng null kaya need ng MiddleName? at ?? ""
+                string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
+
+
+                editTeacher.LRN = model.LRN;
+                editTeacher.FirstName = formattedFirstName;
+                editTeacher.MiddleName = formattedMiddleName;
+                editTeacher.LastName = formattedLastName;
+                editTeacher.Sex = model.Sex;
+                editTeacher.positionTitle = model.PositionTitle;
+
+                var result = await userManager.UpdateAsync(editTeacher);
+
+                //Log Activity
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Manage Account",
+                    entityName: "Teacher",
+                    entityId: editTeacher.Id.ToString(),
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"User {userInfo.username} edited admin user {editTeacher.FirstName} {editTeacher.MiddleName} {editTeacher.LastName}, School Id: {editTeacher.SchoolId}",
+                    username: userInfo.username
+                );
+
+                if (!result.Succeeded)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+
+                    var errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                    );
+
+                    return Json(new { success = false, errors = errors });
+                }
+
+                if (!string.IsNullOrWhiteSpace(model.NewPassword))
+                {
+                    var removePassword = await userManager.RemovePasswordAsync(editTeacher);
+                    if (removePassword.Succeeded)
+                    {
+                        var addPassword = await userManager.AddPasswordAsync(editTeacher, model.NewPassword);
+                        if (!addPassword.Succeeded)
+                        {
+                            foreach (var error in addPassword.Errors)
+                            {
+                                ModelState.AddModelError(string.Empty, error.Description);
+                            }
+
+                            var errors = ModelState.ToDictionary(
+                                 kvp => kvp.Key,
+                                 kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                            );
+
+                            return Json(new { success = false, errors = errors });
+                        }
+                    }
+                }
+
+                return Json(new { success = true, message = "Account Updated Successfully!" });
+
+            }
+            catch
+            {
+                return Json(new { success = false, message = "Something went wrong" });
+            }
+
+        }
         //[Authorize(Roles = "Teacher")]
         public IActionResult TeacherHome()
         {
@@ -173,7 +377,7 @@ namespace AttendanceMonitoring.Controllers
                 }
             }
 
-            var model = new AttendanceViewModel()
+            var model = new TeacherAttendanceViewModel()
             {
                 teacherClass = TeachersClass, //all teacher's class
                 SelectedClassId = selectedClassId, //Selected class (null)
@@ -195,7 +399,9 @@ namespace AttendanceMonitoring.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SaveAttendance(SaveAttendanceViewModel model, int? selectedClassId)
         {
-            if(!model.TeacherAssignmentId.HasValue || model.TeacherAssignmentId == 0)
+            
+
+            if (!model.TeacherAssignmentId.HasValue || model.TeacherAssignmentId == 0)
             {
                 return Json(new { success = false, message = "TeacherAssignmentId is missing!" });
             }
@@ -214,7 +420,15 @@ namespace AttendanceMonitoring.Controllers
             //Recorded by the current user that is logged in
             var recordedById = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            foreach(var attendance in model.StudentAttendance)
+            var TeachersClass = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Subject)
+                .Include(sn => sn.SectionSubject.Section)
+                    .ThenInclude(g => g.Grade)
+                .Where(s => s.TeacherId == recordedById) //Filter to this teacher only
+                .FirstOrDefaultAsync();
+
+            foreach (var attendance in model.StudentAttendance)
             {
                 var studentId = attendance.Key;
                 var marking = attendance.Value;
@@ -255,6 +469,23 @@ namespace AttendanceMonitoring.Controllers
             }
 
             await context.SaveChangesAsync();
+
+            var classInfo = $"Grade {TeachersClass.SectionSubject.Section.Grade.GradeLevel} - {TeachersClass.SectionSubject.Section.SectionName}";
+            var TrackInfo = !string.IsNullOrEmpty(TeachersClass.SectionSubject.Section.Track) ? $"{TeachersClass.SectionSubject.Section.Track}" : "" ;
+            var TVLInfo = !string.IsNullOrEmpty(TeachersClass.SectionSubject.Section.TVLProgram) ? $"{TeachersClass.SectionSubject.Section.TVLProgram}" : "";
+            var subjectInfo = $"{TeachersClass.SectionSubject.Subject.SubjectDescription}";
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Conduct Attendance",
+                entityName: "Attendance",
+                entityId: recordedById,
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"Teacher {userInfo.username} conduct a record to Class {classInfo} {TrackInfo} {TVLInfo} - {subjectInfo}",
+                username: userInfo.username
+            );
             model.SelectedClassId = null;
 
             return Json(new { success = true, message = "Attendance saved successfully!" });

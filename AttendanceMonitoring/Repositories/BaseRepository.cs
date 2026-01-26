@@ -26,9 +26,13 @@ namespace AttendanceMonitoring.Repositories
 
             return new PaginatedResult<T>
             {
+                //Result = records,
+                //Page = page,
+                //TotalCount = (int)Math.Ceiling(count / (double)pageSize) // math.ceiling awalys rounds a number up to the next whole number
                 Result = records,
                 Page = page,
-                TotalCount = (int)Math.Ceiling(count / (double)pageSize) // math.ceiling awalys rounds a number up to the next whole number
+                PageSize = pageSize,
+                TotalCount = count
             };
         }
     }

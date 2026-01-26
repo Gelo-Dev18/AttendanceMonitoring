@@ -177,7 +177,7 @@
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
-            url: '/Admin/Delete/' + userID,
+            url: '/Admin/DeleteTeacher/' + userID,
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {

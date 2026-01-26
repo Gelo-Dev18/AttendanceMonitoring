@@ -1,4 +1,5 @@
-﻿using AttendanceMonitoring.Data;
+﻿using AttendanceMonitoring.Contracts;
+using AttendanceMonitoring.Data;
 using AttendanceMonitoring.Helper;
 using AttendanceMonitoring.Models;
 using AttendanceMonitoring.Services;
@@ -8,23 +9,25 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering; // para sa SelectListItem
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 using NuGet.DependencyResolver;
+using NuGet.Packaging.Signing;
 using System.Data;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Linq;
 using System.Net.NetworkInformation;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using static NuGet.Packaging.PackagingConstants;
 using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Globalization;
-using System.Security.Claims;
-using AttendanceMonitoring.Contracts;
 
 namespace AttendanceMonitoring.Controllers
 {
@@ -72,9 +75,20 @@ namespace AttendanceMonitoring.Controllers
             this._repo = repo;
         }
 
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            var userId = GetCurrentUserId();
+            var user = await userManager.FindByIdAsync(userId);
+
+            //Automatic na set this viewbag to all methods/actions
+            ViewBag.UserLastName = user?.LastName ?? "User";
+            ViewBag.UserProfilePic = user?.imageFilePath ?? "default-avatar.png";
+
+            await next(); // continue to the actual action
+        }
         /// <summary>
         /// HELPER METHODS
-        /// </summary>
+        /// </summary>  
         /// <returns></returns>
 
         protected string GetCurrentUserId()
@@ -106,20 +120,196 @@ namespace AttendanceMonitoring.Controllers
         }
         //[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)] // disabled caching para kapag pinindot back button sa isang browser at naka logged out na eh hindi na babalik sa specific user dashboard
         //[Authorize(Roles = "Admin")]
+        [HttpGet]
         public async Task<IActionResult> AdminHome()
         {
+            var user = await userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return Json(new { success = false, message = "Cannot find user" });
+            }
+
             var studentList = await context.Students.ToListAsync();
             var teacherList = await userManager.GetUsersInRoleAsync("Teacher");
             var subjectList = await context.Subjects.ToListAsync();
+            var secretaryList = await userManager.GetUsersInRoleAsync("Secretary");
+
+
 
             var adminHome = new AdminHomeViewModel
             {
                 StudentCount = studentList.Count,
                 TeacherCount = teacherList.Count,
-                SubjectCount = subjectList.Count
+                SecretaryCount = secretaryList.Count,
+                SubjectCount = subjectList.Count,
+                LastName = user.LastName,
+                imageFilePath = user.imageFilePath
             };
 
             return View(adminHome);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManageAccount()
+        {
+            //var user = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await userManager.GetUserAsync(User);
+
+            if (user == null)
+            {
+                return Json(new { success = false, message = "Cannot find user" });
+            }
+
+            var model = new ManageAccountViewModel()
+            {
+                LRN = user.SchoolId,
+                FirstName = user.FirstName,
+                MiddleName = user.MiddleName,
+                LastName = user.LastName,
+                imageFilePath = user.imageFilePath
+
+            };
+
+            return PartialView("_ManageAccount", model);
+        }
+
+
+
+        [HttpPost] //Query Parameter
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ManageAccount(string id, ManageAccountViewModel model)
+        {
+            var editedUser = await context.Users.FindAsync(id);
+
+            if(editedUser == null)
+            {
+                return Json(new { success = false, message = "User id could not found!" });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+            }
+
+            try
+            {
+
+                string? saveImagePath = null;
+                byte[]? saveImageData = null;
+
+                if (model.imageFile != null)
+                {
+                    string newFile = DateTime.Now.ToString("yyyyMMddHHmmssfff");
+                    newFile += Path.GetExtension(model.imageFile.FileName);
+
+                    string imageFullPath = environment.WebRootPath + "/ProfilePic/" + newFile;
+
+                    using (var stream = System.IO.File.Create(imageFullPath))
+                    {
+                        await model.imageFile.CopyToAsync(stream);
+                    }
+
+                    if (!string.IsNullOrEmpty(editedUser.imageFilePath))
+                    {
+                        string oldImageFullPath = environment.WebRootPath + "/ProfilePic" + editedUser.imageFilePath;
+
+                        if (oldImageFullPath != null)
+                        {
+                            System.IO.File.Delete(oldImageFullPath);
+                        }
+                    }
+
+                    saveImagePath = newFile;
+
+                    using(var inputStream = model.imageFile.OpenReadStream())
+                    using(var memoryStream = new MemoryStream())
+                    {
+                        await inputStream.CopyToAsync(memoryStream);
+                        saveImageData = memoryStream.ToArray();
+                    }
+
+                    editedUser.imageFilePath = saveImagePath;
+                    editedUser.imageFileData = saveImageData;
+                }
+
+                //Capitalize every firsy letter
+                TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+                string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
+                string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName?.ToLower() ?? "");
+                string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
+
+
+                editedUser.LRN = model.LRN;
+                editedUser.FirstName = formattedFirstName;
+                editedUser.MiddleName = formattedMiddleName;
+                editedUser.LastName = formattedLastName;
+
+                var result = await userManager.UpdateAsync(editedUser);
+
+                //Log Activity
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Edit",
+                    entityName: "User",
+                    entityId: editedUser.Id.ToString(),
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"User {userInfo.username} edited admin user {editedUser.FirstName} {editedUser.MiddleName} {editedUser.LastName}, School Id: {editedUser.SchoolId}",
+                    username: userInfo.username
+                );
+
+                if (!result.Succeeded)
+                {
+                    foreach(var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+
+                    var errors = ModelState.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                    );
+
+                    return Json(new { success = false, errors = errors });
+                }
+
+                if (!string.IsNullOrWhiteSpace(model.NewPassword))
+                {
+                    var removePassword = await userManager.RemovePasswordAsync(editedUser);
+                    if (removePassword.Succeeded)
+                    {
+                        var addPassword = await userManager.AddPasswordAsync(editedUser, model.NewPassword);
+                        if (!addPassword.Succeeded)
+                        {
+                            foreach(var error in addPassword.Errors)
+                            {
+                                ModelState.AddModelError(string.Empty, error.Description);
+                            }
+
+                            var errors = ModelState.ToDictionary(
+                                 kvp => kvp.Key,
+                                 kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                            );
+
+                            return Json(new { success = false, errors = errors });
+                        }
+                    }
+                }
+
+                return Json(new { success = true, message = "Admin Updated Successfully!" });
+
+            }
+            catch
+            {
+                return Json(new { success = false, message = "Something went wrong" });
+            }
+
         }
 
         public async Task<IActionResult> AcademicPeriodList()
@@ -221,6 +411,18 @@ namespace AttendanceMonitoring.Controllers
                     await context.SaveChangesAsync();
                     await transaction.CommitAsync();// All good → commit transaction // <— this makes the changes permanent // Para syang save button 
 
+                    var userInfo = await GetCurrentUserInfo();
+
+                    await logService.LogActivity(
+                        actionType: "Set Default",
+                        entityName: "AcademicPeriod",
+                        entityId: setDefaultAcademic.Id.ToString(),
+                        userId: userInfo.userId,
+                        schoolId: userInfo.schoolId,
+                        details: $"User {userInfo.username} set new default academic period",
+                        username: userInfo.username
+                    );
+
                     return Json(new { success = true, message = "Academic Period set default!" });
                 }
                 //catch(Exception ex) //use Exception General — kahit anong error, kahit hindi database
@@ -299,7 +501,19 @@ namespace AttendanceMonitoring.Controllers
                 context.AcademicPeriods.Update(editacademicPeriod);
                 await context.SaveChangesAsync();
 
-                return Json(new { success = true, message = "Academic Period Deleted Successfully!" });
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Edit",
+                    entityName: "AcademicPeriod",
+                    entityId: editacademicPeriod.Id.ToString(),
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"User {userInfo.username} edited {editacademicPeriod.Year} academic period",
+                    username: userInfo.username
+                );
+
+                return Json(new { success = true, message = "Academic Period Edited Successfully!" });
 
 
             }
@@ -328,6 +542,18 @@ namespace AttendanceMonitoring.Controllers
             }
             context.AcademicPeriods.Remove(AcademicId);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Delete",
+                entityName: "AcademicPeriod",
+                entityId: AcademicId.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} deleted {AcademicId.Year} - {AcademicId.GradingPeriod} academic period",
+                username: userInfo.username
+            );
 
             return Json(new { success = true, message = "Academic Period Deleted Successfully!" });
 
@@ -386,13 +612,23 @@ namespace AttendanceMonitoring.Controllers
                 SubjectDescription = model.SubjectDescription,
                 Category = model.Category,
                 CreatedAt = DateTime.Now
-            };
-
-            
+            }; 
 
             await context.Subjects.AddAsync(Subject);
             await context.SaveChangesAsync();
-            
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Added",
+                entityName: "Subject",
+                entityId: Subject.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} added subject successfully",
+                username: userInfo.username
+            );
+
             return Json(new { success = true, message = "Subject Added Successfully!" });
         }
 
@@ -459,6 +695,18 @@ namespace AttendanceMonitoring.Controllers
             context.Subjects.Update(EditSubject);
             await context.SaveChangesAsync();
 
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Edit",
+                entityName: "Subject",
+                entityId: EditSubject.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} edited subject {EditSubject.SubjectDescription}, {EditSubject.Category} Category",
+                username: userInfo.username
+            );
+
             return Json(new { success = true, message = "Subject Edited Successfully!" });
         }
 
@@ -480,9 +728,20 @@ namespace AttendanceMonitoring.Controllers
 
             }
 
-
             context.Subjects.Remove(DeleteSubject);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Edit",
+                entityName: "Subject",
+                entityId: DeleteSubject.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} deleted subject {DeleteSubject.SubjectDescription}, {DeleteSubject.Category} Category",
+                username: userInfo.username
+            );
 
             return Json(new { success = true, message = "Subject Deleted Successfully!" });
         }
@@ -552,7 +811,7 @@ namespace AttendanceMonitoring.Controllers
                     //Check if the subject is already exist on the target section
                     var exists = await context.SectionSubjects
                                               .AnyAsync(ss => ss.SectionId == targetSectionId && ss.SubjectId == sourceSubject.SubjectId);
-                    //If subjec does not already exists, it adds it
+                    //If subject does not already exists, it adds it
                     if (!exists)
                     {
                         context.SectionSubjects.Add(new SectionSubject
@@ -568,7 +827,19 @@ namespace AttendanceMonitoring.Controllers
 
             await context.SaveChangesAsync();
 
-            return Json(new { sucess = true, message = $"Successfully copied {copiedCount} subjects!" });
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Copy",
+                entityName: "Subject",
+                entityId: sourceSectionId.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} copied {copiedCount} subject(s) from section {sourceSectionId} to {targetSectionIds.Count} target section(s)",
+                username: userInfo.username
+            );
+
+            return Json(new { success = true, message = $"Successfully copied {copiedCount} subjects!" });
         }
 
         //[HttpGet]
@@ -643,7 +914,11 @@ namespace AttendanceMonitoring.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignSubject(int sectionId, List<int> SelectedSubjects)
         {
-            var section = await context.Sections.FindAsync(sectionId);
+            //var section = await context.Sections.FindAsync(sectionId);
+            //bago
+            var section = await context.Sections
+                .Include(s => s.Grade)
+                .FirstOrDefaultAsync(s => s.Id == sectionId);
 
             if ( section == null)
             {
@@ -663,11 +938,22 @@ namespace AttendanceMonitoring.Controllers
 
                 return Json(new { success = false, errors = overallErrors });
             }
+            //bagp
+            var subjectsToAssign = await context.Subjects
+                .Where(s => SelectedSubjects.Contains(s.Id))
+                .Select(s => new { s.Id, s.SubjectDescription })
+                .ToListAsync();
+            //bago
+            var sectionInfo = $"Grade {section.Grade.GradeLevel} - {section.SectionName} {section.Track} {section.TVLProgram}";
+            var addedSubjects = new List<string>();
 
-            foreach(var subjectId in SelectedSubjects)
+            foreach (var subjectId in SelectedSubjects)
             {
-                var subject = await context.Subjects.FindAsync(subjectId);
-                if (subject != null)
+                //var subject = await context.Subjects.FindAsync(subjectId);
+                var alreadyAssigned = await context.SectionSubjects
+                    .AnyAsync(ss => ss.SectionId == sectionId && ss.SubjectId == subjectId);
+
+                if (alreadyAssigned != null)
                 {
                     var assigned = new SectionSubject()
                     {
@@ -677,34 +963,89 @@ namespace AttendanceMonitoring.Controllers
 
                     };
                     await context.SectionSubjects.AddAsync(assigned);
+
+                    // Get the subject name// bago
+                    var subjectName = subjectsToAssign.FirstOrDefault(s => s.Id == subjectId)?.SubjectDescription;
+                    if (subjectName != null)
+                    {
+                        addedSubjects.Add(subjectName);
+                    }
                 }
-                //if(subject != null)
-                //{
-                //    await context.SectionSubjects.AddAsync(new SectionSubject
-                //    {
-                //        SectionId = sectionId,
-                //        SubjectId = subjectId
-                //    });
-                //}
             }
+
+            // Create detailed log message
+            // bago
+            var subjectList = addedSubjects.Any()
+                ? string.Join(", ", addedSubjects)
+                : "no new subjects (already assigned)";
+
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Assign Subject",
+                entityName: "SectionSubject",
+                entityId: sectionId.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} assigned {addedSubjects.Count} subject(s) [{subjectList}] to {sectionInfo}",
+                username: userInfo.username
+            );
+
             return Json(new { success = true, message = "Subject Assigned Successfully!" });
         }
 
         [HttpDelete]
         public async Task<IActionResult> RemoveAssignedSubject(int id)
         {
-            var subject = await context.SectionSubjects.FindAsync(id);
-
-            if (subject == null)
+            try
             {
-                return Json(new { success = true, error = "Id not Found!" });
+                var subject = await context.SectionSubjects
+                    .Include(ss => ss.Section)
+                        .ThenInclude(s => s.Grade)
+                    .Include(ss => ss.Subject)
+                    .FirstOrDefaultAsync(ss => ss.Id == id);
+
+                if (subject == null)
+                {
+                    return Json(new { success = false, error = "Id not Found!" });
+                }
+
+                var sectionInf0 = $"Grade {subject.Section.Grade.GradeLevel} - {subject.Section.SectionName} {subject.Section.Track} {subject.Section.TVLProgram}";
+                var subjectName = subject.Subject.SubjectDescription;
+
+                context.SectionSubjects.Remove(subject);
+                await context.SaveChangesAsync();
+
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Delete",
+                    entityName: "SectionSubject",
+                    entityId: id.ToString(),
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"User {userInfo.username} unassigned subject '{subjectName}' from {sectionInf0}",
+                    username: userInfo.username
+                );
+
+                return Json(new { success = true, message = "Subject Removed!" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error removing subject: {ex.Message}");
+                return Json(new { success = false, message = "An error occurred while removing the subject" });
             }
 
-            context.SectionSubjects.Remove(subject);
-            await context.SaveChangesAsync();
+            //var subject = await context.SectionSubjects.FindAsync(id);
 
-            return Json(new {success = true, message = "Subject Removed!"});
+            //if (subject == null)
+            //{
+            //    return Json(new { success = true, error = "Id not Found!" });
+            //}
+
+
         }
 
         //[HttpPost]
@@ -771,6 +1112,18 @@ namespace AttendanceMonitoring.Controllers
             await context.Grades.AddAsync(grade);
             await context.SaveChangesAsync();
 
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Add",
+                entityName: "Grade",
+                entityId: grade.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} added a new subject",
+                username: userInfo.username
+            );
+
             return Json(new { success = true, message = "Grade Level Added Successfully!" });
         }
 
@@ -829,6 +1182,19 @@ namespace AttendanceMonitoring.Controllers
             context.Grades.Update(editGrade);
             await context.SaveChangesAsync();
 
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Edit",
+                entityName: "Grade",
+                entityId: editGrade.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} edited Grade {editGrade.GradeLevel}",
+                username: userInfo.username
+            );
+
+
             return Json(new { success = true, message = "Grade Successfully Edited!" });
 
         }
@@ -851,6 +1217,19 @@ namespace AttendanceMonitoring.Controllers
             }
             context.Grades.Remove(grade);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Deleted",
+                entityName: "Grade",
+                entityId: grade.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} deleted grade {grade.GradeLevel}",
+                username: userInfo.username
+            );
+
 
             return Json(new { success = true, message = "Grade Successfully Deleted!" });
 
@@ -935,6 +1314,8 @@ namespace AttendanceMonitoring.Controllers
             //    CreatedAt = DateTime.Now
             //};
 
+            var grade = await context.Grades.FindAsync(model.GradesId);
+            
             //pag ganito ibig sabihin may data na multiple ang iinsert na data   
             var Sections = sectionNames.Select(name => new Section
             {
@@ -943,10 +1324,29 @@ namespace AttendanceMonitoring.Controllers
                 Track = model.Track,
                 TVLProgram = model.TVLProgram,
                 CreatedAt = DateTime.Now
-            });
+            }).ToList();
+
+            // Build section list for logging
+            var sectionList = string.Join(", ", sectionNames);
+            var gradeInfo = grade != null ? $"Grade {grade.GradeLevel}" : "";
+            var trackInfo = !string.IsNullOrEmpty(model.Track) ? $" - {model.Track}" : "";
+            var tvlInfo = !string.IsNullOrEmpty(model.TVLProgram) ? $" ({model.TVLProgram})" : "";
 
             await context.Sections.AddRangeAsync(Sections);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Add",
+                entityName: "Section",
+                entityId: Sections.First().Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} added {sectionNames.Count()} sections(s) [{sectionList}] to {gradeInfo} {trackInfo} {tvlInfo}",
+                username: userInfo.username
+            );
+
 
             return Json(new { success = true, message = "Section Added Succesfully!" });
         }
@@ -1026,8 +1426,22 @@ namespace AttendanceMonitoring.Controllers
             editSection.Track = model.Track;
             editSection.TVLProgram = model.TVLProgram;
 
+            var grades = await context.Grades.FindAsync(model.GradesId);
             context.Sections.Update(editSection);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Edit",
+                entityName: "Section",
+                entityId: editSection.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} edited section {model.SectionName} of Grade {grades.GradeLevel}",
+                username: userInfo.username
+            );
+
 
             return Json( new {success = true, message = "Section Edited Succcessfully!"});
         }
@@ -1036,6 +1450,12 @@ namespace AttendanceMonitoring.Controllers
         public async Task<IActionResult> DeleteSection(int id)
         {
             var Section = await context.Sections.FindAsync(id);
+            var grade = await context.Grades.FindAsync(Section.GradesId);
+
+            var trackInfo = !string.IsNullOrEmpty(Section.Track) ? $" - {Section.Track}" : "";
+            var tvlInfo = !string.IsNullOrEmpty(Section.TVLProgram) ? $" ({Section.TVLProgram})" : "";
+
+
 
             if (Section == null)
             {
@@ -1046,12 +1466,24 @@ namespace AttendanceMonitoring.Controllers
             var hasStudentAssigned = await context.SectionSubjects.AnyAsync(ss => ss.SectionId == id);
             if (hasStudentAssigned)
             {
-                return Json(new { success = false, message = "Cannot Delete if students are already enrolled to this Class" });
+                return Json(new { success = false, message = "Cannot delete section if class already have a subject" });
 
             }
 
             context.Sections.Remove(Section);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Deleted",
+                entityName: "Section",
+                entityId: Section.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} deleted section '{Section.SectionName}' of Grade {grade.GradeLevel} {trackInfo} {tvlInfo}",
+                username: userInfo.username
+            );
 
             return Json(new { success = true, message = "Section Successfully deleted!" });
         }
@@ -1200,12 +1632,6 @@ namespace AttendanceMonitoring.Controllers
         //}
         public async Task<IActionResult> TeacherList()//string TeacherRole
         {
-            //var teacher = context.Users
-            //    .Where(user => context.UserRoles
-            //    .Any(ur => ur.UserId == user.Id && context.Roles
-            //    .Any(r => r.Id == ur.RoleId && r.Name == "Teacher")))
-            //    .ToList();
-
             var teacher = await userManager.GetUsersInRoleAsync("Teacher");
 
             return View(teacher);// return view dahil full page ang nirereload
@@ -1428,7 +1854,7 @@ namespace AttendanceMonitoring.Controllers
                 TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
 
                 string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
-                string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+                string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName?.ToLower() ?? "");
                 string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
                 //Map from viewmodel to entity
@@ -1453,6 +1879,19 @@ namespace AttendanceMonitoring.Controllers
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(teacher, "Teacher"); //Assign Teacher role when registered!
+
+                    var userInfo = await GetCurrentUserInfo();
+
+                    await logService.LogActivity(
+                        actionType: "Add",
+                        entityName: "User",
+                        entityId: teacher.Id.ToString(),
+                        userId: userInfo.userId,
+                        schoolId: userInfo.schoolId,
+                        details: $"User {userInfo.username} added new teacher : {teacher.FirstName} {teacher.MiddleName} {teacher.LastName}, LRN : {teacher.SchoolId}",
+                        username: userInfo.username
+                    );
+
                     return Json(new { success = true, message = "Teacher Added Successfully" }); //transfer a message to client side from server side 
                 }
                 else
@@ -1616,7 +2055,7 @@ namespace AttendanceMonitoring.Controllers
             TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
 
             string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
-            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName?.ToLower() ?? "");
             string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
             //Map ViewModel -> Entity(update existing entity)
@@ -1630,6 +2069,18 @@ namespace AttendanceMonitoring.Controllers
             editTeacher.positionTitle = model.positionTitle;
 
             var result = await userManager.UpdateAsync(editTeacher);
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Edit",
+                entityName: "User",
+                entityId: editTeacher.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} edited teacher {editTeacher.FirstName} {editTeacher.MiddleName} {editTeacher.LastName}, School Id: {editTeacher.SchoolId}",
+                username: userInfo.username
+            );
 
             if (!result.Succeeded)
             {
@@ -1680,7 +2131,7 @@ namespace AttendanceMonitoring.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> Delete(string id)
+        public async Task<IActionResult> DeleteTeacher(string id)
         {
             
             var teacher = await context.Users.FindAsync(id);
@@ -1714,6 +2165,18 @@ namespace AttendanceMonitoring.Controllers
 
             context.Users.Remove(teacher);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Delete",
+                entityName: "User",
+                entityId: teacher.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} deleted teacher {teacher.FirstName} {teacher.MiddleName} {teacher.LastName}, School Id: {teacher.SchoolId}",
+                username: userInfo.username
+            );
 
             //return RedirectToAction("TeacherList", "Admin");
             return Json(new { success = true, message = "Teacher has been Deleted successfully" }); //JSON store and transport data from server side to client side
@@ -1749,6 +2212,7 @@ namespace AttendanceMonitoring.Controllers
         public async Task<IActionResult> AssignTeacher(string teacherId, int sectionSubjectId)
         {
             var teacher = await context.Users.FindAsync(teacherId);
+            
 
             if (teacher == null)
             {
@@ -1760,12 +2224,37 @@ namespace AttendanceMonitoring.Controllers
                 TeacherId = teacherId,
                 SectionSubjectId = sectionSubjectId,
                 CreatedAt = DateTime.Now,
-
-
             };
 
             await context.TeacherAssignments.AddAsync(assigned);
             await context.SaveChangesAsync();
+
+            //Need natin to for activity log kase  afte ng .SaveChangesAsync, hindi pa loaded sa database yung SectionSubject Property
+            //Kaya magkakaerror sa var gradeinfo, etc kase null pa si sectionsubject kaya need natin si assigned = await context.TeacherAssignments para iload yung data sa database
+            //dahil sa object natin na, var assigned = new TeacherAssignment() is naka load lang yung id hind actual na object or data
+
+            assigned = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Section)
+                    .ThenInclude(s => s.Grade)
+                .FirstOrDefaultAsync(ta => ta.Id == assigned.Id);
+
+            var gradeInfo = $"Grade {assigned.SectionSubject.Section.Grade.GradeLevel}";
+            var sectionInfo = $"{ assigned.SectionSubject.Section.SectionName }";
+            var trackInfo = !string.IsNullOrEmpty(assigned.SectionSubject.Section.Track) ? $" - {assigned.SectionSubject.Section.Track}" : "";
+            var tvlInfo = !string.IsNullOrEmpty(assigned.SectionSubject.Section.TVLProgram) ? $" ({assigned.SectionSubject.Section.TVLProgram})" : "";
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Assign Teacher",
+                entityName: "TeacherAssignment",
+                entityId: teacher.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} assigned to {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo}",
+                username: userInfo.username
+            );
 
             //This excluded the assigned sectonsubject to a teacher by an specific section only
             var assignedToTeacher = await context.TeacherAssignments
@@ -1794,7 +2283,13 @@ namespace AttendanceMonitoring.Controllers
         [HttpDelete]
         public async Task<IActionResult> RemoveAssignedToTeacher(int id)
         {
-            var teacherAssigned = await context.TeacherAssignments.FindAsync(id);
+            //var teacherAssigned = await context.TeacherAssignments.FindAsync(id);
+            //Kunin muna yung existing na record na idedelete para sa activity log is marecord kung ano yun kaya may mga nakainclude
+            var teacherAssigned = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Section)
+                    .ThenInclude(s => s.Grade)
+                .FirstOrDefaultAsync(ta => ta.Id == id);
 
             if (teacherAssigned == null)
             {
@@ -1806,6 +2301,23 @@ namespace AttendanceMonitoring.Controllers
             await context.SaveChangesAsync();
 
             var teacher = await context.Users.FindAsync(teacherId);
+
+            var gradeInfo = $"Grade {teacherAssigned.SectionSubject.Section.Grade.GradeLevel}";
+            var sectionInfo = $"{teacherAssigned.SectionSubject.Section.SectionName}";
+            var trackInfo = !string.IsNullOrEmpty(teacherAssigned.SectionSubject.Section.Track) ? $" - {teacherAssigned.SectionSubject.Section.Track}" : "";
+            var tvlInfo = !string.IsNullOrEmpty(teacherAssigned.SectionSubject.Section.TVLProgram) ? $" ({teacherAssigned.SectionSubject.Section.TVLProgram})" : "";
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Assign Teacher",
+                entityName: "TeacherAssignment",
+                entityId: teacher.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} remove assignment {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo} for Teacher: {teacher.FirstName} {teacher.MiddleName} {teacher.LastName} School Id: {teacher.SchoolId}",
+                username: userInfo.username
+            );
 
             var remainingAssignments = await context.TeacherAssignments
                                        .Include(ta => ta.SectionSubject)
@@ -1943,7 +2455,7 @@ namespace AttendanceMonitoring.Controllers
             TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
 
             string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
-            string formattedMiddleName = textinfo.ToTitleCase(model.MiddelName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddelName?.ToLower() ?? "");
             string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
             var student = new Student
@@ -1961,6 +2473,18 @@ namespace AttendanceMonitoring.Controllers
             
             context.Students.Add(student);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Add",
+                entityName: "Student",
+                entityId: student.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} added {model.FirstName} {model.MiddelName} {model.LastName}, new student",
+                username: userInfo.username
+            );
 
 
             var sectionAssignment = new StudentSectionAssignment
@@ -2027,7 +2551,7 @@ namespace AttendanceMonitoring.Controllers
 
             if(editStudent == null)
             {
-                return Json(new { sucess = false, message = "Student id does not found" });
+                return Json(new { success = false, message = "Student id does not found" });
 
             }
 
@@ -2110,7 +2634,7 @@ namespace AttendanceMonitoring.Controllers
             TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
 
             string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
-            string formattedMiddleName = textinfo.ToTitleCase(model.MiddelName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddelName?.ToLower() ?? "");
             string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
             editStudent.LRN = model.LRN; 
@@ -2121,6 +2645,18 @@ namespace AttendanceMonitoring.Controllers
 
             context.Students.Update(editStudent);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Edit",
+                entityName: "Student",
+                entityId: editStudent.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} editted student {editStudent.FirstName} {editStudent.MiddelName} {editStudent.LastName}. LRN: {editStudent.LRN}",
+                username: userInfo.username
+            );
 
             studentGradeSectionAssigned.StudentId = editStudent.Id;
             studentGradeSectionAssigned.SectionId = model.SectionId;
@@ -2167,14 +2703,26 @@ namespace AttendanceMonitoring.Controllers
         {
             var Student = await context.Students.FindAsync(id);
 
+
             if (Student == null)
             {
                 return Json(new { success = false, error = "Student does not exist!" });
             }
 
-            
             context.Students.Remove(Student);
             await context.SaveChangesAsync();
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Delete",
+                entityName: "Student",
+                entityId: Student.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} deleted student {Student.FirstName} {Student.MiddelName} {Student.LastName}. LRN: {Student.LRN}",
+                username: userInfo.username
+            );
 
             return Json(new { success = true, message = "Student Successfully deleted!" });
         }
@@ -2243,7 +2791,7 @@ namespace AttendanceMonitoring.Controllers
             TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
 
             string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
-            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName?.ToLower() ?? "");
             string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
             AppUser secretary = new AppUser()
@@ -2275,6 +2823,18 @@ namespace AttendanceMonitoring.Controllers
 
                 context.SecretaryAssignments.Add(secretaryAssignment);
                 await context.SaveChangesAsync();
+
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Add",
+                    entityName: "User",
+                    entityId: secretary.Id.ToString(),
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"User {userInfo.username} Added secretary {secretary.FirstName} {secretary.MiddleName} {secretary.LastName}. LRN: {secretary.SchoolId}",
+                    username: userInfo.username
+                );
 
                 return Json(new { success = true, message = "Secretary Added Successfully!" });
             }
@@ -2424,7 +2984,12 @@ namespace AttendanceMonitoring.Controllers
             //FindAsync() = used for primary key lookup lang(yung int Id ng SecretaryAssignment)
             //FirstOrDefaultAsync() = used for filtering by any column(like SecretaryId which is the GUID)
             //check muna if yung Id(secretary) sa AppUser is equals sa SecretaryId na nasa SecretaryAssignements Table
-            var secretaryAssigned = await context.SecretaryAssignments.FirstOrDefaultAsync(sa => sa.SecretaryId == id);
+
+            //var secretaryAssigned = await context.SecretaryAssignments.FirstOrDefaultAsync(sa => sa.SecretaryId == id);
+            var secretaryAssigned = await context.SecretaryAssignments
+                .Include(sa => sa.Section)
+                    .ThenInclude(s => s.Grade)
+                .FirstOrDefaultAsync(sa => sa.SecretaryId == id);
 
             if (secretaryAssigned == null)
             {
@@ -2488,7 +3053,7 @@ namespace AttendanceMonitoring.Controllers
             TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
 
             string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
-            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName.ToLower());
+            string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName?.ToLower() ?? "");
             string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
             editSecretary.Email = model.Email;
@@ -2499,6 +3064,22 @@ namespace AttendanceMonitoring.Controllers
             editSecretary.Sex = model.Sex;
 
             var result = await userManager.UpdateAsync(editSecretary);
+
+            var secretaryClassAssignment = $"Grade {secretaryAssigned.Section.Grade.GradeLevel} - {secretaryAssigned.Section.SectionName}";
+            var secretaryTrackInfo = !string.IsNullOrEmpty(secretaryAssigned.Section.Track) ? $"{secretaryAssigned.Section.Track}" : "";
+            var secretaryTVLProgram = !string.IsNullOrEmpty(secretaryAssigned.Section.TVLProgram) ? $"{secretaryAssigned.Section.TVLProgram}" : "";
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Edit",
+                entityName: "User",
+                entityId: editSecretary.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} edited secretary {editSecretary.FirstName} {editSecretary.MiddleName} {editSecretary.LastName}. LRN: {editSecretary.SchoolId} of Class of {secretaryClassAssignment} {secretaryTrackInfo} {secretaryTVLProgram}",
+                username: userInfo.username
+            );
 
             if (!result.Succeeded)
             {
@@ -2552,7 +3133,7 @@ namespace AttendanceMonitoring.Controllers
         {
             var secretary = await userManager.FindByIdAsync(id);
 
-            if(secretary == null)
+            if (secretary == null)
             {
                 return Json(new { success = false, error = "Secretary does not Found!" });
             }
@@ -2569,7 +3150,19 @@ namespace AttendanceMonitoring.Controllers
             context.Users.Remove(secretary);
             await context.SaveChangesAsync();
 
-            return Json(new { sucesss = true, message = "Secretary Deleted Successfully!" });
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Delete",
+                entityName: "User",
+                entityId: secretary.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"User {userInfo.username} deleted secretary {secretary.FirstName} {secretary.MiddleName} {secretary.LastName}. LRN: {secretary.SchoolId}",
+                username: userInfo.username
+            );
+
+            return Json(new { success = true, message = "Secretary Deleted Successfully!" });
         }
 
         [HttpGet]
@@ -2794,7 +3387,19 @@ namespace AttendanceMonitoring.Controllers
             try
             {
                 string backupFileName = await backupService.CreateBackupAsync();
-               
+
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Backup",
+                    entityName: "Backup",
+                    entityId: backupFileName,
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"User {userInfo.username} created a backup file",
+                    username: userInfo.username
+                );
+
                 logger.LogInformation("Backup created: {FileName}", backupFileName);
                 //return Json(new { success = true, message = $"Backup created successfully! File: {backupFileName}" });
                 //logger.LogInformation("Backup created: {FileName}", backupFileName);
@@ -2838,6 +3443,8 @@ namespace AttendanceMonitoring.Controllers
                 //Return file to user's browser (triggers download)
                 return File(fileBytes, "application/octet-stream", filename); //application/octet-stream save the data to a file
 
+
+
             }
             catch(ArgumentException ex)
             {
@@ -2877,6 +3484,19 @@ namespace AttendanceMonitoring.Controllers
 
                 var result = await backupService.RestoreDatabaseAsync(backupFileName);
 
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Restore",
+                    entityName: "Restore",
+                    entityId: backupFileName,
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"User {userInfo.username} restored a backup file",
+                    username: userInfo.username
+                );
+
+
                 //Success message
                 TempData["SuccessMessage"] = $@"
                     Database restored Sucessfully!
@@ -2909,6 +3529,7 @@ namespace AttendanceMonitoring.Controllers
         [HttpGet]
         public async Task<IActionResult> ActivityLogs(PaginatedRequest request)
         {
+            
 
             var activityLogs = await _repo.GetPaginated(
                     request.PageNumber, 

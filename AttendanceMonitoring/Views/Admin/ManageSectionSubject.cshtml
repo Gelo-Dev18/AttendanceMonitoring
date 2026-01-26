@@ -90,7 +90,7 @@
                 </h6>
             </div>           
             <div class="card-body">
-                <form asp-action="CopySubjects" type="post">
+                <form class="copySubject" id="copySubjectForm" asp-action="CopySubjects" type="post">
                     <input type="hidden" name="sourceSectionId" value="@Model.Section.Id" /> @*Eto yung current subject kapag pinindot yung manageSubject*@
                     <br />
                     @if (Model.otherSectionWithSameGrade != null && Model.otherSectionWithSameGrade.Any())

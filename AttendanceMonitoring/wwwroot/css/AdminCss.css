@@ -8,6 +8,47 @@
     color: #004943!important;
 }
 
+/*FOR PASSWORD*/
+
+.input-group.position-relative {
+    position: relative;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none !important;
+    background: none !important;
+    z-index: 10;
+    padding: 5px 10px;
+}
+
+    .toggle-password-btn:focus {
+        outline: none;
+        box-shadow: none !important;
+    }
+
+    .toggle-password-btn i {
+        color: #6c757d;
+        font-size: 16px;
+    }
+
+    .toggle-password-btn:hover i {
+        color: #000;
+    }
+
+/* Para mag-adjust ang input padding para may space sa eye icon */
+/*#passwordInput {
+    padding-right: 40px !important;
+}*/
+
+/*
+a:hover {
+    color: #1cc88a!important;
+}*/
+
 .page-item.active .page-link {
     background-color: #004943!important;
     border-color: #004943!important;

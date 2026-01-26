@@ -50,10 +50,11 @@
 
                     <tbody>
                         @{
-                            var c = 1;
+                            var c = ((Model.Page - 1) * PaginatedRequest.ITEM_PER_PAGE) + 1;
                         }
                         @foreach (var activityLog in Model.Result)
                         {
+                            
                             <tr>
                                 <td><strong>@(c++)</strong></td>
                                 <td>
@@ -68,10 +69,16 @@
                                         @activityLog.SchoolId
                                     </span>
                                 </td>
-
+                                
                                 <td>
                                     <span class="">
-                                        @activityLog.TimeActivityCommited.ToString("MMMM dd, yyyy hh:mm tt")
+                                        @{
+                                            // When retrieving from database para sa display
+                                            var utcTime = DateTime.SpecifyKind(activityLog.TimeActivityCommited, DateTimeKind.Utc);
+                                            var philippineZone = TimeZoneInfo.FindSystemTimeZoneById("Singapore Standard Time");
+                                            var displayTime = TimeZoneInfo.ConvertTime(utcTime, philippineZone);
+                                        }
+                                        @displayTime.ToString("MMMM dd, yyyy hh:mm tt")
                                     </span>
                                 </td>
                                 @* <td class="text-center">
@@ -89,11 +96,41 @@
                 <nav>
                     <ul class="pagination justify-content-end">
                         <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
-                            <a class="page-link" asp-route-p="@(Model.Page - 1)">Previous</a>
+                            <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.Page - 1)">Previous</a>
                         </li>
-                        @for (var pageNumber = 1; pageNumber <= Model.TotalCount; pageNumber++)
+
+                        @{
+                            var currentPage = Model.Page;
+                            var totalPages = Model.TotalPages; // You need this property
+                            var delta = 2; // Pages to show on each side of current page
+                            var rangeStart = Math.Max(2, currentPage - delta);
+                            var rangeEnd = Math.Min(totalPages - 1, currentPage + delta);
+                        }
+
+                        @* Always show first page *@
+                        <li class="page-item @(currentPage == 1 ? "active" : "")">
+                            @if (currentPage == 1)
+                            {
+                                <span class="page-link">1</span>
+                            }
+                            else
+                            {
+                                <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="1">1</a>
+                            }
+                        </li>
+
+                        @* Show ellipsis if there's a gap after first page *@
+                        @if (rangeStart > 2)
                         {
-                            if (pageNumber == Model.Page)
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        }
+
+                        @* Show middle range *@
+                        @for (var pageNumber = rangeStart; pageNumber <= rangeEnd; pageNumber++)
+                        {
+                            if (pageNumber == currentPage)
                             {
                                 <li class="page-item active">
                                     <span class="page-link">@pageNumber</span>
@@ -106,7 +143,31 @@
                                 </li>
                             }
                         }
-                        <li class="page-item @(Model.Page == Model.TotalCount ? "disabled" : "")">
+
+                        @* Show ellipsis if there's a gap before last page *@
+                        @if (rangeEnd < totalPages - 1)
+                        {
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        }
+
+                        @* Always show last page (if more than 1 page exists) *@
+                        @if (totalPages > 1)
+                        {
+                            <li class="page-item @(currentPage == totalPages ? "active" : "")">
+                                @if (currentPage == totalPages)
+                                {
+                                    <span class="page-link">@totalPages</span>
+                                }
+                                else
+                                {
+                                    <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@totalPages">@totalPages</a>
+                                }
+                            </li>
+                        }
+
+                        <li class="page-item @(Model.Page == totalPages ? "disabled" : "")">
                             <a class="page-link" asp-route-s="@Model.SearchKeyword" asp-route-p="@(Model.Page + 1)">Next</a>
                         </li>
                     </ul>

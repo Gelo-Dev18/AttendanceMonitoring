@@ -63,7 +63,20 @@ function loadViewModal(url, userID, modal) {
 //        inputElement.prop('disabled', true).val('');
 //    }
 //}
-
+//function togglePassword() {
+//    const input = document.getElementById('passwordInput');
+//    const icon = document.querySelector('#toggleBtn i');
+    
+//    if (input.type === 'password') {
+//        input.type = 'text';
+//        icon.classList.remove('fa-eye');
+//        icon.classList.add('fa-eye-slash');
+//    } else {
+//        input.type = 'password';
+//        icon.classList.remove('fa-eye-slash');
+//        icon.classList.add('fa-eye');
+//    }
+//}
 function checkOption() {
     const selectElement = $('#categoryId');
     const inputElement = $('#TVLInput');
@@ -75,7 +88,36 @@ function checkOption() {
     }
 }
 
-$(document).ready(function () {
+$(document).ready(function () { 
+    //$('#togglePassword').click(function (e) {
+    //    e.preventDefault();
+
+    //    var passwordInput = $('input[asp-for="NewPassword"]');
+    //    var icon = $(this).find('span');
+
+    //    if (passwordInput.attr('type') === 'password') {
+    //        passwordInput.attr('type', 'text');
+    //        icon.removeClass('fa-eye').addClass('fa-eye-slash');
+    //    } else {
+    //        passwordInput.attr('type', 'password');
+    //        icon.removeClass('fa-eye-slash').addClass('fa-eye');
+    //    }
+    //});
+
+    $(document).on('click', '.toggle-password', function (e) {
+        e.preventDefault();
+        var button = $(this);
+        var passwordInput = button.closest('.input-group').find('.password-input');
+        var icon = button.find('span');
+
+        if (passwordInput.attr('type') === 'password') {
+            passwordInput.attr('type', 'text');
+            icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            passwordInput.attr('type', 'password');
+            icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
+    });
 
     //Event delegation for file input change
     $(document).on('change', 'input[type="file"].custom-file-input', function () {
@@ -225,9 +267,35 @@ $(document).ready(function () {
         });
     });
 
-    
-
     $('#EditModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    }); 
+
+    $('#ManageAccountModalForm').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+
+        var url = button.data('url');
+        var title = button.data('title');
+
+        var modal = $(this);
+        modal.find('#ManageAccountModalFormLabel').text(title);
+
+        loadBlurBackground();
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function (html) {
+                modal.find('#ManageAccountModalFormBody').html(html);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading edit modal:', error);
+                modal.find('#EditModalBody').html('<p class="text-center">Failed to Load modal body</p>');
+            }
+        });
+    });
+
+
+    $('#ManageAccountModalForm').on('hide.bs.modal', function () {
         hideBlurBackground();
     }); 
 
@@ -359,8 +427,8 @@ $(document).ready(function () {
         hideBlurBackground();
     });
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
+    //
+    
     //Add Small Modal Form
     $('#AddSmallModalForm').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);

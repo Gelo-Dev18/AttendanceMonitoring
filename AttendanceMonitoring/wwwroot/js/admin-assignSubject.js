@@ -135,6 +135,42 @@ $(document).ready(function () {
         });
     });
 
+    $('.copySubject').on('submit', function (e) {
+        e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
+
+        const formData = new FormData(this); //collect and manage form data for submission
+
+        //RESTful api, two computer system to exchange information through the internet
+        $.ajax({
+            url: '/Admin/CopySubjects/',
+            type: 'POST', //a RESTful API uses standard HTTP methods(GET, POST, PUT, DELETE) 
+            data: formData, //sends all form data
+            processData: false, // para hindi maconvert ni formdata to strings yung submission ng data lalo na if my file included
+            contentType: false, //si browser mag set ng contenttype
+            success: function (response) {
+                console.log('Response:', response); 
+                console.log('Type:', typeof response); 
+                console.log('Success property:', response.success); 
+                if (response.success) {
+                    showSuccessToast(response.message);
+                    //loadSpinner();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 2500);
+                } else {
+                    alert('Could not copy subject');
+                }
+                //alert(response.message);
+                //location.reload();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error assigning subject :', error);
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while updating assigned subject.');
+            }
+        });
+    });
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     $('.remove-btn').on('click', function (e) {
         e.preventDefault();
@@ -146,7 +182,9 @@ $(document).ready(function () {
         $.ajax({
             url: '/Admin/RemoveAssignedSubject/' + assignedSubjectId,
             type: 'DELETE',
+            dataType: 'json',
             success: function (response) {
+                
                 if (response.success) {
                     showSuccessToast(response.message);
                     //loadSpinner();

@@ -138,7 +138,7 @@
         //loadPageBlur(); //Para kapag nag success ang isang submit like adding, deleting or editing
 
         $.ajax({
-            url: '/Admin/Delete/' + userID,
+            url: '/Admin/DeleteSecretary/' + userID,
             type: 'DELETE',
             success: function (response) {
                 if (response.success) {
@@ -151,7 +151,7 @@
                         location.reload();
                     }, 2000);
                 } else {
-                    alert('Could not delete teacher');
+                    alert('Could not delete secretary');
                 }
                 //alert(response.message);
                 //location.reload();

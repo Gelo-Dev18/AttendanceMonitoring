@@ -89,6 +89,19 @@
         </div>
     </div>
 
+    @*Manage Account*@
+    <div class="modal fade" id="ManageAccountModalForm" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ManageAccountModalFormLabel">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ManageAccountModalFormLabel"><strong>...</strong></h5>
+                </div>
+                <div class="modal-body" id="ManageAccountModalFormBody">
+                </div>
+            </div>
+        </div>
+    </div>
+
     @*Add modal*@
     <div class="modal fade" id="AddModalForm" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="AddModalFormLabel">
         <div class="modal-dialog modal-lg">
@@ -248,7 +261,7 @@
 
 
     <script src="~/js/site.js"></script>
-
+    <script src="~/js/teacher-manageAccount.js"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

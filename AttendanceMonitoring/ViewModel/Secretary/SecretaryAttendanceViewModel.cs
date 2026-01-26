@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace AttendanceMonitoring.ViewModel.Secretary
 {
-    public class AttendanceViewModel
+    public class SecretaryAttendanceViewModel
     {
         //public List<SecretaryAssignment> secretaryClass { get; set; } = new List<SecretaryAssignment>();
         // For Teacher (multiple classes)
