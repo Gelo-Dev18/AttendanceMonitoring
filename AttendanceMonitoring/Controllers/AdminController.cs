@@ -2182,20 +2182,26 @@ namespace AttendanceMonitoring.Controllers
             return Json(new { success = true, message = "Teacher has been Deleted successfully" }); //JSON store and transport data from server side to client side
 
         }
+
         [HttpGet]
         public async Task<IActionResult> AssignTeacher(string teacherId)
-        {
+        {           
             //This excluded the assigned sectonsubject to a teacher by an specific section only
             var assignedToTeacher = await context.TeacherAssignments
                                     .Where(t => t.TeacherId == teacherId)
                                     .Select(ss => ss.SectionSubjectId)
                                     .ToListAsync();
 
+            var assignedSubject = await context.TeacherAssignments
+                                    .Select(ss => ss.SectionSubjectId)
+                                    .Distinct() // Remove Duplicates
+                                    .ToListAsync();
+
             var sectionSubjectQuery = await context.SectionSubjects
                                     .Include(ss => ss.Subject)
                                     .Include(s => s.Section)
                                         .ThenInclude(g => g.Grade)
-                                    .Where(ss => !assignedToTeacher.Contains(ss.Id))
+                                    .Where(ss => !assignedSubject.Contains(ss.Id))
                                     .OrderBy(ss => ss.Section.Grade.GradeLevel)
                                     .ToListAsync();
 
@@ -2206,6 +2212,20 @@ namespace AttendanceMonitoring.Controllers
             };
 
             return PartialView("_AssignTeacherPartial", model);
+
+            //OLD QUERY
+            //var assignedToTeacher = await context.TeacherAssignments
+            //                        .Where(t => t.TeacherId == teacherId)
+            //                        .Select(ss => ss.SectionSubjectId)
+            //                        .ToListAsync();
+
+            //var sectionSubjectQuery = await context.SectionSubjects
+            //                        .Include(ss => ss.Subject)
+            //                        .Include(s => s.Section)
+            //                            .ThenInclude(g => g.Grade)
+            //                        .Where(ss => !assignedToTeacher.Contains(ss.Id))
+            //                        .OrderBy(ss => ss.Section.Grade.GradeLevel)
+            //                        .ToListAsync();
         }
 
         [HttpPost]
@@ -2262,12 +2282,18 @@ namespace AttendanceMonitoring.Controllers
                                     .Select(ss => ss.SectionSubjectId)
                                     .ToListAsync();
 
+            var assignedSubject = await context.TeacherAssignments
+                                    .Select(ss => ss.SectionSubjectId)
+                                    .Distinct() // Remove Duplicates
+                                    .ToListAsync();
+
             var sectionSubjectQuery = await context.SectionSubjects
                                     .Include(ss => ss.Subject)
                                     .Include(s => s.Section)
                                         .ThenInclude(g => g.Grade)
-                                    .Where(ss => !assignedToTeacher.Contains(ss.Id))
-                                    .OrderBy(ss => ss.SectionId)
+                                    .Where(ss => !assignedSubject.Contains(ss.Id))
+                                    //.OrderBy(ss => ss.SectionId)
+                                    .OrderBy(ss => ss.Section.Grade.GradeLevel)
                                     .ToListAsync();
 
             var model = new AssignTeacherViewModel()

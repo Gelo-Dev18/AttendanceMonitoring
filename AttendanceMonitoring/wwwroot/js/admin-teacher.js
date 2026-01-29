@@ -150,7 +150,7 @@
             success: function (response) {
 
                 $('#AssignModal .modal-body').html(response);
-                $('#dataTable2').DataTable();
+                $('#assignTable').DataTable();
 
                 showUpdateSuccessToast("Assigned Successfully!");
             },
@@ -219,8 +219,11 @@
             type: 'DELETE',
             success: function (response) {
                 $('#currentlyAssigned').html(response);
-                $('#dataTable3').DataTable();
-
+                $('#dataTable3').DataTable({
+                    "autoWidth": false, // PREVENTION SA WIDE TABLE
+                    "responsive": true,
+                    "destroy": true
+                });
                 showUpdateSuccessToast("Remove Successfully");
             },
             error: function (xhr, status, error) {

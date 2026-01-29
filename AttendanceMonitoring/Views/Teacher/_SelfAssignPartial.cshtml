@@ -1,7 +1,7 @@
-﻿@using AttendanceMonitoring.ViewModel;
-@model AssignTeacherViewModel;
+﻿@using AttendanceMonitoring.ViewModel.Teacher;
+@model SelfAssignViewModel;
 @{
-    ViewData["Title"] = "Assign Section";
+    ViewData["Title"] = "Self Assign";
 
 }
 
@@ -27,7 +27,7 @@
                     @{
                         var c = 1;
                     }
-                    @foreach(var sectionSubject in Model.SectionSubjects)
+                    @foreach (var sectionSubject in Model.SectionSubjects)
                     {
                         <tr>
                             <td><strong>@(c++)</strong></td>
@@ -36,16 +36,19 @@
                             @* <td><strong>@sectionSubject.SectionId</strong></td> *@
                             <td><strong>@sectionSubject.Subject.SubjectDescription</strong></td>
                             <td class="text-center">
-                                <button class="btn btn-outline-info remove-btn assign-btn" data-teacher-id="@Model.TeacherId" data-section-subject-id="@sectionSubject.Id" type="button">
+                                @* <button class="btn btn-outline-info remove-btn assign-btn" data-teacher-id="@Model.TeacherId" data-section-subject-id="@sectionSubject.Id" type="button">
+                                    Assign
+                                </button> *@
+                                <button class="btn btn-outline-info remove-btn assign-btn" data-section-subject-id="@sectionSubject.Id" type="button">
                                     Assign
                                 </button>
                             </td>
                         </tr>
-                    }                            
+                    }
                 </tbody>
             </table>
         </div>
-        
+
     </div>
 </div>
 <div class="modal-footer">
@@ -55,11 +58,7 @@
 
 @section Script {
     @{
-        
-        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
-        <script>
-            
 
-        </script>
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
     }
 }

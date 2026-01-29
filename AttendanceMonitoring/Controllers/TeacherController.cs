@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NuGet.Packaging.Signing;
 using System.Globalization;
 using System.Linq;
@@ -45,7 +46,8 @@ namespace AttendanceMonitoring.Controllers
 
             //Automatic na set this viewbag to all methods/actions
             ViewBag.UserLastName = user?.LastName ?? "User";
-            ViewBag.UserProfilePic = user?.imageFilePath ?? "default-avatar.png";
+            //ViewBag.UserProfilePic = user?.imageFilePath ?? "defaultImage.png";
+            ViewBag.UserProfilePic = user?.imageFilePath ?? "";
 
             await next(); // continue to the actual action
         }
@@ -251,8 +253,9 @@ namespace AttendanceMonitoring.Controllers
             //Equivalent nito sa PHP is eto:
             //$user_id = $_SESSION['login_id'];
             //$username = $_SESSION['login_name'];
-            var teacherId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //var teacherId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            var teacherId = GetCurrentUserId();
             // Check kung naka-login ba
             if (string.IsNullOrEmpty(teacherId))
             {
@@ -664,7 +667,185 @@ namespace AttendanceMonitoring.Controllers
 
             //model.SelectedAcademicPeriod = selectedAcademicPeriod;
             return View(model);
-        } 
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> _MyClasses()
+        {
+            var teacherId = GetCurrentUserId();
+
+            var user = await userManager.FindByIdAsync(teacherId);
+
+            if (string.IsNullOrEmpty(teacherId))
+            {
+                return RedirectToAction("TeacherHome", "Teacher");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+
+            var TeacherClass = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Section)
+                        .ThenInclude(s => s.Grade)
+                .Include(ta => ta.SectionSubject.Subject)
+                .Where(ta => ta.TeacherId == teacherId)
+                .ToListAsync();
+
+            var model = new MyClassesViewModel()
+            {
+                LRN = user.SchoolId,
+                FirstName = user.FirstName,
+                MiddleName = user.MiddleName,
+                LastName = user.LastName,
+                Sex = user.Sex,
+                positionTitle = user.positionTitle,
+                imageFilePath = user.imageFilePath,
+                teacherAssignments = TeacherClass
+            };
+
+            ViewData["imageFileData"] = user.imageFileData;
+
+            return View(model);
+
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SelfAssign()
+        {
+            var teacherId = GetCurrentUserId();
+            var teacher = await userManager.FindByIdAsync(teacherId);
+
+            if (string.IsNullOrEmpty(teacherId))
+            {
+                return RedirectToAction("TeacherHome", "Teacher");
+            }
+
+            /// excluding ALL assigned subjects
+            var assignedSectionSubjectIds = await context.TeacherAssignments
+                        .Select(ss => ss.SectionSubjectId)
+                        .Distinct()
+                        .ToListAsync();
+
+            var sectionSubjectQuery = await context.SectionSubjects
+                        .Include(ss => ss.Subject)
+                        .Include(s => s.Section)
+                            .ThenInclude(g => g.Grade)
+                        .Where(ss => !assignedSectionSubjectIds.Contains(ss.Id))
+                        .OrderBy(ss => ss.Section.Grade.GradeLevel)
+                        .ToListAsync();
+
+            var model = new SelfAssignViewModel()
+            {
+                TeacherId = teacherId,
+                SectionSubjects = sectionSubjectQuery
+            };
+
+            return PartialView("_SelfAssignPartial", model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveSelfAssign(int sectionSubjectId)
+        {
+            var teacherId = GetCurrentUserId();
+
+            if(teacherId == null)
+            {
+                return Json(new { success = false, message = "Could not find teacher Id!" });
+            }
+            var teacher = await userManager.FindByIdAsync(teacherId);
+
+            if (teacher == null)
+            {
+                return Json(new { success = false, message = "Teacher not found!" });
+            }
+            var assigned = new TeacherAssignment()
+            {
+                TeacherId = teacherId,
+                SectionSubjectId = sectionSubjectId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await context.TeacherAssignments.AddAsync(assigned);
+            await context.SaveChangesAsync();
+
+            var assignedSectionSubjectIds = await context.TeacherAssignments
+                .Select(ss => ss.SectionSubjectId)
+                .Distinct()
+                .ToListAsync();
+
+            var sectionSubjectQuery = await context.SectionSubjects
+                .Include(ss => ss.Subject)
+                .Include(s => s.Section)
+                    .ThenInclude(g => g.Grade)
+                .Where(ss => !assignedSectionSubjectIds.Contains(ss.Id))
+                .OrderBy(ss => ss.Section.Grade.GradeLevel)
+                .ToListAsync();
+
+
+            var model = new SelfAssignViewModel()
+            {
+                TeacherId = teacherId,
+                SectionSubjects = sectionSubjectQuery
+            };
+
+            return PartialView("_SelfAssignPartial", model);
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> RemoveSelfAssign(int Id)
+        {
+            var teacherId = GetCurrentUserId();
+
+            var teacherAssigned = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Section)
+                        .ThenInclude(g => g.Grade)
+                .FirstOrDefaultAsync(ta => ta.Id == Id && ta.TeacherId == teacherId);
+
+            if (teacherAssigned == null)
+            {
+                return Json(new { success = false, error = "Id not Found!" });
+            }
+
+            //var teacherId = teacherAssigned.TeacherId;
+
+            context.TeacherAssignments.Remove(teacherAssigned);
+            await context.SaveChangesAsync();
+
+            var teacher = await context.Users.FindAsync(teacherId);
+
+
+            var remainingAssignments = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(s => s.Section)
+                        .ThenInclude(g => g.Grade)
+                .Include(ss => ss.SectionSubject.Subject)
+                .Where(ta => ta.TeacherId == teacherId)
+                .ToListAsync();
+
+            var model = new MyClassesViewModel()
+            {
+                LRN = teacher.SchoolId,
+                FirstName = teacher.FirstName,
+                MiddleName = teacher.MiddleName,
+                LastName = teacher.LastName,
+                Sex = teacher.Sex,
+                positionTitle = teacher.positionTitle,
+                imageFilePath = teacher.imageFilePath,
+                teacherAssignments = remainingAssignments
+            };
+
+            return Json(new { success = true, message = "Assigned class removed successfully!" });
+        }
 
         public async Task<IActionResult> Logout()
         {

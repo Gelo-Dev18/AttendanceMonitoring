@@ -1,0 +1,98 @@
+﻿@using AttendanceMonitoring.ViewModel.Teacher;
+@model MyClassesViewModel;
+@{
+    ViewData["Title"] = "My Classes List";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+
+<!-- Teacher List-->
+<!-- Page Heading -->
+<h1 class="h3 mb-2 text-gray-800">My Classes</h1>
+<div class="card shadow mb-4" style="margin-top: 20px;">
+
+    <div id="currentlyAssigned">
+        <div class="card card-widget widget-user shadow">
+            @Html.AntiForgeryToken()
+            <div class="widget-user-header bg-dark">
+                <h3 class="widget-user-username">@Model.FirstName @Model.MiddleName @Model.LastName</h3>
+                <h5 class="widget-user-desc">@Model.positionTitle</h5>
+            </div>
+            <div class="widget-user-image">
+                @* @if (Model.imageFile == null || Model.imageFile.Length > 0) *@
+                @if (string.IsNullOrEmpty(Model.imageFilePath))
+                {
+                    <h4 class="brand-image img-circle elevation-2 d-flex justify-content-center align-items-center bg-primary text-white font-weight-500" style="width: 110px;height: 110px">
+                        @if (!string.IsNullOrEmpty(Model.FirstName) && !string.IsNullOrEmpty(Model.LastName))
+                        {
+                            @* <span>@Model.FirstName[0]</span> *@ @*Ginagamit kapag isang character lang ang need*@
+                            <span>@(Model.FirstName.Substring(0, 1).ToUpper() + @Model.LastName.Substring(0, 1).ToUpper())</span> @*Gamitin kapag gusto display ang isang string at kapag need nag concatenation*@
+                        }
+                    </h4>
+                }
+                else
+                {
+                    <img class="img-circle elevation-2" src="/ProfilePic/@Model.imageFilePath" alt="User Avatar"
+                         style="width: 120px;height: 120px;object-fit: cover">
+                }
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <dl class="mb-0">
+                        <dt style="color: black">LRN</dt>
+                        <dd>@Model.LRN</dd>
+                    </dl>
+                    <button type="button" class="btn btn-success bg-gradient-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AssignModal" data-url="/Teacher/SelfAssign/" data-title="Self Assign Details">
+                        <span class="text">Assign Class</span>
+                    </button>
+                </div>
+                
+                @* <div class="container-fluid"> *@
+                @* <div class="card-body"> *@
+                <b style="color: black">Assigned Subject</b>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
+                        <thead>
+                            <tr style="color: black">
+                                <th>#</th>
+                                <th>Grade and Section</th>
+                                <th>Subject Description</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assignedSubjectsList1">
+                            @{
+                                var c = 1;
+                            }
+                            @foreach (var teacherAssignment in Model.teacherAssignments)
+                            {
+                                <tr>
+                                    <td>@(c++)</td>
+                                    <td>Grade @teacherAssignment.SectionSubject.Section.Grade.GradeLevel @teacherAssignment.SectionSubject.Section.SectionName @teacherAssignment.SectionSubject.Section.Track @teacherAssignment.SectionSubject.Section.TVLProgram</td>
+
+                                    <td>@teacherAssignment.SectionSubject.Subject.SubjectDescription</td>
+
+
+
+                                    <td>
+                                        <button class="btn btn-danger removebtn"
+                                                data-assign-id="@teacherAssignment.Id" style="padding:5px">
+                                            Remove
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @* </div> *@
+            </div>
+        </div>
+        @* <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div> *@
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/teacher-myClasses.js"></script>
+}

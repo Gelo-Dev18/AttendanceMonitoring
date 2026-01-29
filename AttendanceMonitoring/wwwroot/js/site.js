@@ -307,19 +307,27 @@ $(document).ready(function () {
 
         var url = button.data('url');
         var title = button.data('title');
-        var teacherId = button.data('id');
+        var teacherid = button.data('id');
 
         var modal = $(this);
 
         modal.find('#AssignModalLabel').text(title);
         loadBlurBackground();
+
+        var ajaxUrl = teacherid ? url + teacherid : url;
         $.ajax({
-            url: url + teacherId,
+            url: ajaxUrl,
             type: 'GET',
-            data: { teacherId: teacherId },
+            data: teacherid ? { teacherid: teacherid } : {},
             success: function (html) {
                 modal.find('#AssignModalBody').html(html);
-                $('#dataTable2').DataTable();
+                //$('#dataTable2').DataTable();
+                $('#assignTable').DataTable({
+
+                    "autoWidth": false, // PREVENTION SA WIDE TABLE
+                    "responsive": true,
+                    "destroy": true // SAFETY NET: Wasakin ang luma bago gumawa ng bago
+                });
 
             },
             error: function (xhr, status, error) {
@@ -336,6 +344,40 @@ $(document).ready(function () {
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    //Old AssignModal
+    //$('#AssignModal').on('show.bs.modal', function (event) {
+    //    var button = $(event.relatedTarget);
+
+    //    var url = button.data('url');
+    //    var title = button.data('title');
+    //    var teacherId = button.data('id');
+
+    //    var modal = $(this);
+
+    //    modal.find('#AssignModalLabel').text(title);
+    //    loadBlurBackground();
+    //    $.ajax({
+    //        url: url,
+    //        type: 'GET',
+    //        //data: { teacherId: teacherId },
+    //        success: function (html) {
+    //            modal.find('#AssignModalBody').html(html);
+    //            $('#dataTable2').DataTable();
+
+    //        },
+    //        error: function (xhr, status, error) {
+    //            console.error('Error loading add teacher modal:', error);
+    //            modal.find('#AssignModalBody').html('<p class="text-center">Failed to load modal body</p>');
+    //        }
+    //    });
+    //});
+
+    //$('#AssignModal').on('hide.bs.modal', function () {
+    //    hideBlurBackground();
+    //});
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Triggers View Assign Modal
     $('#ViewAssignModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
@@ -360,7 +402,11 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#ViewAssignModalBody').html(html);
-                $('#dataTable3').DataTable();
+                $('#dataTable3').DataTable({
+                    "autoWidth": false, // PREVENTION SA WIDE TABLE
+                    "responsive": true,
+                    "destroy": true 
+                });
             },
             error: function (xhr, status, error) {
                 console.error('Error loading edit modal:', error);

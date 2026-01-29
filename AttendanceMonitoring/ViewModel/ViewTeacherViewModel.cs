@@ -4,8 +4,6 @@ using System.ComponentModel.DataAnnotations;
 namespace AttendanceMonitoring.ViewModel
 {
     public class ViewTeacherViewModel
-
-
     {
 
         public string TeacherId { get; set; }

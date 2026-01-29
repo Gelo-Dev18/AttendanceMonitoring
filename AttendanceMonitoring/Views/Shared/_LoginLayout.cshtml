@@ -10,6 +10,8 @@
 
     <link href="~/DashboardTemplate/css/sb-admin-2.css" rel="stylesheet">
     <link href="~/DashboardTemplate/css/admin-style.css" rel="stylesheet">
+    <link href="~/css/AdminCss.css" rel="stylesheet">
+
     <link href="~/css/LoginLayout.css" rel="stylesheet" asp-append-version="true"/>
     <link href="~/DashboardTemplate/img/MCAPS.png" rel="icon" type="image/png" asp-append-version="true"/>
 
@@ -83,6 +85,7 @@
             </div>
         </div>
     </section>
+
     @* @section Scripts { *@
     @*         <script src="DashboardTemplate/vendor/jquery/jquery.min.js"></script> *@
     @*         <script src="DashboardTemplate/vendor/bootstrap/js/bootstrap.bundle.min.js"></script> *@
@@ -97,7 +100,6 @@
     @*         <script src="DashboardTemplate/js/demo/chart-pie-demo.js"></script> *@
     @*         <partial name="_ValidationScriptsPartial" /> *@
     @* } *@
-
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>
