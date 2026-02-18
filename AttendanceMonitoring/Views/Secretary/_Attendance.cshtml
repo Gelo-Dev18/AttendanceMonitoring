@@ -36,32 +36,46 @@
 
 </style>
 <div class="col-lg-12">
-    <div class="row">
-        <div class="col-md-3">
-            <div class="list-group" id="selectedValue">
-                @if (Model.SecretaryClass != null && Model.SecretaryClass.Any())
-                {
-                    @foreach (var secretaryClass in Model.SecretaryClass)
+    @if (!Model.IsStarted)
+    {
+        <div class="card shadow mb-4 card-outline border-bottom-success card-body">
+            The Attendance is not yet started or is closed.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-3">
+                <div class="list-group" id="selectedValue">
+                    @if (Model.IsAttendanceFinished)
                     {
-                        //Dito na yung SelectedClass na galing sa controller. So kapag may selected na class, dun palang mag kakaroon ng Laman yung null na students(List<StudentSectionAssignment> students = null;)
-                        var isActive = Model.SelectedSubjectId == secretaryClass.Id;
-
-                        //asp-action / asp-controller - Asp.Net Core -Tag Helpers = SAME THING FOR RAZOR HELPER METHOD TO FULL PAGE RELOAD, ONLY DIFFERENT SYNTAX
-                        <a asp-action="_Attendance" asp-controller="Secretary" asp-route-selectedSubjectId="@secretaryClass.Id"
-                           class="list-group-item list-group-item-action card shadow mb-4 card-outline border-bottom-success card-body @(isActive ? "active" : "")">
-                            Grade @secretaryClass.Section.Grade.GradeLevel
-                            @secretaryClass.Section.SectionName
-                            @secretaryClass.Section.Track
-                            @secretaryClass.Section.TVLProgram
-                            
-                                @secretaryClass.Subject.SubjectDescription
-                            
-                        </a>
-
+                        <div class="card shadow mb-4 card-outline border-bottom-success card-body">
+                            You finished conducting Attendance
+                        </div>
                     }
-                }
-                //Nabago
-                @* @if (Model.SecretaryClass != null)
+                    else if (Model.SecretaryClass != null && Model.SecretaryClass.Any())
+                    {
+                        @foreach (var secretaryClass in Model.SecretaryClass)
+                        {
+                            //Dito na yung SelectedClass na galing sa controller. So kapag may selected na class, dun palang mag kakaroon ng Laman yung null na students(List<StudentSectionAssignment> students = null;)
+                            var isActive = Model.SelectedSubjectId == secretaryClass.Id;
+
+                            //asp-action / asp-controller - Asp.Net Core -Tag Helpers = SAME THING FOR RAZOR HELPER METHOD TO FULL PAGE RELOAD, ONLY DIFFERENT SYNTAX
+                            <a asp-action="_Attendance" asp-controller="Secretary" asp-route-selectedSubjectId="@secretaryClass.Id"
+                               class="list-group-item list-group-item-action card shadow mb-4 card-outline border-bottom-success card-body @(isActive ? "active" : "")">
+                                Grade @secretaryClass.Section.Grade.GradeLevel
+                                @secretaryClass.Section.SectionName
+                                @secretaryClass.Section.Track
+                                @secretaryClass.Section.TVLProgram
+
+                                @secretaryClass.Subject.SubjectDescription
+
+                            </a>
+
+                        }
+                    }
+                    //Nabago
+                    @* @if (Model.SecretaryClass != null)
                 {
                     <div class="card shadow mb-4 card-outline border-bottom-success card-body item-active">
                        
@@ -73,71 +87,71 @@
                     </div>
                     
                 } *@
-                else
-                {
-                    <div class="list-group-item list-group-item-action">
-                        <p><strong>No Assignments yet</strong></p>
-                    </div>
-                }
-            </div>
-        </div>
-        <div class="col-md-9">
-            @* <div class="card shadow mb-4" style=""> *@
-
-            <div class="card shadow mb-4 card-outline border-left-success">
-                <div class="card-header">
-                    <b>Attendance for Academic Year: @Model.YearLevel - @Model.GradingPeriod Grading</b>
-                    <!-- <div class="card-tools">
-                        Submit Evaluation Button
-                        <button class="btn btn-sm btn-flat btn-primary bg-gradient-primary mx-1 mt-2" form="manage-evaluation" id="submit-btn" disabled>Submit Evaluation</button>
-                    </div> -->
-                </div>
-                <div class="card-body">
-
-                    @if (Model.Students != null && Model.Students.Any())
+                    else
                     {
-                        <fieldset class="border border-success p-2 w-100">
-                            <legend class="w-auto">Attendance Marking</legend>
-                            <h4><strong>P</strong> = Present, <strong>A</strong> = Absent, <strong>L</strong> = Late, <strong>E</strong> = Excuse</h4>
+                        <div class="list-group-item list-group-item-action">
+                            <p><strong>No Assignments yet</strong></p>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-md-9">
+                @* <div class="card shadow mb-4" style=""> *@
 
-                        </fieldset>
-                        <form id="SaveAttendanceForm" method="post" asp-action="SaveAttendance" asp-controller="Secretary">
-                            <input type="hidden" name="SecretaryAssignmentId" value="@Model.SecretaryAssignmentId">
-                            <input type="hidden" name="AcademicPeriodId" value="@Model.CurrentAcademicPeriodId">
-                            <input type="hidden" name="SectionSubjectId" value="@Model.SelectedSubjectId">
-                            <input type="hidden" name="AttendanceDate" value="@DateTime.Now.ToString("MM/dd/yyyy hh:mm tt")">
+                <div class="card shadow mb-4 card-outline border-left-success">
+                    <div class="card-header">
+                        <b>Attendance for Academic Year: @Model.YearLevel - @Model.GradingPeriod Grading</b>
+                        <!-- <div class="card-tools">
+                            Submit Evaluation Button
+                            <button class="btn btn-sm btn-flat btn-primary bg-gradient-primary mx-1 mt-2" form="manage-evaluation" id="submit-btn" disabled>Submit Evaluation</button>
+                        </div> -->
+                    </div>
+                    <div class="card-body">
 
-                            <div class="clear-fix mt-2"></div>
+                        @if (Model.Students != null && Model.Students.Any())
+                        {
+                            <fieldset class="border border-success p-2 w-100">
+                                <legend class="w-auto">Attendance Marking</legend>
+                                <h4><strong>P</strong> = Present, <strong>A</strong> = Absent, <strong>L</strong> = Late, <strong>E</strong> = Excuse</h4>
 
-                            <div class="table-responsive">  
-                                <table class="table table-condensed">
-                                    <thead>
-                                        <tr class="bg-gradient-secondary" style="color: white;">
-                                            <th class="p-1"><b>List of Students</b></th>
-                                            <th class="text-center" style="font-size: 13px;">
-                                                <br>
-                                                Present
-                                            </th>
-                                            <th class="text-center" style="font-size: 13px;">
-                                                <br>
-                                                Absent
-                                            </th>
-                                            <th class="text-center" style="font-size: 13px;">
-                                                <br>
-                                                Late
-                                            </th>
-                                            <th class="text-center" style="font-size: 13px;">
-                                                <br>
-                                                Cutting
-                                            </th>
-                                            <th class="text-center" style="font-size: 13px;">
-                                                <br>
-                                                Excuse
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="tr-sortable">
-                                        @* @{
+                            </fieldset>
+                            <form id="SaveAttendanceForm" method="post" asp-action="SaveAttendance" asp-controller="Secretary">
+                                <input type="hidden" name="SecretaryAssignmentId" value="@Model.SecretaryAssignmentId">
+                                <input type="hidden" name="AcademicPeriodId" value="@Model.CurrentAcademicPeriodId">
+                                <input type="hidden" name="SectionSubjectId" value="@Model.SelectedSubjectId">
+                                <input type="hidden" name="AttendanceDate" value="@DateTime.Now.ToString("MM/dd/yyyy hh:mm tt")">
+
+                                <div class="clear-fix mt-2"></div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-condensed">
+                                        <thead>
+                                            <tr class="bg-gradient-secondary" style="color: white;">
+                                                <th class="p-1"><b>List of Students</b></th>
+                                                <th class="text-center" style="font-size: 13px;">
+                                                    <br>
+                                                    Present
+                                                </th>
+                                                <th class="text-center" style="font-size: 13px;">
+                                                    <br>
+                                                    Absent
+                                                </th>
+                                                <th class="text-center" style="font-size: 13px;">
+                                                    <br>
+                                                    Late
+                                                </th>
+                                                <th class="text-center" style="font-size: 13px;">
+                                                    <br>
+                                                    Cutting
+                                                </th>
+                                                <th class="text-center" style="font-size: 13px;">
+                                                    <br>
+                                                    Excuse
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="tr-sortable">
+                                            @* @{
                                             var attendanceOptions = new[]
                                             {
                                                 new{Value = "Present", Label = "Present"},
@@ -146,19 +160,19 @@
                                                 new{Value = "Excuse", Label = "Excuse"}
                                             };
                                         } *@
-                                        @foreach (var studentAssignment in Model.Students)
-                                        {
-                                            var studentId = studentAssignment.StudentId;
-                                            var studentName = $"{studentAssignment.Student.FirstName} {studentAssignment.Student.MiddelName} {studentAssignment.Student.LastName}";
+                                            @foreach (var studentAssignment in Model.Students)
+                                            {
+                                                var studentId = studentAssignment.StudentId;
+                                                var studentName = $"{studentAssignment.Student.FirstName} {studentAssignment.Student.MiddelName} {studentAssignment.Student.LastName}";
 
-                                            <tr class="student-row" data-student-id="@studentId">
-                                                <td class="p-1">
-                                                    @studentName
-                                                    <span class="excuse-reason-display" style="display: none;"></span>
-                                                    <input type="hidden" class="excuse-reason-input" name="ExcuseReason[@studentId]" value="">
-                                                </td>
+                                                <tr class="student-row" data-student-id="@studentId">
+                                                    <td class="p-1">
+                                                        @studentName
+                                                        <span class="excuse-reason-display" style="display: none;"></span>
+                                                        <input type="hidden" class="excuse-reason-input" name="ExcuseReason[@studentId]" value="">
+                                                    </td>
 
-                                                @* <tr class="bg-white">
+                                                    @* <tr class="bg-white">
                                                     <td class="p-1" width="40%">
                                                         @studentAssignment.Student.FirstName
                                                         @studentAssignment.Student.MiddelName
@@ -168,139 +182,141 @@
 
 
 
-                                                @*//Dating foreach*@
+                                                    @*//Dating foreach*@
 
-                                                @*----------FOR PRESENT----------*@
+                                                    @*----------FOR PRESENT----------*@
 
-                                                <td class="text-center" style="">
-                                                    @* <div class="icheck-success d-inline"> *@
-                                                    <div class="form-check">
-                                                        <input class="form-check-input attendance-radio"
-                                                               type="radio"
-                                                               name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
-                                                               id="present_@studentId"
-                                                               value="Present"
-                                                               data-student-id="@studentId" />
-                                                        <label class="form-check-label"
-                                                               for="present_@studentId">
-                                                        </label>
-                                                    </div>
-                                                </td>
+                                                    <td class="text-center" style="">
+                                                        @* <div class="icheck-success d-inline"> *@
+                                                        <div class="form-check">
+                                                            <input class="form-check-input attendance-radio"
+                                                                   type="radio"
+                                                                   name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
+                                                                   id="present_@studentId"
+                                                                   value="Present"
+                                                                   data-student-id="@studentId" />
+                                                            <label class="form-check-label"
+                                                                   for="present_@studentId">
+                                                            </label>
+                                                        </div>
+                                                    </td>
 
-                                                @*----------FOR ABSENT----------*@
+                                                    @*----------FOR ABSENT----------*@
 
 
-                                                <td class="text-center" style="">
-                                                    @* <div class="icheck-success d-inline"> *@
-                                                    <div class="form-check">
-                                                        <input class="form-check-input attendance-radio"
-                                                               type="radio"
-                                                               name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
-                                                               id="absent_@studentId"
-                                                               value="Absent"
-                                                               data-student-id="@studentId" />
-                                                        <label class="form-check-label"
-                                                               for="absent_@studentId">
-                                                        </label>
-                                                    </div>
-                                                </td>
+                                                    <td class="text-center" style="">
+                                                        @* <div class="icheck-success d-inline"> *@
+                                                        <div class="form-check">
+                                                            <input class="form-check-input attendance-radio"
+                                                                   type="radio"
+                                                                   name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
+                                                                   id="absent_@studentId"
+                                                                   value="Absent"
+                                                                   data-student-id="@studentId" />
+                                                            <label class="form-check-label"
+                                                                   for="absent_@studentId">
+                                                            </label>
+                                                        </div>
+                                                    </td>
 
-                                                @*----------FOR LATE----------*@
+                                                    @*----------FOR LATE----------*@
 
-                                                <td class="text-center" style="">
-                                                    @* <div class="icheck-success d-inline"> *@
-                                                    <div class="form-check">
-                                                        <input class="form-check-input attendance-radio"
-                                                               type="radio"
-                                                               name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
-                                                               id="late_@studentId"
-                                                               value="Late"
-                                                               data-student-id="@studentId" />
-                                                        <label class="form-check-label"
-                                                               for="late_@studentId">
-                                                        </label>
-                                                    </div>
-                                                </td>
+                                                    <td class="text-center" style="">
+                                                        @* <div class="icheck-success d-inline"> *@
+                                                        <div class="form-check">
+                                                            <input class="form-check-input attendance-radio"
+                                                                   type="radio"
+                                                                   name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
+                                                                   id="late_@studentId"
+                                                                   value="Late"
+                                                                   data-student-id="@studentId" />
+                                                            <label class="form-check-label"
+                                                                   for="late_@studentId">
+                                                            </label>
+                                                        </div>
+                                                    </td>
 
-                                                @*----------FOR LATE----------*@
+                                                    @*----------FOR LATE----------*@
 
-                                                <td class="text-center" style="">
-                                                    @* <div class="icheck-success d-inline"> *@
-                                                    <div class="form-check">
-                                                        <input class="form-check-input attendance-radio"
-                                                               type="radio"
-                                                               name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
-                                                               id="cutting_@studentId"
-                                                               value="Cutting"
-                                                               data-student-id="@studentId" />
-                                                        <label class="form-check-label"
-                                                               for="cutting_@studentId">
-                                                        </label>
-                                                    </div>
-                                                </td>
-                                                @*----------FOR EXCUSE----------*@
+                                                    <td class="text-center" style="">
+                                                        @* <div class="icheck-success d-inline"> *@
+                                                        <div class="form-check">
+                                                            <input class="form-check-input attendance-radio"
+                                                                   type="radio"
+                                                                   name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
+                                                                   id="cutting_@studentId"
+                                                                   value="Cutting"
+                                                                   data-student-id="@studentId" />
+                                                            <label class="form-check-label"
+                                                                   for="cutting_@studentId">
+                                                            </label>
+                                                        </div>
+                                                    </td>
+                                                    @*----------FOR EXCUSE----------*@
 
-                                                <td class="text-center" style="">
-                                                    @* <div class="icheck-success d-inline"> *@
-                                                    <div class="form-check">
-                                                        <input class="form-check-input excuse-radio"
-                                                               @* <input class="form-check-input excuse-radio" data-bs-toggle="modal" data-bs-target="#excuseModal" *@
-                                                               type="radio"
-                                                               name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
-                                                               id="excuse_@studentId"
-                                                               value="Excuse"
-                                                               data-student-id="@studentId"
-                                                               data-student-name="@studentName" />
-                                                        <label class="form-check-label"
-                                                               for="excuse_@studentId">
-                                                        </label>
-                                                        @* <input type="hidden"
+                                                    <td class="text-center" style="">
+                                                        @* <div class="icheck-success d-inline"> *@
+                                                        <div class="form-check">
+                                                            <input class="form-check-input excuse-radio"
+                                                                   @* <input class="form-check-input excuse-radio" data-bs-toggle="modal" data-bs-target="#excuseModal" *@
+                                                                   type="radio"
+                                                                   name="StudentAttendance[@studentId]" @*This create a dictionary: StudentAttendance["STU001"] = "Present"*@
+                                                                   id="excuse_@studentId"
+                                                                   value="Excuse"
+                                                                   data-student-id="@studentId"
+                                                                   data-student-name="@studentName" />
+                                                            <label class="form-check-label"
+                                                                   for="excuse_@studentId">
+                                                            </label>
+                                                            @* <input type="hidden"
                                                                    name="ExcuseReason[@studentId]"
                                                                    class="excuse-reason-input"
                                                                    value="" />
                                                             <!-- Visual indicator ng reason -->
                                                             <div class="excuse-reason-display" style="display: none;"></div> *@
-                                                    </div>
-                                                </td>
+                                                        </div>
+                                                    </td>
 
-                                            </tr>
-                                        }
+                                                </tr>
+                                            }
 
-                                    </tbody>
-                                </table>
-                            </div>
-                            <!-- Add a comment box for evaluators -->
-                            <div class="form-group">
-                                <label for="Remarks"><strong>Remarks(Optional) </strong></label>
-                                <textarea name="Remarks" id="remarks" class="form-control" rows="4" placeholder="Enter any remarks here..."></textarea>
-
-                                <div class="card-tools" style="text-align: right;">
-                                    <!-- Submit Evaluation Button -->
-                                    <button class="btn btn-sm btn-flat btn-success bg-gradient-success mx-1 mt-2" id="submitBtn" disabled>Submit Attendance</button>
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </div>
+                                <!-- Add a comment box for evaluators -->
+                                <div class="form-group">
+                                    <label for="Remarks"><strong>Remarks(Optional) </strong></label>
+                                    <textarea name="Remarks" id="remarks" class="form-control" rows="4" placeholder="Enter any remarks here..."></textarea>
 
-                        </form>
-                    }
-                    else if (Model.SectionSubjectId.HasValue)
-                    {
-                        <h3 class="text-center">
-                            No Students assigned to this section yet
-                        </h3>
-                    }
-                    else
-                    {
-                        @* <div class="list-group-item list-group-item-action shadow mb-4 card-outline border-bottom-success card-body">
+                                    <div class="card-tools" style="text-align: right;">
+                                        <!-- Submit Evaluation Button -->
+                                        <button class="btn btn-sm btn-flat btn-success bg-gradient-success mx-1 mt-2" id="submitBtn" disabled>Submit Attendance</button>
+                                    </div>
+                                </div>
+
+                            </form>
+                        }
+                        else if (Model.SectionSubjectId.HasValue)
+                        {
+                            <h3 class="text-center">
+                                No Students assigned to this section yet
+                            </h3>
+                        }
+                        else
+                        {
+                            @* <div class="list-group-item list-group-item-action shadow mb-4 card-outline border-bottom-success card-body">
                             Please Select Class to conduct Attendance
                         </div> *@
-                        <h3 class="text-center">
-                            Please Select Class to conduct Attendance
-                        </h3>
-                    }
+                            <h3 class="text-center">
+                                Please Select Class to conduct Attendance
+                            </h3>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
+    
 </div>
 
 <!-- Excuse Reason Modal -->

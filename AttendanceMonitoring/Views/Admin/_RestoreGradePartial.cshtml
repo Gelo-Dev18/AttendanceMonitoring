@@ -1,0 +1,53 @@
+﻿@* @using AttendanceMonitoring.Models; *@
+@using System.Linq
+@model IEnumerable<AttendanceMonitoring.Models.Grade>
+@{
+    ViewData["Title"] = "Restore Grade";
+}
+<div class="card shadow mb-2" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Deleted Grades</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th><strong>#</strong></th>
+                        <th><strong>Grade Level</strong></th>
+                        <th><strong>Category</strong></th>
+                        <th><strong>Action</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var c = 1;
+                    }
+                    @foreach (var GradeLevel in Model)
+                    {
+
+                        <tr>
+                            <td><strong>@(c++)</strong></td>
+                            <td><strong>Grade @GradeLevel.GradeLevel</strong></td>
+                            <td><strong>@GradeLevel.Category</strong></td>
+                            <td class="text-center">
+                                <strong>
+                                    <button data-grade-id="@GradeLevel.Id" type="button" class="btn btn-warning btn-circle restore-btn" title="Restore Grade">
+                                        <i class="fas fa-trash-restore"></i>
+                                    </button>
+                                </strong>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

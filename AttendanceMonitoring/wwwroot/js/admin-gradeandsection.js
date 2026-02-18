@@ -1,4 +1,17 @@
 ﻿$(document).ready(function () {
+    //1.Dito, naka-flag na false yung has-assignments so every time na mag open ang modal is naka false sya.
+    //Mag automatic syang mag set na true kapag may assigned na bago kaya naka true na sya dun sa '.assign-btn',
+    $('#ViewModal').on('show.bs.modal', function () {
+        $(this).data('has-assignments', false);
+    });
+
+    //This will reload the page for MyClasses list if there is a new assign
+    $('#ViewModal').on('hide.bs.modal', function () {
+        if ($(this).data('has-assignments')) {
+            location.reload();
+        }
+    });
+
     $(document).on('submit', '#AddGradeForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
 
@@ -171,6 +184,37 @@
                 loadSpinner();
                 loadPageBlur();
                 showDangerToast(response);
+            }
+        });
+    });
+
+
+    $(document).on('click', '.restore-btn', function (e) {
+        e.preventDefault();
+
+        var gradeId = $(this).data("grade-id");
+
+        $.ajax({
+            url: '/Admin/RestoreGrade',
+            type: 'POST',
+            data: { gradeId: gradeId },
+            //processData: false,
+            //contentType: false,
+            //dataType: 'json',
+            success: function (response) {
+
+                $('#ViewModal .modal-body').html(response);
+                //$('#dataTable2').DataTable();
+
+                showUpdateSuccessToast("Restore Successfully!");
+                $('#ViewModal').data('has-assignments', true);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating user:', error);
+                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while restoring grade.');
             }
         });
     });

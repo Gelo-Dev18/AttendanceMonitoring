@@ -1,6 +1,86 @@
 ﻿
+function updateBulkPromotionButton() {
+    const selectedCount = $('.student-checkbox:checked').length;
+    $('#selectedCount').text(selectedCount);
+    $('#bulkPromoteBtn').prop('disabled', selectedCount === 0);
+}
+
+
+
 $(document).ready(function () {
+
+    $('#ViewModal').on('show.bs.modal', function () {
+        $(this).data('has-assignments', false);
+    });
+
+    //This will reload the page for MyClasses list if there is a new assign
+    $('#ViewModal').on('hide.bs.modal',  function () {   
+        if ($(this).data('has-assignments')) {
+            location.reload();
+        }
+    });
+
+    //For promotion
+    $('#selectAll').on('change', function () {   
+
+        $('.student-checkbox').prop('checked', this.checked);
+        updateBulkPromotionButton();
+
+        // ✅ Add this - get checked checkboxes
+        const checked = $('.student-checkbox:checked');
+
+        if (checked.length > 0) {
+            const grades = checked.map(function () {
+                return $(this).data('current-grade');
+            }).get();
+
+            const uniqueGrades = [...new Set(grades)];
+
+            if (uniqueGrades.length > 1) {
+                $('#bulkPromoteBtn').prop('disabled', true);
+                $('#gradeWarning').show().text(`⚠️ Mixed grades selected: ${uniqueGrades.join(', ')}`);
+                //                           ↑ Fix parentheses too
+            } else {
+                $('#bulkPromoteBtn').prop('disabled', false);
+                $('#gradeWarning').hide();
+            }
+        } else {
+            $('#gradeWarning').hide();
+        }
+    });
+
+    $(document).on('change', '.student-checkbox', function () {
+        updateBulkPromotionButton();
+
+        const total = $('.student-checkbox').length;
+        const checked = $('.student-checkbox:checked');
+
+        $('#selectAll').prop('checked', total > 0 && total === checked.length);
+
+        //To prevent promoting student that is not with the same grade
+        if (checked.length > 0) {
+            const grades = checked.map(function () {
+                return $(this).data('current-grade');
+            }).get();
+
+            const uniqueGrades = [...new Set(grades)];
+
+            if (uniqueGrades.length > 1) {
+                $('#bulkPromoteBtn').prop('disabled', true);
+                $('#gradeWarning').show().text(`⚠️ Mixed grades selected: ${uniqueGrades.join(', ')}`);
+            } else {
+                $('#bulkPromoteBtn').prop('disabled', false);
+                $('#gradeWarning').hide();
+            }
+        } else {
+            $('#gradeWarning').hide();
+        }
+    });
     
+    //$('.student-checkbox').on('change', function () {
+    //    updateBulkPromotionButton();
+    //});
+
     //Submit Function For Secretary Teacher
     $(document).on('submit', '#AddStudentForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
@@ -169,6 +249,72 @@ $(document).ready(function () {
                 loadSpinner();
                 loadPageBlur();
                 showDangerToast(response);
+            }
+        });
+    });
+
+    $(document).on('submit', '#BulkPromoteStudentForm', function (e) {
+        e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
+
+        var formData = new FormData(this); //collect and manage form data for submission
+        //RESTful api, two computer system to exchange information through the internet
+        $.ajax({
+            url: '/Admin/BulkPromoteStudent/',
+            type: 'POST', //a RESTful API uses standard HTTP methods(GET, POST, PUT, DELETE) 
+            data: formData, //sends all form data
+            processData: false, // para hindi maconvert ni formdata to strings yung submission ng data lalo na if my file included
+            contentType: false, //si browser mag set ng contenttype
+            success: function (response) {
+                if (response.success) {
+                    $('#ViewSmallForm').off('hide.bs.modal'); //Para i-disable ang blur effect for hiding modal
+                    $('#ViewSmallForm').modal('hide');
+                    // alert(response.message);
+                    loadSpinner();
+                    loadBlurBackground();
+                    showSuccessToast(response.message);
+                    setTimeout(function () {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showDangerToast("Could not bulk promote students");
+
+                }            
+            },
+            error: function (xhr, status, error) {
+                console.error('Error promoting student:', error);
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while promoting the students.');
+            }
+        });
+    });
+
+    $(document).on('click', '.restore-btn', function (e) {
+        e.preventDefault();
+
+        var studentId = $(this).data("student-id");
+
+        $.ajax({
+            url: '/Admin/RestoreDeletedStudent',
+            type: 'POST',
+            data: { studentId: studentId },
+            //processData: false,
+            //contentType: false,
+            //dataType: 'json',
+            success: function (response) {
+
+                $('#ViewModal .modal-body').html(response);
+                $('#dataTable2').DataTable();
+
+                showUpdateSuccessToast("Restore Successfully!");
+                $('#ViewModal').data('has-assignments', true);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating user:', error);
+                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while restoring student.');
             }
         });
     });

@@ -7,6 +7,10 @@
         public int SubjectId { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        //For Soft Delete function
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
+
 
         public Section Section { get; set; } //Navigation Property
         public Subject Subject { get; set; } //Navigation Property

@@ -1,5 +1,14 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
+    $('#ViewModal').on('show.bs.modal', function () {
+        $(this).data('has-assignments', false);
+    });
 
+    //This will reload the page for MyClasses list if there is a new assign
+    $('#ViewModal').on('hide.bs.modal', function () {
+        if ($(this).data('has-assignments')) {
+            location.reload();
+        }
+    });
     //Submit Function For Adding Teacher
     $(document).on('submit', '#AddTeacherForm', function (e) {
         e.preventDefault(); // stops the default page refresh/navigation on form submission, allowing JavaScript to handle the data submission.
@@ -232,6 +241,66 @@
                 loadSpinner();
                 loadPageBlur();
                 showDangerToast(response);
+            }
+        });
+    });
+
+    $(document).on('click', '.restore-btn', function (e) {
+        e.preventDefault();
+
+        var assignmentId = $(this).data("assignment-id");
+
+        $.ajax({
+            url: '/Admin/RestoreTeacherAssignment',
+            type: 'POST',
+            data: { assignmentId: assignmentId },
+            //processData: false,
+            //contentType: false,
+            //dataType: 'json',
+            success: function (response) {
+
+                $('#ViewModal .modal-body').html(response);
+                $('#dataTable2').DataTable();
+
+                showUpdateSuccessToast("Restore Successfully!");
+                $('#ViewModal').data('has-assignments', true);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating user:', error);
+                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while restoring section.');
+            }
+        });
+    });
+
+    $(document).on('click', '.restore-teacher-btn', function (e) {
+        e.preventDefault();
+
+        var teacherId = $(this).data("teacher-id");
+
+        $.ajax({
+            url: '/Admin/RestoreDeletedTeacher',
+            type: 'POST',
+            data: { teacherId: teacherId },
+            //processData: false,
+            //contentType: false,
+            //dataType: 'json',
+            success: function (response) {
+
+                $('#ViewModal .modal-body').html(response);
+                $('#dataTable2').DataTable();
+
+                showUpdateSuccessToast("Restore Successfully!");
+                $('#ViewModal').data('has-assignments', true);
+            },
+            error: function (xhr, status, error) {
+                console.error('Error updating user:', error);
+                console.log('XHR Response:', xhr.responseText); // Para makita mo yung actual error
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast('An error occurred while restoring student.');
             }
         });
     });

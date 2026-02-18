@@ -8,6 +8,10 @@
         public string? Track { get; set; }
         public string? TVLProgram { get; set; }
         public DateTime CreatedAt { get; set; }
+
+        //For Soft Delete function
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public Grade Grade { get; set; } //Navigation Property/Lazy Loading - REQUIRED for .Include()! // Pag Public Virtual, no need include sa controller
         
         //Section Relationship (Many-to-Many relationship through SectionSubject) 

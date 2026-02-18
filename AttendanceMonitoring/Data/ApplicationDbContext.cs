@@ -122,7 +122,8 @@ namespace AttendanceMonitoring.Data
                 .HasOne(s => s.Grade)          //Section has one Grade
                 .WithMany(g => g.Sections)      //Grade has many Sections
                 .HasForeignKey(s => s.GradesId)      //Foreign key
-                .OnDelete(DeleteBehavior.Restrict);  // ← IMPORTANT! Prevent cascade delete
+                .OnDelete(DeleteBehavior.Restrict)  // ← IMPORTANT! Prevent cascade delete
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////
             ///// FOR SECTION SUBJECT ASSIGNMENT ///////
@@ -135,13 +136,17 @@ namespace AttendanceMonitoring.Data
                 .HasOne(ss => ss.Section)
                 .WithMany(s => s.SectionSubjects)
                 .HasForeignKey(ss => ss.SectionId)
-                .OnDelete(DeleteBehavior.Cascade); //Deletes assignment when section deleted
+                //.OnDelete(DeleteBehavior.Cascade); //Deletes assignment when section deleted
+                .OnDelete(DeleteBehavior.Restrict) //Deletes assignment when section deleted
+                .IsRequired(false); //this is needed so that the navigation can be null
+
 
             modelBuilder.Entity<SectionSubject>()
                 .HasOne(ss => ss.Subject)
                 .WithMany(j => j.SectionSubjects)
                 .HasForeignKey(ss => ss.SubjectId)
-                .OnDelete(DeleteBehavior.Restrict); //To Prevent deletion when subject is already assigned
+                .OnDelete(DeleteBehavior.Restrict) //To Prevent deletion when subject is already assigned
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////
             ///// FOR STUDENT ASSIGNMENT ///////
@@ -155,52 +160,82 @@ namespace AttendanceMonitoring.Data
                 .HasOne(ssa => ssa.Student)
                 .WithMany(sa => sa.SectionAssignments)
                 .HasForeignKey(ssa => ssa.StudentId)
-                .OnDelete(DeleteBehavior.Cascade); //Deletes Student = delete assignment so that's why Cascade is okay.
+                //.OnDelete(DeleteBehavior.Cascade); //Deletes Student = delete assignment so that's why Cascade is okay.
+                .OnDelete(DeleteBehavior.Restrict) //Deletes Student = delete assignment so that's why Cascade is okay.
+                .IsRequired(false); //this is needed so that the navigation can be null
+
 
             modelBuilder.Entity<StudentSectionAssignment>()
                 .HasOne(ssa => ssa.Section)
                 .WithMany(sa => sa.StudentAssignments)
                 .HasForeignKey(ssa => ssa.SectionId)
-                .OnDelete(DeleteBehavior.Restrict); //Restrict delete so if section is accidentally delete, it will be block 
+                .OnDelete(DeleteBehavior.Restrict) //Restrict delete so if section is accidentally delete, it will be block 
                                                     //to protect students who are enrolled on a specific section that is being deleted
+                .IsRequired(false); //this is needed so that the navigation can be null
 
+
+            modelBuilder.Entity<StudentSectionAssignment>()
+                .HasOne(ssa => ssa.AcademicPeriod)
+                .WithMany(sa => sa.StudentSectionAssignments)
+                .HasForeignKey(ssa => ssa.AcademicPeriodId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
             ///////////////////////////////////////////////////////////////////////////////////////////////////
             ///// FOR SECRETARY ASSIGNMENT ///////
 
             modelBuilder.Entity<SecretaryAssignment>()
-                .HasIndex(sa => new { sa.SecretaryId, sa.SectionId })
+                .HasIndex(sa => new { sa.SecretaryId, sa.SectionId})
                 .IsUnique();
 
             modelBuilder.Entity<SecretaryAssignment>()
                 .HasOne(sa => sa.Secretary)
                 .WithMany(s => s.SecretariesAssignments)
                 .HasForeignKey(sa => sa.SecretaryId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict) //Not Cascade, Restrict
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             modelBuilder.Entity<SecretaryAssignment>()
                 .HasOne(sa => sa.Section)
                 .WithMany(s => s.SecretaryAssignments)
                 .HasForeignKey(sa => sa.SectionId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
+
+            modelBuilder.Entity<SecretaryAssignment>()
+                .HasOne(sa => sa.AcademicPeriod)
+                .WithMany(s => s.SecretaryAssignments)
+                .HasForeignKey(sa => sa.AcademicPeriodId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////
             ///// FOR TEACHER ASSIGNMENT ///////
-
+            
+            //This avoid duplications for assign, But because of newly added AcademicPeriodId it can assign SAME TEACHER, SAME CLASS, DIFFERENT ACADEMIC PERIOD
             modelBuilder.Entity<TeacherAssignment>()
-                .HasIndex(ta => new { ta.TeacherId, ta.SectionSubjectId })
+                .HasIndex(ta => new { ta.TeacherId, ta.SectionSubjectId, ta.AcademicPeriodId })
                 .IsUnique();
 
             modelBuilder.Entity<TeacherAssignment>()
                 .HasOne(ta => ta.Teacher)
                 .WithMany(t => t.TeachingAssignments)
                 .HasForeignKey(ta => ta.TeacherId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             modelBuilder.Entity<TeacherAssignment>()
                 .HasOne(ta => ta.SectionSubject)
                 .WithMany(t => t.TeacherAssignments)
                 .HasForeignKey(ta => ta.SectionSubjectId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
+
+            modelBuilder.Entity<TeacherAssignment>()
+                .HasOne(ta => ta.AcademicPeriod)
+                .WithMany(t => t.TeacherAssignments)
+                .HasForeignKey(ta => ta.AcademicPeriodId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false);
 
             ///////////////////////////////////////////////////////////////////////////////////////////////////
             ///// FOR TEACHER ASSIGNMENT ///////
@@ -212,41 +247,47 @@ namespace AttendanceMonitoring.Data
                 .HasOne(a => a.Student)
                 .WithMany()
                 .HasForeignKey(a => a.StudentId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             //foreign keys to AppUser table
             modelBuilder.Entity<Attendance>()
                 .HasOne(a => a.RecordedBy)
                 .WithMany()
                 .HasForeignKey(a => a.RecordedById)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             //foreign keys to AppUser table
             modelBuilder.Entity<Attendance>()
                 .HasOne(a => a.AcademicPeriod)
                 .WithMany(ap => ap.Attendances) //(e.g., "Get all attendances for School Year 2024-2025")
                 .HasForeignKey(a => a.AcademicPeriodId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.NoAction)
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             //Secretary Assignment Relationship
             modelBuilder.Entity<Attendance>()
                 .HasOne(a => a.SecretaryAssignment)
                 .WithMany(sa => sa.SecretaryAttendances)
                 .HasForeignKey(a => a.SecretaryAssignmentId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             //Teacher Assignment Relationship
             modelBuilder.Entity<Attendance>()
                 .HasOne(a => a.TeacherAssignment)
                 .WithMany(ta => ta.TeacherAttendances)
                 .HasForeignKey(a => a.TeacherAssignmentId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             modelBuilder.Entity<Attendance>()
                 .HasOne(a => a.SectionSubject)
                 .WithMany(ss => ss.SectionSubjectAttendance)
                 .HasForeignKey(a => a.SectionSubjectId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired(false); //this is needed so that the navigation can be null
 
             //modelBuilder.Entity<Attendance>()
             //    .HasOne(a => a.Su)
@@ -279,6 +320,20 @@ namespace AttendanceMonitoring.Data
                     "OR ([TeacherAssignmentId] IS NULL AND [SecretaryAssignmentId] IS NOT NULL)"
                     )
                 );
+
+            //For Soft Deletion 
+            modelBuilder.Entity<AppUser>().HasQueryFilter(user => !user.IsDeleted);
+            modelBuilder.Entity<AcademicPeriod>()
+                .HasQueryFilter(ap => !ap.IsDeleted); //Automatically exclude delete records
+            modelBuilder.Entity<Grade>().HasQueryFilter(g => !g.IsDeleted);
+            modelBuilder.Entity<Section>().HasQueryFilter(s => !s.IsDeleted);
+            modelBuilder.Entity<Subject>().HasQueryFilter(s => !s.IsDeleted);
+            modelBuilder.Entity<Student>().HasQueryFilter(s => !s.IsDeleted);
+            modelBuilder.Entity<SectionSubject>().HasQueryFilter(ss => !ss.IsDeleted);
+            modelBuilder.Entity<StudentSectionAssignment>().HasQueryFilter(ssa => !ssa.IsDeleted);
+            modelBuilder.Entity<TeacherAssignment>().HasQueryFilter(ta => !ta.IsDeleted);
+            modelBuilder.Entity<SecretaryAssignment>().HasQueryFilter(sa => !sa.IsDeleted);
+
         }
 
     }

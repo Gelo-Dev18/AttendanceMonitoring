@@ -20,6 +20,10 @@ namespace AttendanceMonitoring.Models
         public byte[]? imageFileData { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        //For Soft Delete function
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
+
         //Direct relationship: One-to-Many(Student → StudentSectionAssignment)
         //Overall pattern: Many-to-Many (Student ↔ Section through linking table)
         public ICollection<StudentSectionAssignment> SectionAssignments { get; set; }

@@ -11,9 +11,16 @@
 <div class="card shadow mb-4" style="margin-top: 20px;">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Section's Info</h6>
-        <button type="button" class="btn btn-success bg-gradient-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddSmallModalForm" data-url="/Admin/AddSection" data-title="Add Section Details">
-            <span class="text">Add Section</span>
-        </button>
+        <div class="d-flex gap-2">
+
+            <button type="button" class="btn btn-success bg-gradient-success btn-icon-split mr-1" data-bs-toggle="modal" data-bs-target="#AddSmallModalForm" data-url="/Admin/AddSection" data-title="Add Section Details">
+                <span class="text">Add Section</span>
+            </button>
+            <button type="button" class="btn btn-warning bg-gradient-warning btn-icon-split" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreSection/" data-title="Restore Section Details">
+                <span class="text">Archive</span>
+            </button>
+        </div>
+
     </div>
     <div class="card-body">
         <div class="table-responsive">

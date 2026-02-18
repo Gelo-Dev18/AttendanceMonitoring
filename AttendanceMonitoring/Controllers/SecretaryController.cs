@@ -363,6 +363,9 @@ namespace AttendanceMonitoring.Controllers
             //Get Current default academic Period
             var currentAcademicPeriod = await _context.AcademicPeriods.FirstOrDefaultAsync(ap => ap.IsDefault == 1);
 
+            var hasAnyAssignments = await _context.SecretaryAssignments
+                .AnyAsync(sa => sa.SecretaryId == secretaryId);
+
             //1.Get Secretary's Assignment    
             var SecretaryClass = await _context.SecretaryAssignments
                                 .Where(s => s.SecretaryId == secretaryId)
@@ -384,115 +387,130 @@ namespace AttendanceMonitoring.Controllers
             ///Queries inside foreach. Problem: N + 1 problem
             /// </summary>
             //track subjects that must be hidden
-            var alreadyRecordedSectionSubjectIds = new List<int>();
+            bool isAttendanceFinished = false;
 
-            foreach (var subject in subjects.ToList())
+            if(subjects != null && subjects.Any())
             {
-                var sectionId = subject.SectionId;
-                var sectionSubjectId = subject.Id;
-                //Find the SecretaryAssignment for this section
-                var secretaryAssignment = SecretaryClass
-                    .FirstOrDefault(sc => sc.SectionId == sectionId);
+                var alreadyRecordedSectionSubjectIds = new List<int>();
 
-                if (secretaryAssignment != null)
+                foreach (var subject in subjects.ToList())
                 {
-                    //Check if secretary already recorded attendance for this specific subject
-                    var secretaryRecorded = await _context.Attendances //n + 1 problem, kase may await sa loob ng foreach
-                        .AnyAsync(a => a.SecretaryAssignmentId == secretaryAssignment.Id
+                    var sectionId = subject.SectionId;
+                    var sectionSubjectId = subject.Id;
+                    //Find the SecretaryAssignment for this section
+                    var secretaryAssignment = SecretaryClass
+                        .FirstOrDefault(sc => sc.SectionId == sectionId);
+
+                    if (secretaryAssignment != null)
+                    {
+                        //Check if secretary already recorded attendance for this specific subject
+                        var secretaryRecorded = await _context.Attendances //n + 1 problem, kase may await sa loob ng foreach
+                            .AnyAsync(a => a.SecretaryAssignmentId == secretaryAssignment.Id
+                                        && a.SectionSubjectId == sectionSubjectId
+                                        && a.RecordedById == secretaryId
+                                        && a.AcademicPeriodId == currentAcademicPeriod.Id
+                                        && a.AttendanceDate.Date == today);
+
+                        if (secretaryRecorded)
+                        {
+                            alreadyRecordedSectionSubjectIds.Add(sectionSubjectId);
+                            continue; // Skip teacher check, already excluded
+                        }
+                    }
+
+                    var teacherRecorded = await _context.Attendances //n + 1 problem, kase may await sa loob ng foreach
+                        .AnyAsync(a => a.TeacherAssignmentId != null
                                     && a.SectionSubjectId == sectionSubjectId
-                                    && a.RecordedById == secretaryId
+                                    //&& a.RecordedById == teacherAssignment.TeacherId
                                     && a.AcademicPeriodId == currentAcademicPeriod.Id
                                     && a.AttendanceDate.Date == today);
 
-                    if (secretaryRecorded)
+                    if (teacherRecorded)
                     {
                         alreadyRecordedSectionSubjectIds.Add(sectionSubjectId);
                         continue; // Skip teacher check, already excluded
+
                     }
+
                 }
+                //Remove subject that already have attendance
+                subjects = subjects
+                        .Where(s => !alreadyRecordedSectionSubjectIds.Contains(s.Id))
+                        .ToList();
 
-                var teacherRecorded = await _context.Attendances //n + 1 problem, kase may await sa loob ng foreach
-                    .AnyAsync(a => a.TeacherAssignmentId != null
-                                && a.SectionSubjectId == sectionSubjectId
-                                //&& a.RecordedById == teacherAssignment.TeacherId
-                                && a.AcademicPeriodId == currentAcademicPeriod.Id
-                                && a.AttendanceDate.Date == today);
-
-                if (teacherRecorded)
+                if (!subjects.Any())
                 {
-                    alreadyRecordedSectionSubjectIds.Add(sectionSubjectId);
-                    continue; // Skip teacher check, already excluded
-
+                    isAttendanceFinished = true;
                 }
-
             }
-            //Remove subject that already have attendance
-            subjects = subjects
-                    .Where(s => !alreadyRecordedSectionSubjectIds.Contains(s.Id))
-                    .ToList();
+            else if (hasAnyAssignments)
+            {
+                isAttendanceFinished = true;
+            }
 
-            ///<summary>
-            ///REFACTOR FOR = "Queries inside foreach. Problem: N + 1 problem"
-            /// </summary>
-            /// 
 
-            ////1. Get all the data needed in one Query each
-            //var sectiondIds = subjects
-            //    .Select(s => s.SectionId)
-            //    .Distinct()
-            //    .ToList();
-            //var sectionSubjectIds = subjects
-            //    .Select(s => s.Id)
-            //    .ToList();
+                ///<summary>
+                ///REFACTOR FOR = "Queries inside foreach. Problem: N + 1 problem"
+                /// </summary>
+                /// 
 
-            ////Get all relevant secretary assignemnts at once
-            //var secretaryAssignments = SecretaryClass
-            //    .Where(sc => sectiondIds.Contains(sc.SectionId))
-            //    .ToList(); //Load into memory
-            ////to avoid error CS1929 when query secretaryRecorded usses contains
-            //var secretaryAssignmentIds = secretaryAssignments
-            //    .Select(sa => sa.Id)
-            //    .ToList();
+                ////1. Get all the data needed in one Query each
+                //var sectiondIds = subjects
+                //    .Select(s => s.SectionId)
+                //    .Distinct()
+                //    .ToList();
+                //var sectionSubjectIds = subjects
+                //    .Select(s => s.Id)
+                //    .ToList();
 
-            ////Get all secretary-recorded attendances at once    
-            //var secretaryRecorded = await _context.Attendances
-            //    .Where(a => secretaryAssignmentIds.Contains(a.SecretaryAssignmentId ?? 0) //Select().Contains() creates a new enumerable then searches through it //Any() stops immediately kapag nakita yung match
-            //            && sectionSubjectIds.Contains(a.SectionSubjectId ?? 0) // PROBLEMA: int? vs int kapag walang HasValue at Value
-            //            && a.RecordedById == secretaryId
-            //            && a.AcademicPeriodId == currentAcademicPeriod.Id
-            //            && a.AttendanceDate.Date == today)
-            //    .Select(a => a.SectionSubjectId)
-            //    .Distinct()
-            //    .ToListAsync();
+                ////Get all relevant secretary assignemnts at once
+                //var secretaryAssignments = SecretaryClass
+                //    .Where(sc => sectiondIds.Contains(sc.SectionId))
+                //    .ToList(); //Load into memory
+                ////to avoid error CS1929 when query secretaryRecorded usses contains
+                //var secretaryAssignmentIds = secretaryAssignments
+                //    .Select(sa => sa.Id)
+                //    .ToList();
 
-            ////Get all teacher assignment at once
-            //var teacherAssignments = await _context.TeacherAssignments
-            //    .Where(ta => sectionSubjectIds.Contains(ta.SectionSubjectId))
-            //    .ToListAsync();
+                ////Get all secretary-recorded attendances at once    
+                //var secretaryRecorded = await _context.Attendances
+                //    .Where(a => secretaryAssignmentIds.Contains(a.SecretaryAssignmentId ?? 0) //Select().Contains() creates a new enumerable then searches through it //Any() stops immediately kapag nakita yung match
+                //            && sectionSubjectIds.Contains(a.SectionSubjectId ?? 0) // PROBLEMA: int? vs int kapag walang HasValue at Value
+                //            && a.RecordedById == secretaryId
+                //            && a.AcademicPeriodId == currentAcademicPeriod.Id
+                //            && a.AttendanceDate.Date == today)
+                //    .Select(a => a.SectionSubjectId)
+                //    .Distinct()
+                //    .ToListAsync();
 
-            ////Get all teacher-recorded attendances at once
-            //var teacherAssignmentIds = teacherAssignments.Select(ta => ta.Id).ToList();
-            //var teacherIds = teacherAssignments.Select(ta => ta.TeacherId).ToList();
+                ////Get all teacher assignment at once
+                //var teacherAssignments = await _context.TeacherAssignments
+                //    .Where(ta => sectionSubjectIds.Contains(ta.SectionSubjectId))
+                //    .ToListAsync();
 
-            //var teacherRecorded = await _context.Attendances
-            //    .Where(a => teacherAssignmentIds.Contains(a.TeacherAssignmentId ?? 0)
-            //            && sectionSubjectIds.Contains(a.SectionSubjectId ?? 0)
-            //            && teacherIds.Contains(a.RecordedById ?? "") //Quote sign kapag yung id ay string
-            //            && a.AcademicPeriodId == currentAcademicPeriod.Id
-            //            && a.AttendanceDate == today)
-            //    .Select(a => a.SectionSubjectId)
-            //    .Distinct()
-            //    .ToListAsync();
+                ////Get all teacher-recorded attendances at once
+                //var teacherAssignmentIds = teacherAssignments.Select(ta => ta.Id).ToList();
+                //var teacherIds = teacherAssignments.Select(ta => ta.TeacherId).ToList();
 
-            ////2.Combine exclusion List
-            //var alreadyRecordedSectionSubjectsIds = secretaryRecorded
-            //    .Union(teacherRecorded)
-            //    .ToHashSet();
-            ////3. Filter in Memory
-            //subjects = subjects
-            //    .Where(s => !alreadyRecordedSectionSubjectsIds.Contains(s.Id))
-            //    .ToList();
-            //////////////////////////////////////////////////////////////////////////////////////////
+                //var teacherRecorded = await _context.Attendances
+                //    .Where(a => teacherAssignmentIds.Contains(a.TeacherAssignmentId ?? 0)
+                //            && sectionSubjectIds.Contains(a.SectionSubjectId ?? 0)
+                //            && teacherIds.Contains(a.RecordedById ?? "") //Quote sign kapag yung id ay string
+                //            && a.AcademicPeriodId == currentAcademicPeriod.Id
+                //            && a.AttendanceDate == today)
+                //    .Select(a => a.SectionSubjectId)
+                //    .Distinct()
+                //    .ToListAsync();
+
+                ////2.Combine exclusion List
+                //var alreadyRecordedSectionSubjectsIds = secretaryRecorded
+                //    .Union(teacherRecorded)
+                //    .ToHashSet();
+                ////3. Filter in Memory
+                //subjects = subjects
+                //    .Where(s => !alreadyRecordedSectionSubjectsIds.Contains(s.Id))
+                //    .ToList();
+                //////////////////////////////////////////////////////////////////////////////////////////
             List<StudentSectionAssignment> students = null;
             int? actualsecretaryAssignmentId = null; //kaya null kase tulad ng students wala pang selected value
 
@@ -526,8 +544,10 @@ namespace AttendanceMonitoring.Controllers
                 SecretaryAssignmentId = actualsecretaryAssignmentId,
                 SectionSubjectId = selectedSubjectId,
                 CurrentAcademicPeriodId = currentAcademicPeriod?.Id ?? 1,
+                IsStarted = currentAcademicPeriod.Status == 1,
                 YearLevel = currentAcademicPeriod.Year,
                 GradingPeriod = currentAcademicPeriod.GradingPeriod,
+                IsAttendanceFinished = isAttendanceFinished
             };
 
             return View(model);

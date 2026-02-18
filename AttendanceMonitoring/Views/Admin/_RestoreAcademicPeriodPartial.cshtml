@@ -1,0 +1,55 @@
+﻿@* @using AttendanceMonitoring.Models; *@
+@using System.Linq
+@model IEnumerable<AttendanceMonitoring.Models.AcademicPeriod>
+@{
+    ViewData["Title"] = "Restore Academic Period";
+}
+<div class="card shadow mb-2" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Deleted Academic Period</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th><strong>#</strong></th>
+                        <th><strong>Year</strong></th>
+                        <th><strong>Grading Period</strong></th>
+                        <th><strong>Action</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var c = 1;
+                    }
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var academicPeriod in Model)
+                        {
+                            <tr>
+                                <td><strong>@(c++)</strong></td>
+                                <td><strong>@academicPeriod.Year</strong></td>
+                                <td><strong>@academicPeriod.GradingPeriod Grading</strong></td>        
+                                <td class="text-center">
+                                    <strong>
+                                        <button data-academic-id="@academicPeriod.Id" type="button" class="btn btn-warning btn-circle restore-btn" title="Restore Academic Period">
+                                            <i class="fas fa-trash-restore"></i>
+                                        </button>
+                                    </strong>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

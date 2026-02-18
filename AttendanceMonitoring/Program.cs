@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using static System.Runtime.InteropServices.JavaScript.JSType;
+using OfficeOpenXml;
+
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial; //EPP syntax for ,net7-
 
 var builder = WebApplication.CreateBuilder(args); //logging
 

@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NuGet.Packaging.Signing;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
@@ -295,7 +297,7 @@ namespace AttendanceMonitoring.Controllers
                     .ThenInclude(ss => ss.Subject)
                 .Include(sn => sn.SectionSubject.Section)
                     .ThenInclude(g => g.Grade)
-                .Where(s => s.TeacherId == teacherId) //Filter to this teacher only
+                .Where(s => s.TeacherId == teacherId && s.AcademicPeriod == currentAcademicPeriod) //Filter to this teacher only
                 .Where(s => !alreadyRecordedAttendance.Contains(s.SectionSubjectId)) //Use SectionSubjectId not Id
                 .OrderBy(s => s.SectionSubject.Section.Grade) 
                 .ToListAsync();
@@ -420,6 +422,10 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, errors = overallErrors });
             }
 
+            //Get Current default academic period
+            var currentAcademicPeriod = await context.AcademicPeriods
+                .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+
             //Recorded by the current user that is logged in
             var recordedById = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -428,8 +434,17 @@ namespace AttendanceMonitoring.Controllers
                     .ThenInclude(ss => ss.Subject)
                 .Include(sn => sn.SectionSubject.Section)
                     .ThenInclude(g => g.Grade)
-                .Where(s => s.TeacherId == recordedById) //Filter to this teacher only
-                .FirstOrDefaultAsync();
+                //.Where(s => s.TeacherId == recordedById) //Filter to this teacher only
+                .FirstOrDefaultAsync(ta => ta.SectionSubjectId == model.SelectedClassId && ta.TeacherId == recordedById && ta.AcademicPeriod == currentAcademicPeriod);
+
+            if(TeachersClass == null)
+            {
+                return Json(new
+                {
+                    success = false,
+                    error = "Class not found or access denied"
+                });
+            }
 
             foreach (var attendance in model.StudentAttendance)
             {
@@ -461,7 +476,8 @@ namespace AttendanceMonitoring.Controllers
                     AttendanceDate = model.AttendanceDate,
                     RecordedById = recordedById,
                     ExcuseReason = excuseReason,
-                    TeacherAssignmentId = model.TeacherAssignmentId,
+                    //TeacherAssignmentId = model.TeacherAssignmentId,
+                    TeacherAssignment = TeachersClass,
                     SectionSubjectId = model.SelectedClassId, //1. BAGO
                     SecretaryAssignmentId = null,
                     Remarks = model.Remarks,
@@ -496,6 +512,7 @@ namespace AttendanceMonitoring.Controllers
 
         [HttpGet]
         public async Task<IActionResult> _AttendanceReport(int? selectedAcademicPeriod,
+                                                            string? selectedAttendanceStatus,
                                                             int? teacherAssignment, //selected  Class
                                                             DateTime? startDate, //Date range start
                                                             DateTime? endDate) //date range end
@@ -529,19 +546,42 @@ namespace AttendanceMonitoring.Controllers
 
             //Fetch all available academic periods
             var allAcademicPeriod = await context.AcademicPeriods
+                                    .IgnoreQueryFilters()
                                     .OrderBy(ap => ap.Year)
                                     //.Take(8)
                                     .ToListAsync();
 
-            //Query to fetch assign Grade & Section - Subjects on a specific teacher
-            var teacherClass = await context.TeacherAssignments
-                .Include(ta => ta.SectionSubject)
-                    .ThenInclude(ss => ss.Subject)
-                .Include(sn => sn.SectionSubject.Section)
-                    .ThenInclude(g => g.Grade)
-                .Where(s => s.TeacherId == teacherId)
-                .OrderBy(s => s.SectionSubject.Section.Grade.GradeLevel)
-                .ToListAsync();
+            List<SelectListItem> myClasses = new List<SelectListItem>();
+
+            if (selectedAcademicPeriod.HasValue)
+            {
+                //Query to fetch assign Grade & Section - Subjects on a specific teacher
+                myClasses = await context.TeacherAssignments
+                    .IgnoreQueryFilters()
+                    .Include(ta => ta.SectionSubject)
+                        .ThenInclude(ss => ss.Subject)
+                    .Include(sn => sn.SectionSubject.Section)
+                        .ThenInclude(g => g.Grade)
+                    .Where(s => s.TeacherId == teacherId && s.AcademicPeriodId == selectedAcademicPeriod)
+                    .OrderBy(s => s.SectionSubject.Section.Grade.GradeLevel)
+                    .Select(tc => new SelectListItem
+                    {
+                        Value = tc.Id.ToString(),
+                        Text = $"Grade {tc.SectionSubject.Section.Grade.GradeLevel} {tc.SectionSubject.Section.SectionName} {tc.SectionSubject.Section.Track} {tc.SectionSubject.Section.TVLProgram} {tc.SectionSubject.Subject.SubjectDescription}",
+                    })
+                    .ToListAsync();
+            }
+
+            ////Query to fetch assign Grade & Section - Subjects on a specific teacher
+            //var teacherClass = await context.TeacherAssignments
+            //    .IgnoreQueryFilters()
+            //    .Include(ta => ta.SectionSubject)
+            //        .ThenInclude(ss => ss.Subject)
+            //    .Include(sn => sn.SectionSubject.Section)
+            //        .ThenInclude(g => g.Grade)
+            //    .Where(s => s.TeacherId == teacherId)
+            //    .OrderBy(s => s.SectionSubject.Section.Grade.GradeLevel)
+            //    .ToListAsync();
 
 
             //This code means initialize empty lists
@@ -556,10 +596,18 @@ namespace AttendanceMonitoring.Controllers
             if (teacherAssignment.HasValue && selectedAcademicPeriod.HasValue && startDate.HasValue && endDate.HasValue)
             {
                 //get the value base on the selected filter
-                var selectedClass = teacherClass.FirstOrDefault(tc => tc.Id == teacherAssignment.Value);
+                //var selectedClass = myClasses.FirstOrDefault(tc => tc.Id == teacherAssignment.Value);
+                var selectedClass = await context.TeacherAssignments
+                    .IgnoreQueryFilters()
+                    .Include(ta => ta.SectionSubject)
+                        .ThenInclude(ss => ss.Subject)
+                    .Include(sn => sn.SectionSubject.Section)
+                        .ThenInclude(g => g.Grade)
+                    .Where(s => s.TeacherId == teacherId && s.AcademicPeriodId == selectedAcademicPeriod)
+                    .FirstOrDefaultAsync(tc => tc.Id == teacherAssignment.Value);
                 //var selectedYear = allAcademicPeriod.FirstOrDefault(tc => tc.Id == selectedAcademicPeriod.Value);
 
-                if(selectedClass != null)
+                if (selectedClass != null)
                 {
                     //get the sectionId on the selected class
                     var sectionId = selectedClass.SectionSubject.SectionId;
@@ -579,6 +627,7 @@ namespace AttendanceMonitoring.Controllers
 
                     //Get students in this section
                     var students = await context.StudentSectionAssignments
+                                    .IgnoreQueryFilters()
                                     .Include(ssa => ssa.Student)
                                     .Where(ssa => ssa.SectionId == sectionId)
                                     .OrderBy(ssa => ssa.Student.LastName)
@@ -590,14 +639,24 @@ namespace AttendanceMonitoring.Controllers
                     //                    .FirstOrDefaultAsync();
 
                     //Get attendance Record
-                    var attendanceRecord = await context.Attendances
+                    var attendanceRecord = context.Attendances
+                                            .IgnoreQueryFilters()
                                             .Where(a => //a.TeacherAssignmentId != null
-                                                    //&& a.SecretaryAssignmentId == teacherAssignment.Value
+                                                        //&& a.SecretaryAssignmentId == teacherAssignment.Value
                                                     a.SectionSubjectId == sectionSubjectId
                                                     && a.AttendanceDate.Date >= startDate.Value.Date
                                                     && a.AttendanceDate.Date <= endDate.Value.Date
-                                                    && a.AcademicPeriod.Id == selectedAcademicPeriod.Value)
-                                            .ToListAsync();
+                                                    && a.AcademicPeriod.Id == selectedAcademicPeriod.Value);
+                                            //.ToListAsync();
+
+                    if (!string.IsNullOrEmpty(selectedAttendanceStatus))
+                    {
+                        attendanceRecord = context.Attendances
+                                            .IgnoreQueryFilters()
+                                            .Where(a => a.AttendanceMarking == selectedAttendanceStatus);
+                    }
+
+                    var record = await attendanceRecord.ToListAsync();
                     
                     //BUild report data
                     foreach(var student in students)
@@ -612,7 +671,7 @@ namespace AttendanceMonitoring.Controllers
                         //For each date, find attendance marking (e.g "Present, Late, etc)
                         foreach(var date in dateRange)
                         {
-                            var attendance = attendanceRecord
+                            var attendance = record
                                 .FirstOrDefault(ar => ar.StudentId == student.StudentId
                                                 && ar.AttendanceDate.Date == date.Date);
 
@@ -644,11 +703,13 @@ namespace AttendanceMonitoring.Controllers
 
             var model = new AttendanceReportViewModel()
             {
-                teacherClass = teacherClass.Select(tc => new SelectListItem
-                {
-                    Value = tc.Id.ToString(),
-                    Text = $"Grade {tc.SectionSubject.Section.Grade.GradeLevel} {tc.SectionSubject.Section.SectionName} {tc.SectionSubject.Section.Track} {tc.SectionSubject.Section.TVLProgram} {tc.SectionSubject.Subject.SubjectDescription}",
-                }).ToList(),
+                //teacherClass = teacherClass.Select(tc => new SelectListItem
+                //{
+                //    Value = tc.Id.ToString(),
+                //    Text = $"Grade {tc.SectionSubject.Section.Grade.GradeLevel} {tc.SectionSubject.Section.SectionName} {tc.SectionSubject.Section.Track} {tc.SectionSubject.Section.TVLProgram} {tc.SectionSubject.Subject.SubjectDescription}",
+                //}).ToList(),
+
+                teacherClass = myClasses,
 
                 academicPeriod = allAcademicPeriod.Select(aap => new SelectListItem
                 {
@@ -658,6 +719,7 @@ namespace AttendanceMonitoring.Controllers
 
                 SelectedAcademicPeriod = selectedAcademicPeriod,
                 StudentAttendance = studentAttendance,
+                SelectedAttendanceStatus = selectedAttendanceStatus,
                 DateRange = dateRange,
                 SelectedTeacherAssignment = teacherAssignment,
                 StartDate = startDate,
@@ -667,6 +729,437 @@ namespace AttendanceMonitoring.Controllers
 
             //model.SelectedAcademicPeriod = selectedAcademicPeriod;
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetTeacherAssignment(int academicPeriodId)
+        {
+            var teacherId = GetCurrentUserId();
+
+            var allAcademicPeriod = await context.AcademicPeriods
+                .IgnoreQueryFilters()
+                .ToListAsync();
+
+            var teacherClass = await context.TeacherAssignments
+                .IgnoreQueryFilters()
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Subject)
+                .Include(ta => ta.SectionSubject.Section)
+                    .ThenInclude(s => s.Grade)
+                .Include(ap => ap.AcademicPeriod)
+                .Where(ta => ta.TeacherId == teacherId && ta.AcademicPeriodId == academicPeriodId)
+                .OrderBy(ta => ta.SectionSubject.Section.Grade.GradeLevel)
+                .Select(tc => new
+                {
+                    Value = tc.Id.ToString(),
+                    Text = $"Grade {tc.SectionSubject.Section.Grade.GradeLevel} {tc.SectionSubject.Section.SectionName} {tc.SectionSubject.Section.Track} {tc.SectionSubject.Section.TVLProgram} {tc.SectionSubject.Subject.SubjectDescription}",
+                })
+                .ToListAsync();
+
+            return Json(teacherClass);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportAttendanceReport(int? selectedAcademicPeriod,
+                                                            string? selectedAttendanceStatus,
+                                                            int? teacherAssignment, //selected  Class
+                                                            DateTime? startDate, //Date range start
+                                                            DateTime? endDate)
+        {
+            if (!selectedAcademicPeriod.HasValue
+               || !teacherAssignment.HasValue
+               || !startDate.HasValue
+               || !endDate.HasValue)
+            {
+                TempData["ErrorMessage"] = "Please select all filters before exporting.";
+                return RedirectToAction("AttendanceReport");
+                //return Json(new { success = false, message = "Please select all filters before exporting." });
+            }
+
+            var teacherId = GetCurrentUserId();
+
+            var query = await userManager.FindByIdAsync(teacherId);
+
+            var firstName = query.FirstName;
+            var middleName = query?.MiddleName;
+            var lastName = query.LastName;
+
+            var selectedClass = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Subject)
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Section)
+                        .ThenInclude(s => s.Grade)
+                .Where(ta => ta.TeacherId == teacherId && ta.AcademicPeriodId == selectedAcademicPeriod)
+                .FirstOrDefaultAsync(tc => tc.Id == teacherAssignment.Value);
+
+            if (selectedClass == null)
+            {
+                TempData["ErrorMessage"] = "Selected class not found.";
+                return RedirectToAction("AttendanceReport");
+                //return Json(new { success = false, message = "Selected class not found" });
+
+            }
+
+            var sectionId = selectedClass.SectionSubject.SectionId;
+            var sectionSubjectId = selectedClass.SectionSubject.Id;
+
+            var dateRange = new List<DateTime>();
+            for (var date = startDate.Value; date <= endDate.Value; date = date.AddDays(1))
+            {
+                dateRange.Add(date);
+            }
+
+            var students = await context.StudentSectionAssignments
+               .IgnoreQueryFilters()
+               .Include(ssa => ssa.Student)
+               .Where(ssa => ssa.SectionId == sectionId)
+               .OrderBy(ssa => ssa.Student.LastName)
+               .ToListAsync();
+
+            //Get Attendance Record
+            var attendanceRecord = context.Attendances
+                .IgnoreQueryFilters()
+                .Where(a => a.SectionSubjectId == sectionSubjectId
+                        && a.AttendanceDate.Date >= startDate.Value.Date
+                        && a.AttendanceDate.Date <= endDate.Value.Date
+                        && a.AcademicPeriod.Id == selectedAcademicPeriod.Value);
+            //.ToListAsync();
+
+            if (!string.IsNullOrEmpty(selectedAttendanceStatus))
+            {
+                attendanceRecord = attendanceRecord
+                                //.IgnoreQueryFilters()
+                                .Where(a => a.AttendanceMarking == selectedAttendanceStatus);
+            }
+
+            var record = await attendanceRecord.ToListAsync();
+
+            //build report data
+            var studentAttendance = new List<AdminAttendanceReportData>();
+
+            foreach (var student in students)
+            {
+                var studentData = new AdminAttendanceReportData
+                {
+                    StudentId = student.StudentId,
+                    StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                    DailyAttendance = new List<string>()
+                };
+
+                foreach (var date in dateRange)
+                {
+                    var attendance = record
+                        .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                                        && ar.AttendanceDate.Date == date.Date);
+
+                    if (attendance != null)
+                    {
+                        studentData.DailyAttendance.Add(
+                            attendance.AttendanceMarking == "Present" ? "P" :
+                            attendance.AttendanceMarking == "Late" ? "L" :
+                            attendance.AttendanceMarking == "Absent" ? "A" :
+                            attendance.AttendanceMarking == "Cutting" ? "C" :
+                            attendance.AttendanceMarking == "Excuse" ? "E" : "-"
+                        );
+                    }
+                    else
+                    {
+                        studentData.DailyAttendance.Add("-");
+                    }
+                }
+
+                if (studentData.DailyAttendance.Any(d => d != "-"))
+                {
+                    studentAttendance.Add(studentData);
+                }
+            }
+
+            //check if no data
+            if (!studentAttendance.Any())
+            {
+                TempData["ErrorMessage"] = "No attendance data to export.";
+                return RedirectToAction("AttendanceReport");
+                //return Json(new { success = false, message = "No Attendance data to export" });
+            }
+
+
+            var academicPeriod = await context.AcademicPeriods
+                .FirstOrDefaultAsync(ap => ap.Id == selectedAcademicPeriod.Value);
+
+
+            using (var package = new ExcelPackage())
+            {
+                var worksheet = package.Workbook.Worksheets.Add("Attendance Report");
+                //HEADER SECTION
+                int currentRow = 1;
+
+                //Title
+                worksheet.Cells[currentRow, 1].Value = "ATTENDANCE REPORT";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 16;
+                worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                currentRow++;
+
+                //Academic Period
+                worksheet.Cells[currentRow, 1].Value = $"Academic Year: {academicPeriod?.Year} - {academicPeriod?.GradingPeriod} Grading";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 12;
+                currentRow++;
+
+                worksheet.Cells[currentRow, 1].Value = $"Teacher Name: {firstName} {middleName} {lastName}";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 12;
+                currentRow++;
+
+                //Class info
+                var classInfo = $"Grade {selectedClass.SectionSubject.Section.Grade.GradeLevel} " +
+                                $"{selectedClass.SectionSubject.Section.SectionName}" +
+                                $"{selectedClass.SectionSubject.Section.Track}" +
+                                $"{selectedClass.SectionSubject.Section.TVLProgram}" +
+                                $"- {selectedClass.SectionSubject.Subject.SubjectDescription}";
+                worksheet.Cells[currentRow, 1].Value = $"Class: {classInfo}";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 11;
+                currentRow++;
+
+                // Date Range
+                worksheet.Cells[currentRow, 1].Value = $"Date Range: {startDate.Value:MMM dd, yyyy} - {endDate.Value:MMM dd, yyyy}";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 11;
+                currentRow++;
+
+                // Generated Date
+                worksheet.Cells[currentRow, 1].Value = $"Generated: {DateTime.Now:MMM dd, yyyy hh:mm tt}";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 10;
+                worksheet.Cells[currentRow, 1].Style.Font.Italic = true;
+                //currentRow += 2; // spacing
+                currentRow++;
+
+                //TABLE HEADER
+                int col = 1;
+                //int currentRow = 7;
+
+                worksheet.Cells[currentRow, col].Value = "Student Name";
+                worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                worksheet.Cells[currentRow, col].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[currentRow, col].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(86, 143, 135));
+                worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                worksheet.Cells[currentRow, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                col++;
+
+                //Date Columns
+                foreach (var date in dateRange)
+                {
+                    worksheet.Cells[currentRow, col].Value = $"{date:ddd}\n{date:MMM d}";
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[currentRow, col].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(86, 143, 135));
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.WrapText = true;
+                    col++;
+                }
+
+                //Stats header columns (PRESENT, LATE, ETC)
+                var statHeaders = new[]
+                {
+                    ("Present", System.Drawing.Color.FromArgb(40, 167, 69)),    // Green
+                    ("Late", System.Drawing.Color.FromArgb(255, 193, 7)),       // Yellow
+                    ("Absent", System.Drawing.Color.FromArgb(220, 53, 69)),     // Red
+                    ("Cutting", System.Drawing.Color.FromArgb(23, 162, 184)),   // Cyan
+                    ("Excuse", System.Drawing.Color.FromArgb(0, 123, 255))
+                };
+
+                foreach (var (header, color) in statHeaders)
+                {
+                    worksheet.Cells[currentRow, col].Value = header;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[currentRow, col].Style.Fill.BackgroundColor.SetColor(color);
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                    col++;
+                }
+
+
+
+                // Summary header
+                worksheet.Cells[currentRow, col].Value = "Summary";
+                worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                worksheet.Cells[currentRow, col].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                worksheet.Cells[currentRow, col].Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.FromArgb(86, 143, 135));
+                worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                worksheet.Cells[currentRow, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+
+                currentRow++;
+
+                //DATA ROWS
+                foreach (var student in studentAttendance)
+                {
+                    //int startRow = currentRow;
+                    col = 1;
+
+                    worksheet.Cells[currentRow, col].Value = student.StudentName;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    col++;
+
+                    foreach (var marking in student.DailyAttendance)
+                    {
+                        worksheet.Cells[currentRow, col].Value = marking;
+                        worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                        var cellColor = marking switch
+                        {
+                            "P" => System.Drawing.Color.FromArgb(40, 167, 69),    // Green
+                            "L" => System.Drawing.Color.FromArgb(255, 193, 7),    // Yellow
+                            "A" => System.Drawing.Color.FromArgb(220, 53, 69),    // Red
+                            "C" => System.Drawing.Color.FromArgb(23, 162, 184),   // Cyan
+                            "E" => System.Drawing.Color.FromArgb(0, 123, 255),    // Blue
+                            _ => System.Drawing.Color.FromArgb(108, 117, 125)     // Gray
+                        };
+
+                        worksheet.Cells[currentRow, col].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                        worksheet.Cells[currentRow, col].Style.Fill.BackgroundColor.SetColor(cellColor);
+                        worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                        worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+
+                        col++;
+                    }
+
+                    //Calculate summary
+                    var presentCount = student.DailyAttendance.Count(d => d == "P");
+                    var lateCount = student.DailyAttendance.Count(d => d == "L");
+                    var absentCount = student.DailyAttendance.Count(d => d == "A");
+                    var cuttingCount = student.DailyAttendance.Count(d => d == "C");
+                    var exuseCount = student.DailyAttendance.Count(d => d == "E");
+                    var totalDays = student.DailyAttendance.Count(d => d != "-");
+                    var rate = totalDays > 0
+                        ? Math.Round(((double)(presentCount + lateCount * 0.5) / totalDays) * 100)
+                        : 0;
+
+                    //PRESENT COUNT 
+                    worksheet.Cells[currentRow, col].Value = presentCount;
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Font.Size = 11;
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(40, 167, 69));
+                    col++;
+
+                    // Late count
+                    worksheet.Cells[currentRow, col].Value = lateCount;
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Font.Size = 11;
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(255, 193, 7)); // Yellow
+                    col++;
+
+                    // ABSENT COUNT
+                    worksheet.Cells[currentRow, col].Value = absentCount;
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Font.Size = 11;
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(220, 53, 69)); // Red
+                    col++;
+
+                    // CUTTING COUNT
+                    worksheet.Cells[currentRow, col].Value = cuttingCount;
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Font.Size = 11;
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(23, 162, 184)); // Cyan
+                    col++;
+
+                    // EXCUSE COUNT
+                    worksheet.Cells[currentRow, col].Value = exuseCount;
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Font.Size = 11;
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(System.Drawing.Color.FromArgb(0, 123, 255)); // Blue
+                    col++;
+
+                    // SUMMARY COUNT
+                    //col = dateRange.Count + 2;
+                    worksheet.Cells[currentRow, col].Value = $"{rate}%";
+                    worksheet.Cells[currentRow, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                    worksheet.Cells[currentRow, col].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, col].Style.Font.Size = 14;
+
+                    // Color based on rate
+                    var summaryColor = rate == 100 ? System.Drawing.Color.FromArgb(40, 167, 69) :
+                                      rate >= 90 ? System.Drawing.Color.FromArgb(23, 162, 184) :
+                                      rate >= 70 ? System.Drawing.Color.FromArgb(255, 193, 7) :
+                                      System.Drawing.Color.FromArgb(220, 53, 69);
+
+                    worksheet.Cells[currentRow, col].Style.Font.Color.SetColor(summaryColor);
+
+                    currentRow++; // Move to next row
+
+                }
+
+                //LEGEND
+                currentRow += 2; //For student
+                worksheet.Cells[currentRow, 1].Value = "Legend:";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 16;
+                worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                currentRow++;
+
+                var legends = new[]
+                {
+                    ("P", "PRESENT", System.Drawing.Color.FromArgb(40, 167, 69)),      // Green
+                    ("L", "LATE", System.Drawing.Color.FromArgb(255, 193, 7)),         // Yellow
+                    ("A", "ABSENT", System.Drawing.Color.FromArgb(220, 53, 69)),       // Red
+                    ("C", "CUTTING", System.Drawing.Color.FromArgb(23, 162, 184)),     // Cyan
+                    ("E", "EXCUSE", System.Drawing.Color.FromArgb(0, 123, 255)),       // Blue
+                    ("-", "NO DATA", System.Drawing.Color.FromArgb(108, 117, 125))     // Gray
+                };
+
+
+                foreach (var (code, description, color) in legends)
+                {
+                    worksheet.Cells[currentRow, 2].Value = code;
+                    worksheet.Cells[currentRow, 2].Style.Font.Size = 14;
+                    worksheet.Cells[currentRow, 2].Style.Fill.PatternType = ExcelFillStyle.Solid;
+                    worksheet.Cells[currentRow, 2].Style.Fill.BackgroundColor.SetColor(color);
+                    worksheet.Cells[currentRow, 2].Style.Font.Color.SetColor(System.Drawing.Color.White);
+                    worksheet.Cells[currentRow, 2].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                    worksheet.Cells[currentRow, 1].Value = $"{description}";
+                    worksheet.Cells[currentRow, 1].Style.Font.Bold = true;
+                    worksheet.Cells[currentRow, 1].Style.Font.Size = 12;
+
+
+                    currentRow++;
+                }
+
+                //Auto-fit columns
+                worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+                worksheet.Column(1).Width = 30;
+
+                int lastcol = dateRange.Count + 7; //Student name + dates + summary
+                int dataStartRow = 7; //Wheere data table starts
+                int dataEndRow = 7 + studentAttendance.Count; //Last data row
+                //int dataEndRow = currentRow - 1;
+
+                var dataRange = worksheet.Cells[dataStartRow, 1, dataEndRow, lastcol];
+                dataRange.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+                dataRange.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+                dataRange.Style.Border.Right.Style = ExcelBorderStyle.Thin;
+                dataRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+
+                //GENERATE FILE
+                var stream = new MemoryStream(package.GetAsByteArray());
+
+                var fileName = $"Attendance_Report_{selectedClass.SectionSubject.Section.Grade.GradeLevel}" +
+                                $"{selectedClass.SectionSubject.Section.SectionName}_" +
+                                $"{startDate.Value:yyyyMMdd}-{endDate.Value:yyyyMMdd}.xlsx";
+
+                return File(stream,
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            fileName);
+
+            }
         }
 
         [HttpGet]
@@ -691,13 +1184,17 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, errors = overallErrors });
             }
 
+            var defaultYear = await context.AcademicPeriods
+                .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
 
             var TeacherClass = await context.TeacherAssignments
+                //.IgnoreQueryFilters()
                 .Include(ta => ta.SectionSubject)
                     .ThenInclude(ss => ss.Section)
                         .ThenInclude(s => s.Grade)
                 .Include(ta => ta.SectionSubject.Subject)
-                .Where(ta => ta.TeacherId == teacherId)
+                .Where(ta => ta.TeacherId == teacherId && ta.AcademicPeriod == defaultYear)
+                //.Distinct()
                 .ToListAsync();
 
             var model = new MyClassesViewModel()
@@ -721,6 +1218,9 @@ namespace AttendanceMonitoring.Controllers
         [HttpGet]
         public async Task<IActionResult> SelfAssign()
         {
+            var defaultYear = await context.AcademicPeriods
+                            .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+
             var teacherId = GetCurrentUserId();
             var teacher = await userManager.FindByIdAsync(teacherId);
 
@@ -731,6 +1231,8 @@ namespace AttendanceMonitoring.Controllers
 
             /// excluding ALL assigned subjects
             var assignedSectionSubjectIds = await context.TeacherAssignments
+                        .IgnoreQueryFilters()
+                        .Where(ta => ta.AcademicPeriod == defaultYear)
                         .Select(ss => ss.SectionSubjectId)
                         .Distinct()
                         .ToListAsync();
@@ -767,15 +1269,43 @@ namespace AttendanceMonitoring.Controllers
             {
                 return Json(new { success = false, message = "Teacher not found!" });
             }
+
+            var defaultYear = await context.AcademicPeriods
+                .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+
             var assigned = new TeacherAssignment()
             {
                 TeacherId = teacherId,
                 SectionSubjectId = sectionSubjectId,
+                AcademicPeriod = defaultYear,
                 CreatedAt = DateTime.UtcNow
             };
 
             await context.TeacherAssignments.AddAsync(assigned);
             await context.SaveChangesAsync();
+
+            assigned = await context.TeacherAssignments
+                .Include(ta => ta.SectionSubject)
+                    .ThenInclude(ss => ss.Section)
+                    .ThenInclude(s => s.Grade)
+                .FirstOrDefaultAsync(ta => ta.Id == assigned.Id);
+
+            var gradeInfo = $"Grade {assigned.SectionSubject.Section.Grade.GradeLevel}";
+            var sectionInfo = $"{assigned.SectionSubject.Section.SectionName}";
+            var trackInfo = !string.IsNullOrEmpty(assigned.SectionSubject.Section.Track) ? $" - {assigned.SectionSubject.Section.Track}" : "";
+            var tvlInfo = !string.IsNullOrEmpty(assigned.SectionSubject.Section.TVLProgram) ? $" ({assigned.SectionSubject.Section.TVLProgram})" : "";
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Self Teacher",
+                entityName: "TeacherAssignment",
+                entityId: teacher.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"Teacher {userInfo.username} self assigned to {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo}",
+                username: userInfo.username
+            );
 
             var assignedSectionSubjectIds = await context.TeacherAssignments
                 .Select(ss => ss.SectionSubjectId)
@@ -806,6 +1336,7 @@ namespace AttendanceMonitoring.Controllers
             var teacherId = GetCurrentUserId();
 
             var teacherAssigned = await context.TeacherAssignments
+                .IgnoreQueryFilters()
                 .Include(ta => ta.SectionSubject)
                     .ThenInclude(ss => ss.Section)
                         .ThenInclude(g => g.Grade)
@@ -818,11 +1349,34 @@ namespace AttendanceMonitoring.Controllers
 
             //var teacherId = teacherAssigned.TeacherId;
 
-            context.TeacherAssignments.Remove(teacherAssigned);
+            //context.TeacherAssignments.Remove(teacherAssigned);
+
+            var time = DateTime.UtcNow;
+
+            teacherAssigned.IsDeleted = true;
+            teacherAssigned.DeletedAt = time;
+
+
             await context.SaveChangesAsync();
 
             var teacher = await context.Users.FindAsync(teacherId);
 
+            var gradeInfo = $"Grade {teacherAssigned.SectionSubject.Section.Grade.GradeLevel}";
+            var sectionInfo = $"{teacherAssigned.SectionSubject.Section.SectionName}";
+            var trackInfo = !string.IsNullOrEmpty(teacherAssigned.SectionSubject.Section.Track) ? $" - {teacherAssigned.SectionSubject.Section.Track}" : "";
+            var tvlInfo = !string.IsNullOrEmpty(teacherAssigned.SectionSubject.Section.TVLProgram) ? $" ({teacherAssigned.SectionSubject.Section.TVLProgram})" : "";
+
+            var userInfo = await GetCurrentUserInfo();
+
+            await logService.LogActivity(
+                actionType: "Remove Assignment",
+                entityName: "TeacherAssignment",
+                entityId: teacher.Id.ToString(),
+                userId: userInfo.userId,
+                schoolId: userInfo.schoolId,
+                details: $"Teacher {userInfo.username} remove assignment {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo}. School Id: {teacher.SchoolId}",
+                username: userInfo.username
+            );
 
             var remainingAssignments = await context.TeacherAssignments
                 .Include(ta => ta.SectionSubject)

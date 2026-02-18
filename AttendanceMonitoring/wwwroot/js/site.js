@@ -40,11 +40,21 @@ function hideBlurBackground() {
 //BEst approach Separate Function with Parameters (soc)"Separation of Concerns"
 //yung function, dapat tumatanggap siya ng parameters
 function loadViewModal(url, userID, modal) {
+    if (userID !== undefined && userID !== null) {
+        url = url + userID;
+    }
     $.ajax({
-        url: url + userID,
+        
+        //url: url + userID,
+        url: url,
         type: 'GET',
         success: function (html) {
             modal.find('#ViewModalBody').html(html);
+            $('#dataTable2').DataTable({
+                "autoWidth": false, // PREVENTION SA WIDE TABLE
+                "responsive": true,
+                "destroy": true // SAFETY NET: Wasakin ang luma bago gumawa ng bago
+            });
         },
         error: function (xhr, status, error) {
             console.error('Error loading add teacher modal:', error);
@@ -436,16 +446,78 @@ $(document).ready(function () {
         modal.find('#ViewModalLabel').text(title);
 
 
+        //For Restore only
+        //$.ajax({
+        //    url: url,
+        //    type: 'GET',
+        //    success: function (response) {
+        //        modal.find('#ViewModalBody').html(response); // Load content
+
+        //        // NOW initialize DataTable after content is loaded
+        //        $('#dataTable2').DataTable();
+        //    }
+        //});
+
 
         loadBlurBackground();
-        // Ipasa 'yung local variables sa function
+
+        //if (userID !== undefined && userID !== null) {
+        //    url = url + userID;
+        //}
+        // Ipasa 'yung local variables sa function  
         loadViewModal(url, userID, modal);
+
     });
 
     $('#ViewModal').on('hide.bs.modal', function () {
         hideBlurBackground();
     });
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //View Small Modal
+    $('#ViewSmallModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        userID = button.data('id');
 
+        var url = button.data('url');
+        var title = button.data('title');
+
+        var modal = $(this);
+
+        if (!userID) {
+            alert('Id does not found');
+            return;
+        }
+
+        modal.find('#ViewSmallModalLabel').text(title);
+        loadBlurBackground();
+        $.ajax({
+            url: url + userID,
+            type: 'GET',
+            success: function (html) {
+                modal.find('#ViewSmallModalBody').html(html);
+
+                $('#sectionSelection').select2({
+                    placeholder: 'Select Grade and Section...',
+                    allowClear: true,
+                    width: '100%',
+                    minimumResultsForSearch: 0, // ALWAYS show search box
+                    dropdownParent: $('#ViewSmallModal'),// para gumana yung searchbox
+                    theme: 'bootstrap4'
+                });
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading view modal:', error);
+                modal.find('#AddSmallModalFormBody').html('<p class="text-center">Failed to load modal body</p>');
+            }
+        });
+    });
+
+    $('#ViewSmallModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    });
+
+    
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //Triggers ModalDelete
@@ -560,6 +632,7 @@ $(document).ready(function () {
             type: 'GET',
             success: function (html) {
                 modal.find('#EditSmallModalBody').html(html);
+             
                 checkOption(); //onchange function
 
             },
@@ -574,6 +647,61 @@ $(document).ready(function () {
         hideBlurBackground();
     }); 
 
-    
+    //For Promote
+    $('#PromoteModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var url = button.data('url');
+        var title = button.data('title');
+        var modal = $(this);
 
+        if (button.attr('id') === 'bulkPromoteBtn') {
+            const selectedIds = $('.student-checkbox:checked')
+                .map(function () {
+                    return $(this).data('student-id');
+                })
+                .get();
+
+            if (selectedIds.length === 0) {
+                showDangerToast('No students selected');
+                return;
+            }
+
+            userID = selectedIds.join(',');
+        } else {
+            userID = button.data('id');
+
+            if (!userID) {
+                showDangerToast('Id does not found');
+                return;
+            }
+        }
+
+        modal.find('#PromoteModalLabel').text(title);
+        loadBlurBackground();
+
+        $.ajax({
+            url: url + userID,
+            type: 'GET',
+            success: function (html) {
+                modal.find('#PromoteModalBody').html(html);
+
+                $('#sectionSelection').select2({
+                    placeholder: 'Select Grade and Section...',
+                    allowClear: true,
+                    width: '100%',
+                    minimumResultsForSearch: 0, // ALWAYS show search box
+                    dropdownParent: $('#PromoteModal'),// para gumana yung searchbox
+                    theme: 'bootstrap4'
+                });
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Error loading view modal:', error);
+                modal.find('#AddSmallModalFormBody').html('<p class="text-center">Failed to load modal body</p>');
+            }
+        });
+    });
+    $('#PromoteModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    });
 });

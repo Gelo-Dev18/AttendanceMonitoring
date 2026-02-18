@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using AttendanceMonitoring.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace AttendanceMonitoring.ViewModel
 {
@@ -11,6 +12,9 @@ namespace AttendanceMonitoring.ViewModel
         public int GradeLevel { get; set; }
         [Required(ErrorMessage = "Category is Required!")]
         public string Category { get; set; }
+
+        public bool IsDeleted { get; set; }
+
 
     }
 }

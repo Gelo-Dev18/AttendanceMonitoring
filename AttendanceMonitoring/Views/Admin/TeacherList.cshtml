@@ -13,10 +13,25 @@
         @* <a href="#" class="btn btn-success btn-icon-split"> *@
         @*     <span class="text">Add Teacher</span> *@
         @* </a> *@
+        <div class="d-flex gap-2">
+
         <!-- Button trigger modal -->
-        <button type="button" class="btn btn-success bg-gradient-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddModalForm" data-url="/Admin/AddTeacher" data-title="Add Teacher's Details">
-            <span class="text">Add Teacher</span>
-        </button>
+            <button type="button" class="btn btn-success bg-gradient-success btn-icon-split mr-1" data-bs-toggle="modal" data-bs-target="#AddModalForm" data-url="/Admin/AddTeacher" data-title="Add Teacher's Details">
+                <span class="text">Add Teacher</span>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-warning bg-gradient-warning dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Archives
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a class="dropdown-item" style="font-size: 12px;" href="#" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreTeacherAssignment/" data-title="Teacher Assignment Details">Deleted Assignments</a>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreDeletedTeacher/" data-title="Deleted Teacher Details">Deleted Teachers</a>
+                </div>
+            </div>
+            @* <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreTeacherAssignment/" data-title="Teacher Assignment Detail's">
+                <span class="text">Archive</span>
+            </button> *@
+        </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">

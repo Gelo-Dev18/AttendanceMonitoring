@@ -91,8 +91,37 @@
     });
     updateDateRangeText();
 
+    $('#academicYear').change(function () {
+        var academicPeriodId = $(this).val();
+        var teacherDropdown = $('#allTeacher');
+        var classDropdown = $('#gradeFilter');
+
+        //classDropdown.empty();
+        teacherDropdown.empty().append('<option value="">Select</option>');
+        classDropdown.empty().append('<option value="">Select</option>');
+
+        if (academicPeriodId) {
+            $.ajax({
+                url: '/Admin/GetAllTeacher',
+                type: 'GET',
+                data: { academicPeriodId: academicPeriodId },
+                success: function (classes) {
+                    $.each(classes, function (index, cls) {
+                        teacherDropdown.append(
+                            $('<option></option>').val(cls.Value).text(cls.Text)
+                        );
+                    });
+                },
+                error: function () {
+                    alert('Error loading teacher Assignments');
+                }
+            });
+        }
+    });
+
     $('#allTeacher').change(function () {
         var teacherId = $(this).val();
+        var academicPeriodId = $('#academicYear').val();
         var classDropdown = $('#gradeFilter');
 
         classDropdown.empty();
@@ -102,7 +131,10 @@
             $.ajax({
                 url: '/Admin/GetTeacherAssignments',
                 type: 'GET',
-                data: { teacherId: teacherId },
+                data: {
+                    teacherId: teacherId,
+                    academicPeriodId: academicPeriodId
+                },
                 success: function (classes) {
                     $.each(classes, function (index, cls) {
                         classDropdown.append(

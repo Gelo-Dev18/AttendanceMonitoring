@@ -29,6 +29,12 @@
         /// Foreign Keys //NAVIGATION PROPERTY FOR LAZY LOADING
         /// THey are all MAny to One relationship
         /// </summary>
+        /// 
+
+        //NEED NA LAHAT NG NAVIGATION PROPERTIES NA MAGING NULLABLE PARA GUMANA ANG SOFT DELETION, KASE SI SOFT DELETION USES QUERY FILTER
+        //QUERY FILTERS CAN HIDE ENTITIES FROM NAVIGATION PROPERTIES
+        //PAG NON-NULLABLE ANG MGA NP, EF CORE EXPECTS IT TO ALWAYS HAVE VALUE
+            
         //public Student Student { get; set; } Option 1 : just public (older Style) used in .net 6 and below
         public virtual Student Student { get; set; } //Option 2: public virtual na (modern Ef Core best practice)
                                                      //other info: SINGEL OBJECT (one to one or many to one) kaya walang ICollection

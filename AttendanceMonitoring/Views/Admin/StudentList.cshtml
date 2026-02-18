@@ -14,19 +14,55 @@
 <!-- Page Heading -->
 <h1 class="h3 mb-2 text-gray-800">Student List</h1>
 <!-- <p class="mb-4">Table for Teachers Info</p> -->
-<!-- DataTales Example -->
+<div class="alert alert-warning mb-3">
+    <i class="bi bi-exclamation-triangle"></i> 
+    <strong>Note:</strong> Only select students from the same grade level for bulk promotion.
+</div>
+<div>
+    <button type="button" id="bulkPromoteBtn" class="btn btn-info bg-gradient-info" data-bs-toggle="modal" data-bs-target="#PromoteModal" data-url="/Admin/BulkPromoteStudent/" data-title="Bulk Promote Student's Details" disabled>
+        <i class="bi bi-arrow-up-circle"></i> Promote Selected (<span id="selectedCount">0</span>)
+    </button>
+
+    <div id="gradeWarning" class="text-danger mt-2" style="display: none;"></div>
+</div>
+@* 
+<div class="d-flex justify-content-between align-items-center">
+    <div>
+        <button type="button" id="bulkPromoteBtn" class="btn btn-info bg-gradient-info" data-bs-toggle="modal" data-bs-target="#PromoteModal" data-url="/Admin/BulkPromoteStudent/" data-title="Bulk Promote Student's Details" disabled>
+            <i class="bi bi-arrow-up-circle"></i> Promote Selected (<span id="selectedCount">0</span>)
+        </button>
+    </div>
+    <div class="py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success bg-gradient-success btn-icon-split mr-1" data-bs-toggle="modal" data-bs-target="#AddModalForm" data-url="/Admin/AddStudent" data-title="Add Student's Details">
+                    <span class="text">Add Student</span>
+                </button>
+                <button type="button" class="btn btn-warning bg-gradient-warning btn-icon-split" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreDeletedStudent/" data-title="Deleted Student's Details">
+                    <span class="text">Archive</span>
+                </button>
+        </div>    
+    </div>
+</div> *@
+
 <div class="card shadow mb-4" style="margin-top: 20px;">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Student's Info</h6>
-        <button type="button" class="btn btn-success bg-gradient-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AddModalForm" data-url="/Admin/AddStudent" data-title="Add Student's Details">
-            <span class="text">Add Student</span>
-        </button>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success bg-gradient-success btn-icon-split mr-1" data-bs-toggle="modal" data-bs-target="#AddModalForm" data-url="/Admin/AddStudent" data-title="Add Student's Details">
+                <span class="text">Add Student</span>
+            </button>
+            <button type="button" class="btn btn-warning bg-gradient-warning btn-icon-split" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreDeletedStudent/" data-title="Deleted Student's Details">
+                <span class="text">Archive</span>
+            </button>
+        </div>    
     </div>
+
     <div class="card-body">
         <div class="table-responsive">
             <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
                         <th><strong>#</strong></th>
                         <th><strong>LRN No.</strong></th>
                         <th><strong>Full Name</strong></th>
@@ -42,35 +78,44 @@
                     @foreach(var students in Model)
                     {
                         <tr>
+                            <td><input type="checkbox" class="student-checkbox" data-student-id="@students.Id" data-current-grade="@students.SectionAssignments.FirstOrDefault()?.Section.Grade?.GradeLevel"></td>
                             <td><strong>@(i++)</strong></td>
                             <td><strong>@students.LRN</strong></td>
                             <td><strong>@students.LastName, @students.FirstName @students.MiddelName </strong></td>
                             <td><strong>@students.Sex</strong></td>
                             <td>
-                                @if(@students.SectionAssignments.FirstOrDefault()?.Section?.Track == null)
+                                @if(students.SectionAssignments.FirstOrDefault() == null)
                                 {
-                                    <strong>
-                                        @students.SectionAssignments.FirstOrDefault()?.Section.Grade?.GradeLevel - 
-                                        @students.SectionAssignments.FirstOrDefault()?.Section?.SectionName 
-                                    </strong>
-                                        
-                                }else if(@students.SectionAssignments.FirstOrDefault()?.Section?.TVLProgram == null)
-                                {
-                                    <strong>
-                                        @students.SectionAssignments.FirstOrDefault()?.Section.Grade?.GradeLevel - 
-                                        @students.SectionAssignments.FirstOrDefault()?.Section?.SectionName -
-                                        @students.SectionAssignments.FirstOrDefault()?.Section?.Track 
-                                    </strong>
+                                    <strong style="font-style: italic;">No classes assigned yet</strong>
                                 }
                                 else
                                 {
-                                    <strong>
-                                        @students.SectionAssignments.FirstOrDefault()?.Section.Grade?.GradeLevel - 
-                                        @students.SectionAssignments.FirstOrDefault()?.Section?.SectionName -
-                                        @students.SectionAssignments.FirstOrDefault()?.Section?.Track -
-                                        @students.SectionAssignments.FirstOrDefault()?.Section?.TVLProgram
-                                    </strong>
-                                }                 
+                                     @if(@students.SectionAssignments.FirstOrDefault()?.Section?.Track == null)
+                                    {
+                                        <strong>
+                                            Grade @students.SectionAssignments.FirstOrDefault()?.Section.Grade?.GradeLevel - 
+                                            @students.SectionAssignments.FirstOrDefault()?.Section?.SectionName 
+                                        </strong>
+                                        
+                                    }else if(@students.SectionAssignments.FirstOrDefault()?.Section?.TVLProgram == null)
+                                    {
+                                        <strong>
+                                            Grade @students.SectionAssignments.FirstOrDefault()?.Section.Grade?.GradeLevel - 
+                                            @students.SectionAssignments.FirstOrDefault()?.Section?.SectionName -
+                                            @students.SectionAssignments.FirstOrDefault()?.Section?.Track 
+                                        </strong>
+                                    }
+                                    else
+                                    {
+                                        <strong>
+                                            Grade @students.SectionAssignments.FirstOrDefault()?.Section.Grade?.GradeLevel - 
+                                            @students.SectionAssignments.FirstOrDefault()?.Section?.SectionName -
+                                            @students.SectionAssignments.FirstOrDefault()?.Section?.Track -
+                                            @students.SectionAssignments.FirstOrDefault()?.Section?.TVLProgram
+                                        </strong>
+                                    }    
+                                }
+                                            
                                 </td>
                             <td>
                                 @* <button data-id="@students.Id" type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/ViewStudent/" data-title="View Student's Details">
@@ -113,7 +158,58 @@
         </div>
     </div>
 </div>
+@* <div class="card shadow mb-4" style="margin-top: 20px;">
 
+<!-- Student List Table -->
+<div class="d-flex justify-content-between mb-3">
+    <div>
+        <button id="bulkPromoteBtn" class="btn btn-success" disabled>
+            <i class="bi bi-arrow-up-circle"></i> Promote Selected (<span id="selectedCount">0</span>)
+        </button>
+    </div>
+    <div>
+        <button class="btn btn-primary" onclick="openAddStudentModal()">
+            <i class="bi bi-plus-circle"></i> Add Student
+        </button>
+    </div>
+</div>
+
+<table id="studentTable" class="table table-striped">
+    <thead>
+        <tr>
+            <th><input type="checkbox" id="selectAll"></th> <!-- ✅ Select all -->
+            <th>#</th>
+            <th>LRN</th>
+            <th>Full Name</th>
+            <th>Sex</th>
+            <th>Grade & Section</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><input type="checkbox" class="student-checkbox"></td>
+            <td>1</td>
+            <td>123456</td>
+            <td>Juan Cruz</td>
+            <td>Male</td>
+            <td>Grade 7 - A</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="editStudent('1')">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-success" onclick="promoteStudent('1')">
+                    <i class="bi bi-arrow-up"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteStudent('1')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+        <!-- More rows... -->
+    </tbody>
+</table>
+</div> *@
 @section Scripts{
     <script src="~/js/admin-student.js"></script>
 }                        

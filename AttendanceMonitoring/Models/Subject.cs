@@ -11,6 +11,10 @@ namespace AttendanceMonitoring.Models
         public string Category { get; set; }
         public DateTime CreatedAt { get; set; }
 
+        //For Soft Delete function
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
+
         //Section Relationship (Many-to-Many relationship through SectionSubject) 
         public ICollection<SectionSubject> SectionSubjects { get; set; }
 

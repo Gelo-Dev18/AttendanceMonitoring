@@ -11,6 +11,7 @@ namespace AttendanceMonitoring.ViewModel.Teacher
         public List<AttendanceReportData> StudentAttendance { get; set; }
         public int? SelectedAcademicPeriod { get; set; }
         public int? SelectedTeacherAssignment { get; set; }
+        public string? SelectedAttendanceStatus { get; set; } = null;
         public List<DateTime> DateRange { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

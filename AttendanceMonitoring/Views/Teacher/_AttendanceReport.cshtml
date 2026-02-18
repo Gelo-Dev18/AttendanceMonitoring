@@ -25,6 +25,14 @@
         </div>
     </div>
 </div> *@
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alertalert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triange me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
 <div class="card border-left-success shadow h-100 py-2 mb-3">
     <div class="card-body">
@@ -35,9 +43,30 @@
                     Track and monitor student attendance
                 </p>
             </div>
-            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            @* <div class="col-md-4 text-md-end mt-3 mt-md-0">
                 <button class="btn btn-light me-2" id="exportBtn"><i class="fas fa-download me-2"></i>Export</button>
                 <button class="btn btn-light" id="refreshBtn"><i class="fas fa-sync me-2"></i>Refresh</button>
+            </div> *@
+            <div class="col-md-4 d-flex justify-content-end mt-3 mt-md-0">
+                @if (Model.StudentAttendance != null && Model.StudentAttendance.Any())
+                {
+                    @* <button class="btn btn-secondary me-2" id="exportBtn"><i class="fas fa-download me-2"></i> Export</button> *@
+                    <a asp-action="ExportAttendanceReport"
+                       asp-Controller="Teacher"
+                       asp-route-selectedAcademicPeriod="@Model.SelectedAcademicPeriod"
+                       asp-route-teacherAssignment="@Model.SelectedTeacherAssignment"
+                       asp-route-selectedAttendanceStatus="@Model.SelectedAttendanceStatus"
+                       asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                       asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                       class="btn btn-secondary me-2" id="exportBtn"><i class="fas fa-download me-2"></i> Export</a>
+
+                }
+                else
+                {
+                    <button class="btn btn-secondary me-2" disabled>
+                        <i class="fas fa-file-excel me-2"></i>Export to Excel
+                    </button>
+                }
             </div>
         </div>
     </div>
@@ -48,7 +77,7 @@
     <form method="get" asp-action="_AttendanceReport" asp-controller="Teacher">
         @* @Html.AntiForgeryToken() *@
         <div class="row align-items-end" style="color: black;">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-4">
                 <label class="form-label fw-bold"><strong>Select Academic Period</strong></label>
                 <select id="academicYear" asp-for="SelectedAcademicPeriod" asp-items="@Model.academicPeriod" class="form-control" required>
                     <option value="" selected>Select</option>
@@ -60,10 +89,20 @@
                     } *@
                 </select>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-4 mb-4">
                 <label class="form-label fw-bold"><strong>Select  Assigned Class</strong></label>
                 <select asp-for="SelectedTeacherAssignment" asp-items="@Model.teacherClass" class="form-control" id="gradeFilter" name="teacherAssignment" required>
                     <option value="" selected>Select</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-4">
+                <label class="form-label fw-bold"><strong>Attendance Status(Optional)</strong></label>
+                <select id="attendanceStatus" asp-for="SelectedAttendanceStatus" class="form-control">
+                    <option value="" selected>Select</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                    <option value="Cutting">Cutting</option>
+                    <option value="Excuse">Excuse</option>
                 </select>
             </div>
             <div class="col-md-3 mb-3">

@@ -75,7 +75,7 @@
     <div style="position: fixed; top: 20px; right: 20px; z-index: 1090; font-size: 16px;">
         <div id="dangerToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true" data-delay="1000">
             <div class="toast-body bg-danger text-white" style="font-size: 16px; font-weight:600;">
-                <i class="bi bi-check-circle-fill"></i>
+                <i class="bi bi-x-circle-fill"></i>
                 @* <strong class="mr-auto" id="#toast-body">Something went wrong. Please try again.</strong> *@
                 <span id="dangertoast-message"></span>
             </div>
@@ -223,6 +223,37 @@
         </div>
     </div>
     
+    @*View small Modal*@
+    <div class="modal fade" id="ViewSmallModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ViewSmallModalBody">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ViewSmallModalLabel"><strong>...</strong></h5>
+                </div>
+                <div class="modal-body" id="ViewSmallModalBody">
+                </div>
+                @* <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div> *@
+            </div>
+        </div>
+    </div>
+
+    @*Promote Modal*@
+    <div class="modal fade" id="PromoteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="PromoteModalBody">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="PromoteModalLabel"><strong>...</strong></h5>
+                </div>
+                <div class="modal-body" id="PromoteModalBody">
+                </div>
+                @* <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div> *@
+            </div>
+        </div>
+    </div>
     @* <!-- Delete Confirmation Modal --> *@
     <div class="modal fade" id="ModalDelete" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
         <div class="modal-dialog">

@@ -14,6 +14,8 @@ namespace AttendanceMonitoring.Models
         public string? positionTitle { get; set; }
         public string? imageFilePath { get; set; }
         public byte[]? imageFileData { get; set; }
+        public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         public ICollection<TeacherAssignment> TeachingAssignments { get; set; }
         public ICollection<SecretaryAssignment> SecretariesAssignments { get; set; }

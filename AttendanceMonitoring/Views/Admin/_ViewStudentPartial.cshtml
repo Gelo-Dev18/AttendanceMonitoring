@@ -41,29 +41,38 @@
         </dl>
         <dl>
             <dt style="color: black">Student's Grade and Section</dt>
-                @if(@Model.studentClass.Section.Track == null)
+            @if(Model.studentClass == null)
+            {
+                <dd>No class yet</dd>
+            }
+            else
+            {
+                @if (@Model.studentClass.Section.Track == null)
                 {
-                <dd>
-                    Grade @Model.studentClass.Section.Grade.GradeLevel -
-                    @Model.studentClass.Section.SectionName
-                </dd>
-                }else if(@Model.studentClass.Section.TVLProgram == null)
+                    <dd>
+                        Grade @Model.studentClass.Section.Grade.GradeLevel -
+                        @Model.studentClass.Section.SectionName
+                    </dd>
+                }
+                else if (@Model.studentClass.Section.TVLProgram == null)
                 {
-                <dd>
-                    Grade @Model.studentClass.Section.Grade.GradeLevel -
-                    @Model.studentClass.Section.SectionName -
-                    @Model.studentClass.Section.Track
-                </dd>
+                    <dd>
+                        Grade @Model.studentClass.Section.Grade.GradeLevel -
+                        @Model.studentClass.Section.SectionName -
+                        @Model.studentClass.Section.Track
+                    </dd>
                 }
                 else
                 {
-                <dd>
-                    Grade @Model.studentClass.Section.Grade.GradeLevel -
-                    @Model.studentClass.Section.SectionName -
-                    @Model.studentClass.Section.Track -
-                    @Model.studentClass.Section.TVLProgram
-                </dd>
-                }           
+                    <dd>
+                        Grade @Model.studentClass.Section.Grade.GradeLevel -
+                        @Model.studentClass.Section.SectionName -
+                        @Model.studentClass.Section.Track -
+                        @Model.studentClass.Section.TVLProgram
+                    </dd>
+                }
+            }
+                     
         </dl>
     </div>
 

@@ -90,4 +90,30 @@
         maxDate: "today",
     });
     updateDateRangeText();
+
+    $('#academicYear').change(function () {
+        var academicPeriodId = $(this).val();
+        var classDropdown = $('#gradeFilter');
+
+        //classDropdown.empty();
+        classDropdown.empty().append('<option value="">Select</option>');
+
+        if (academicPeriodId) {
+            $.ajax({
+                url: '/Teacher/GetTeacherAssignment',
+                type: 'GET',
+                data: { academicPeriodId: academicPeriodId },
+                success: function (classes) {
+                    $.each(classes, function (index, cls) {
+                        classDropdown.append(
+                            $('<option></option>').val(cls.Value).text(cls.Text)
+                        );
+                    });
+                },
+                error: function () {
+                    alert('Error loading teacher Assignments');
+                }
+            });
+        }
+    });
 });

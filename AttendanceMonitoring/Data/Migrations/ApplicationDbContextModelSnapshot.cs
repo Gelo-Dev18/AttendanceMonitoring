@@ -33,12 +33,18 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("GradingPeriod")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("IsDefault")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -49,7 +55,7 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AcademicPeriods");
+                    b.ToTable("AcademicPeriods", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.ActivityLog", b =>
@@ -95,7 +101,7 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ActivityLogs");
+                    b.ToTable("ActivityLogs", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.AppUser", b =>
@@ -113,6 +119,9 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -126,6 +135,9 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("LRN")
                         .HasColumnType("int");
@@ -224,7 +236,6 @@ namespace AttendanceMonitoring.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RecordedById")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Remarks")
@@ -261,7 +272,7 @@ namespace AttendanceMonitoring.Data.Migrations
                         .IsUnique()
                         .HasFilter("[TeacherAssignmentId] IS NOT NULL AND [SecretaryAssignmentId] IS NOT NULL");
 
-                    b.ToTable("Attendances", t =>
+                    b.ToTable("Attendances", null, t =>
                         {
                             t.HasCheckConstraint("CK_Attendance_Assignment", "([TeacherAssignmentId] IS NOT NULL AND [SecretaryAssignmentId] IS NULL)OR ([TeacherAssignmentId] IS NULL AND [SecretaryAssignmentId] IS NOT NULL)");
                         });
@@ -282,12 +293,18 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("GradeLevel")
                         .HasColumnType("int");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Grades");
+                    b.ToTable("Grades", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.SecretaryAssignment", b =>
@@ -298,24 +315,38 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AcademicPeriodId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("SecretaryId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AcademicPeriodId");
 
                     b.HasIndex("SectionId");
 
                     b.HasIndex("SecretaryId", "SectionId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[SecretaryId] IS NOT NULL");
 
-                    b.ToTable("SecretaryAssignments");
+                    b.ToTable("SecretaryAssignments", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Section", b =>
@@ -329,8 +360,14 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("GradesId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("SectionName")
                         .IsRequired()
@@ -346,7 +383,7 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     b.HasIndex("GradesId");
 
-                    b.ToTable("Sections");
+                    b.ToTable("Sections", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.SectionSubject", b =>
@@ -359,6 +396,12 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
@@ -373,7 +416,7 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasIndex("SectionId", "SubjectId")
                         .IsUnique();
 
-                    b.ToTable("SectionSubjects");
+                    b.ToTable("SectionSubjects", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Student", b =>
@@ -387,9 +430,15 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("LRN")
                         .HasColumnType("int");
@@ -413,7 +462,7 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.StudentSectionAssignment", b =>
@@ -424,8 +473,17 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AcademicPeriodId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
@@ -433,14 +491,19 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<int>("StudentId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AcademicPeriodId");
 
                     b.HasIndex("SectionId");
 
                     b.HasIndex("StudentId", "SectionId")
                         .IsUnique();
 
-                    b.ToTable("StudentSectionAssignments");
+                    b.ToTable("StudentSectionAssignments", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Subject", b =>
@@ -458,13 +521,19 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("SubjectDescription")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects");
+                    b.ToTable("Subjects", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Teacher", b =>
@@ -501,7 +570,7 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Teacher");
+                    b.ToTable("Teacher", (string)null);
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.TeacherAssignment", b =>
@@ -512,24 +581,35 @@ namespace AttendanceMonitoring.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AcademicPeriodId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("SectionSubjectId")
                         .HasColumnType("int");
 
                     b.Property<string>("TeacherId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AcademicPeriodId");
+
                     b.HasIndex("SectionSubjectId");
 
-                    b.HasIndex("TeacherId", "SectionSubjectId")
-                        .IsUnique();
+                    b.HasIndex("TeacherId", "SectionSubjectId", "AcademicPeriodId")
+                        .IsUnique()
+                        .HasFilter("[AcademicPeriodId] IS NOT NULL");
 
-                    b.ToTable("TeacherAssignments");
+                    b.ToTable("TeacherAssignments", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -674,14 +754,12 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasOne("AttendanceMonitoring.Models.AcademicPeriod", "AcademicPeriod")
                         .WithMany("Attendances")
                         .HasForeignKey("AcademicPeriodId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("AttendanceMonitoring.Models.AppUser", "RecordedBy")
                         .WithMany()
                         .HasForeignKey("RecordedById")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.SecretaryAssignment", "SecretaryAssignment")
                         .WithMany("SecretaryAttendances")
@@ -696,8 +774,7 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasOne("AttendanceMonitoring.Models.Student", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.TeacherAssignment", "TeacherAssignment")
                         .WithMany("TeacherAttendances")
@@ -719,17 +796,22 @@ namespace AttendanceMonitoring.Data.Migrations
 
             modelBuilder.Entity("AttendanceMonitoring.Models.SecretaryAssignment", b =>
                 {
+                    b.HasOne("AttendanceMonitoring.Models.AcademicPeriod", "AcademicPeriod")
+                        .WithMany("SecretaryAssignments")
+                        .HasForeignKey("AcademicPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AttendanceMonitoring.Models.AppUser", "Secretary")
                         .WithMany("SecretariesAssignments")
                         .HasForeignKey("SecretaryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.Section", "Section")
                         .WithMany("SecretaryAssignments")
                         .HasForeignKey("SectionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AcademicPeriod");
 
                     b.Navigation("Secretary");
 
@@ -741,8 +823,7 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasOne("AttendanceMonitoring.Models.Grade", "Grade")
                         .WithMany("Sections")
                         .HasForeignKey("GradesId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Grade");
                 });
@@ -752,14 +833,12 @@ namespace AttendanceMonitoring.Data.Migrations
                     b.HasOne("AttendanceMonitoring.Models.Section", "Section")
                         .WithMany("SectionSubjects")
                         .HasForeignKey("SectionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.Subject", "Subject")
                         .WithMany("SectionSubjects")
                         .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Section");
 
@@ -768,17 +847,22 @@ namespace AttendanceMonitoring.Data.Migrations
 
             modelBuilder.Entity("AttendanceMonitoring.Models.StudentSectionAssignment", b =>
                 {
+                    b.HasOne("AttendanceMonitoring.Models.AcademicPeriod", "AcademicPeriod")
+                        .WithMany("StudentSectionAssignments")
+                        .HasForeignKey("AcademicPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AttendanceMonitoring.Models.Section", "Section")
                         .WithMany("StudentAssignments")
                         .HasForeignKey("SectionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.Student", "Student")
                         .WithMany("SectionAssignments")
                         .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AcademicPeriod");
 
                     b.Navigation("Section");
 
@@ -787,17 +871,22 @@ namespace AttendanceMonitoring.Data.Migrations
 
             modelBuilder.Entity("AttendanceMonitoring.Models.TeacherAssignment", b =>
                 {
+                    b.HasOne("AttendanceMonitoring.Models.AcademicPeriod", "AcademicPeriod")
+                        .WithMany("TeacherAssignments")
+                        .HasForeignKey("AcademicPeriodId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("AttendanceMonitoring.Models.SectionSubject", "SectionSubject")
                         .WithMany("TeacherAssignments")
                         .HasForeignKey("SectionSubjectId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.AppUser", "Teacher")
                         .WithMany("TeachingAssignments")
                         .HasForeignKey("TeacherId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AcademicPeriod");
 
                     b.Navigation("SectionSubject");
 
@@ -858,6 +947,12 @@ namespace AttendanceMonitoring.Data.Migrations
             modelBuilder.Entity("AttendanceMonitoring.Models.AcademicPeriod", b =>
                 {
                     b.Navigation("Attendances");
+
+                    b.Navigation("SecretaryAssignments");
+
+                    b.Navigation("StudentSectionAssignments");
+
+                    b.Navigation("TeacherAssignments");
                 });
 
             modelBuilder.Entity("AttendanceMonitoring.Models.AppUser", b =>

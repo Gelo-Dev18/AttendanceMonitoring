@@ -1,0 +1,59 @@
+﻿@* @using AttendanceMonitoring.Models; *@
+@using System.Linq
+@model IEnumerable<AttendanceMonitoring.Models.AppUser>
+@{
+    ViewData["Title"] = "Restore Deleted Teacher";
+}
+<div class="card shadow mb-2" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Deleted Teacher</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable2" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th class="text-center"><strong>#</strong></th>
+                        <th><strong>School ID</strong></th>
+                        <th><strong>Full name</strong></th>
+                        <th><strong>Sex</strong></th>
+                        <th><strong>Designation</strong></th>
+                        <th><strong>Action</strong></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var c = 1;
+                    }
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var teacher in Model)
+                        {
+                            <tr>
+                                <td><strong>@(c++)</strong></td>
+                                <td><strong>@teacher.SchoolId</strong></td>
+                                <td><strong>@teacher.LastName, @teacher.FirstName @teacher.MiddleName</strong></td>
+                                <td><strong>@teacher.Sex</strong></td>
+                                <td><strong>@teacher.positionTitle</strong></td>
+                                <td class="text-center">
+                                    <strong>
+                                        <button data-teacher-id="@teacher.Id" type="button" class="btn btn-warning btn-circle restore-teacher-btn" title="Restore Teacher Assignment Details">
+                                            <i class="fas fa-trash-restore"></i>
+                                        </button>
+                                    </strong>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Script {
+    @{
+
+        await Html.RenderPartialAsync("_ValidationScriptPartial.cshtml");
+    }
+}

@@ -6,6 +6,16 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
+@if(TempData["ErrorMessage"] != null)
+{
+    <div class="alert alertalert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triange me-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+
 <div class="card border-left-success shadow h-100 py-2 mb-3">
     <div class="card-body">
         <div class="row no-gutters align-items-center">
@@ -15,10 +25,32 @@
                     Track and monitor student attendance
                 </p>
             </div>
-            @* <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <button class="btn btn-light me-2" id="exportBtn"><i class="fas fa-download me-2"></i>Export</button>
-                <button class="btn btn-light" id="refreshBtn"><i class="fas fa-sync me-2"></i>Refresh</button>
-            </div> *@
+            @* <div class="col-md-4 text-md-end mt-3 mt-md-0"> *@
+            @* <button class="btn btn-light" id="refreshBtn"><i class="fas fa-sync me-2"></i>Refresh</button> *@
+
+            <div class="col-md-4 d-flex justify-content-end mt-3 mt-md-0">
+                @if (Model.StudentAttendance != null && Model.StudentAttendance.Any())
+                {
+                    @* <button class="btn btn-secondary me-2" id="exportBtn"><i class="fas fa-download me-2"></i> Export</button> *@
+                    <a asp-action="ExportAttendanceReport"
+                       asp-Controller="Admin"
+                       asp-route-SelectedTeacher="@Model.SelectedTeacher"
+                       asp-route-SelectedAcademicPeriod="@Model.SelectedAcademicPeriod"
+                       asp-route-SelectedTeacherAssignment="@Model.SelectedTeacherAssignment"
+                       asp-route-SelectedAttendanceStatus="@Model.SelectedAttendanceStatus"
+                       asp-route-StartDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                       asp-route-EndDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                       class="btn btn-secondary me-2" id="exportBtn"><i class="fas fa-download me-2"></i> Export</a>
+
+                }
+                else
+                {
+                    <button class="btn btn-secondary me-2" disabled>
+                        <i class="fas fa-file-excel me-2"></i>Export to Excel
+                    </button>
+                }
+            </div>
+
         </div>
     </div>
 </div>
@@ -43,6 +75,16 @@
                 <label class="form-label fw-bold"><strong>Select  Assigned Class</strong></label>
                 <select asp-for="SelectedTeacherAssignment" asp-items="@Model.teacherClass" class="form-control" id="gradeFilter" required>
                     <option value="" selected>Select</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label fw-bold"><strong>Attendance Status(Optional)</strong></label>
+                <select id="attendanceStatus" asp-for="SelectedAttendanceStatus" class="form-control" >
+                    <option value="" selected>Select</option>
+                    <option value="Absent">Absent</option>
+                    <option value="Late">Late</option>
+                    <option value="Cutting">Cutting</option>
+                    <option value="Excuse">Excuse</option>
                 </select>
             </div>
             <div class="col-md-3 mb-3">

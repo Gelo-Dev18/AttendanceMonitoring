@@ -19,6 +19,10 @@ namespace AttendanceMonitoring.ViewModel.Secretary
         public int CurrentAcademicPeriodId { get; set; }
         public string YearLevel { get; set; }
         public string GradingPeriod { get; set; }
+        public bool IsAttendanceFinished { get; set; }
+        public bool IsStarted { get; set; }
+
+
 
         [Required]
         public Dictionary<int, string> ExcuseReason { get; set; } = new Dictionary<int, string>();
