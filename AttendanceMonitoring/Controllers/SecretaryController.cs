@@ -41,7 +41,7 @@ namespace AttendanceMonitoring.Controllers
 
             //Automatic na set this viewbag to all methods/actions
             ViewBag.UserLastName = user?.LastName ?? "User";
-            ViewBag.UserProfilePic = user?.imageFilePath ?? "default-avatar.png";
+            ViewBag.UserProfilePic = user?.imageFilePath ?? "";
 
             await next(); // continue to the actual action
         }

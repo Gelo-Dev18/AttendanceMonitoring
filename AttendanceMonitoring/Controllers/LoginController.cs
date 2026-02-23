@@ -164,6 +164,9 @@ namespace AttendanceMonitoring.Controllers
                 return View(model);
             }
 
+            //This means, hanapin muna kung sinong user ang mayroon schoolId ni ginamit sa pag login, tapos tsaka palang pupunta sa result
+            //Para kapag confirm na mayroong exisiting na schoolId ,tsaka palang kukunin yung username tapos didiretso na sa if statement
+            //So meaning find user via schoolId and authenticate yung username dahil sa PasswordSignInAsync ay gumagamit ng username or email
             var user = await userManager.Users.FirstOrDefaultAsync(u => u.SchoolId == model.SchoolId);
 
             if (user != null)
@@ -200,11 +203,15 @@ namespace AttendanceMonitoring.Controllers
 
                 }
 
-                ModelState.AddModelError("", "School ID or Password is incorrect!");
+                //ModelState.AddModelError("", "School ID or Password is incorrect!");
+                ModelState.AddModelError("", "Invalid School ID or Password."); // Ito ang gamitin parehas sa model error para di malaman ni attacker if balid ba yung school id na ginamit
+
                 return View(model);
             }
 
-            ModelState.AddModelError("", "School ID or Password is null!");
+            //ModelState.AddModelError("", "School ID or Password is null!");
+            ModelState.AddModelError("", "Invalid School ID or Password.");
+
             return View(model);
         }
     }

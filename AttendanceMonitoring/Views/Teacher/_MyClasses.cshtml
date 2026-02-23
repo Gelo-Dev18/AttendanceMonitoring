@@ -5,7 +5,6 @@
     Layout = "~/Views/Shared/_TeacherLayout.cshtml";
 }
 
-<!-- Teacher List-->
 <!-- Page Heading -->
 <h1 class="h3 mb-2 text-gray-800">My Classes</h1>
 <div class="card shadow mb-4" style="margin-top: 20px;">
@@ -38,12 +37,19 @@
             <div class="card-footer">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <dl class="mb-0">
-                        <dt style="color: black">LRN</dt>
-                        <dd>@Model.LRN</dd>
+                        <dt style="color: black">Academic Period</dt>
+                        <dd>@Model.currentAcademicYear : @Model.currentPeriod Grading</dd>
                     </dl>
+                    
                     <button type="button" class="btn btn-success bg-gradient-success btn-icon-split" data-bs-toggle="modal" data-bs-target="#AssignModal" data-url="/Teacher/SelfAssign/" data-title="Self Assign Details">
                         <span class="text">Assign Class</span>
                     </button>
+                </div>
+                <div>
+                    <dl class="mb-0">
+                        <dt style="color: black">LRN</dt>
+                        <dd>@Model.LRN</dd>
+                    </dl>
                 </div>
                 
                 @* <div class="container-fluid"> *@
@@ -70,12 +76,13 @@
                                     <td>Grade @teacherAssignment.SectionSubject.Section.Grade.GradeLevel @teacherAssignment.SectionSubject.Section.SectionName @teacherAssignment.SectionSubject.Section.Track @teacherAssignment.SectionSubject.Section.TVLProgram</td>
 
                                     <td>@teacherAssignment.SectionSubject.Subject.SubjectDescription</td>
-
-
-
-                                    <td>
-                                        <button class="btn btn-danger removebtn"
-                                                data-assign-id="@teacherAssignment.Id" style="padding:5px">
+                                    <td class="text-center">
+                                        <a asp-action="ManageClass" asp-route-id="@teacherAssignment.Id" class="btn btn-info bg-gradient-info managebtn"
+                                                style="padding:5px">
+                                            Manage 
+                                        </a>
+                                        <button class="btn btn-danger bg-gradient-danger removebtn"
+                                                data-remove-id="@teacherAssignment.Id" style="padding:5px">
                                             Remove
                                         </button>
                                     </td>

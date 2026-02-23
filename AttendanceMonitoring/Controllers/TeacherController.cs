@@ -41,6 +41,7 @@ namespace AttendanceMonitoring.Controllers
             this.logService = logService;
 
         }
+        //allowing code to run both before and after a controller action is executed
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var userId = GetCurrentUserId();
@@ -1206,7 +1207,10 @@ namespace AttendanceMonitoring.Controllers
                 Sex = user.Sex,
                 positionTitle = user.positionTitle,
                 imageFilePath = user.imageFilePath,
-                teacherAssignments = TeacherClass
+                teacherAssignments = TeacherClass,
+                currentAcademicYear = defaultYear.Year,
+                currentPeriod = defaultYear.GradingPeriod
+
             };
 
             ViewData["imageFileData"] = user.imageFileData;
@@ -1308,9 +1312,11 @@ namespace AttendanceMonitoring.Controllers
             );
 
             var assignedSectionSubjectIds = await context.TeacherAssignments
-                .Select(ss => ss.SectionSubjectId)
-                .Distinct()
-                .ToListAsync();
+                        .IgnoreQueryFilters()
+                        .Where(ta => ta.AcademicPeriod == defaultYear)
+                        .Select(ss => ss.SectionSubjectId)
+                        .Distinct()
+                        .ToListAsync();
 
             var sectionSubjectQuery = await context.SectionSubjects
                 .Include(ss => ss.Subject)
@@ -1319,7 +1325,6 @@ namespace AttendanceMonitoring.Controllers
                 .Where(ss => !assignedSectionSubjectIds.Contains(ss.Id))
                 .OrderBy(ss => ss.Section.Grade.GradeLevel)
                 .ToListAsync();
-
 
             var model = new SelfAssignViewModel()
             {
@@ -1401,6 +1406,235 @@ namespace AttendanceMonitoring.Controllers
             return Json(new { success = true, message = "Assigned class removed successfully!" });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ManageClass(int id)
+        {
+            var assignmentId = await context.TeacherAssignments
+                .FindAsync(id);
+
+            if(assignmentId == null)
+            {
+                return Json(new { success = false, message = "Assginemnt Id does not found!" });
+            }
+
+            var teacherClass = await context.TeacherAssignments
+                                .Include(ta => ta.SectionSubject)
+                                    .ThenInclude(ss => ss.Section)
+                                        .ThenInclude(g => g.Grade)
+                                .Where(ta => ta.Id == id)
+                                .FirstOrDefaultAsync();
+
+            var sectionId = teacherClass.SectionSubject.SectionId;
+            var section = teacherClass.SectionSubject.Section.Id;
+            var subjectId = teacherClass.SectionSubject.SubjectId;
+
+            var studentsClass = await context.Sections
+                                .Include(s => s.Grade)
+                                .Where(sec => sec.Id == section)
+                                .FirstOrDefaultAsync();
+
+            var student = await context.StudentSectionAssignments
+                            .Include(ssa => ssa.Student)
+                            .Where(ssa => ssa.SectionId == sectionId)
+                            .OrderBy(s => s.Student.LastName)
+                            .ToListAsync();
+
+            var studentSubjects = await context.Subjects
+                                  .Where(s => s.Id == subjectId)
+                                  .FirstOrDefaultAsync();
+
+
+            var model = new ViewManageClassViewModel()
+            {
+                Students = student,
+                Section = studentsClass,
+                Subject = studentSubjects
+            };
+
+            return View(model);
+        }
+
+        //[HttpDelete]
+        //public async Task<IActionResult> RemoveStudent(int id)
+        //{
+        //    var student = await context.StudentSectionAssignments
+        //                    .Include(ssa => ssa.Student)
+        //                    .Include(sec => sec.Section)
+        //                        .ThenInclude(s => s.SectionSubjects)
+        //                            .ThenInclude(ss => ss.Subject)
+        //                    .FirstOrDefaultAsync(ssa => ssa.Id == id);
+
+        //    if(student == null)
+        //    {
+        //        return Json(new { succes = false, message = "Assignment id does not found" });
+        //    }
+
+        //    var studentId = await context.Students.FirstOrDefaultAsync(s => s.Id == student.StudentId);
+
+        //    var hasAttendance = await context.Attendances
+        //                        .AnyAsync(a => a.StudentId == studentId.Id);
+
+        //    var time = DateTime.UtcNow;
+
+        //    if (hasAttendance)
+        //    {
+        //        student.IsDeleted = true;
+        //        student.DeletedAt = time;
+
+        //        await context.SaveChangesAsync();
+
+        //        return Json(new { success = true, message = "Student assignment! Attendance data is archived for history data!" });
+
+        //    }
+
+        //    student.IsDeleted = true;
+        //    student.DeletedAt = time;
+
+        //    await context.SaveChangesAsync();
+
+        //    var grade = student.Section.Grade.GradeLevel;
+        //    var section = student.Section.SectionName;
+        //    var Track = student.Section?.Track;
+        //    var TVLProgram = student.Section?.TVLProgram;
+        //    //Need gumamit ng FirstOrDefault para maaccess si subject kase list of collection si SectionSubject eh isang subject lang need natin iaccess.
+        //    var subject = student?.Section?.SectionSubjects?.FirstOrDefault().Subject.SubjectDescription;
+
+
+        //    var userInfo = await GetCurrentUserInfo();
+
+        //    await logService.LogActivity(
+        //        actionType: "Remove",
+        //        entityName: "Student's Assignment",
+        //        entityId: student.Id.ToString(),
+        //        userId: userInfo.userId,
+        //        schoolId: userInfo.schoolId,
+        //        details: $"Admin remove {studentId.FirstName} {studentId.MiddelName} {studentId.LastName} from Grade {grade} - {section} {Track} {TVLProgram}. Subject: {subject}",
+        //        username: userInfo.username
+        //    );
+
+        //    return Json(new { success = true, message = "Student assignment! Attendance data is archived for history data!" });
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> ManageSecretary()
+        {
+            var teacherId = GetCurrentUserId();
+
+            var user = await userManager.FindByIdAsync(teacherId);
+
+            if (string.IsNullOrEmpty(teacherId))
+            {
+                return RedirectToAction("TeacherHome", "Teacher");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var overallErrors = ModelState.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToList()
+                );
+
+                return Json(new { success = false, errors = overallErrors });
+            }
+
+
+            var currentDefaultYear = await context.AcademicPeriods
+                .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+
+            var sectionSubjectIds = await context.TeacherAssignments
+                                    .Where(t => t.TeacherId == teacherId && t.AcademicPeriod == currentDefaultYear)
+                                    .Select(ta => ta.SectionSubjectId)
+                                    .ToListAsync();
+
+            var sectionIds = await context.SectionSubjects
+                                .Where(ss => sectionSubjectIds.Contains(ss.Id))
+                                .Select(ss => ss.SectionId)
+                                .Distinct()
+                                .ToListAsync();
+
+            //if (!sectionIds.Any())
+            //{
+            //    return RedirectToAction("TeacherHome", "Teacher");
+            //}
+
+            var secretaryAssignment = await context.SecretaryAssignments
+                                .Include(sa => sa.Section)
+                                    .ThenInclude(s => s.SectionSubjects)
+                                        .ThenInclude(ss => ss.Subject)
+                                .Include(g => g.Section.Grade)
+                                .Include(user => user.Secretary)
+                                .Where(s => sectionIds.Contains(s.SectionId))
+                                .ToListAsync();
+
+            var model = new MySecretariesViewModel()
+            {
+                Secretary = secretaryAssignment
+            };
+
+            return View(model);
+        }
+        [HttpGet]
+        public async Task<IActionResult> AddSecretary()
+        {
+            var teacherId = GetCurrentUserId();
+
+            if(teacherId == null)
+            {
+                return Json(new { success = true, message = "Id does not Found" });
+            }
+
+            var currentAcademicPeriod = await context.AcademicPeriods
+                                        .Where(ap => ap.IsDefault == 1)
+                                        .FirstOrDefaultAsync();
+
+            var teacherClass = await context.TeacherAssignments
+                                        .Where(ta => ta.TeacherId == teacherId && ta.AcademicPeriod == currentAcademicPeriod)
+                                        .Select(ta => new
+                                        {
+                                            SectionId = ta.SectionSubject.Section.Id,
+                                            GradeLevel = ta.SectionSubject.Section.Grade.GradeLevel,
+                                            SectionName = ta.SectionSubject.Section.SectionName,
+                                            SubjectDescription = ta.SectionSubject.Subject.SubjectDescription,
+                                            Track = ta.SectionSubject.Section.Track,
+                                            TVLProgram = ta.SectionSubject.Section.TVLProgram
+                                        })
+                                        .OrderBy(x => x.GradeLevel)
+                                        .ToListAsync();
+
+
+            //var availableClass = await context.Sections
+            //                        .Include(s => s.Grade)
+            //                        .Include(sub => sub.SectionSubjects)
+            //                            .ThenInclude(ss => ss.Subject)
+            //                        .Where(s => teacherClass.Contains(s.Id))
+            //                        .OrderBy(g => g.Grade.GradeLevel)
+            //                        .Select(ags => new
+            //                        {
+            //                            ags.Id,
+            //                            ags.Grade.GradeLevel,
+            //                            ags.SectionName,
+            //                            ags.Track,
+            //                            ags.TVLProgram,
+            //                            ags.SectionSubjects?
+            //                        .FirstOrDefault().Subject.SubjectDescription
+            //                        })
+            //                        .ToListAsync();
+
+            var model = new TeacherSecretaryViewModel()
+            {
+                AvailableClass = teacherClass.Select(ags => new SelectListItem
+                {
+                    Value = ags.SectionId.ToString(),
+                    Text = ags.TVLProgram == null
+                            ? $"Grade {ags.GradeLevel} - {ags.SectionName}, {ags.Track}: {ags.SubjectDescription}"
+                            : $"Grade {ags.GradeLevel} - {ags.SectionName}, {ags.Track} - {ags.TVLProgram}: {ags.SubjectDescription}"
+                })
+                .ToList()
+            };
+
+
+            return PartialView("_AddSecretaryPartial", model);
+        }
         public async Task<IActionResult> Logout()
         {
             var user = await userManager.GetUserAsync(User);

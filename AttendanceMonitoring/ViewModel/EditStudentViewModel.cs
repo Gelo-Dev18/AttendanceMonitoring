@@ -19,6 +19,7 @@ namespace AttendanceMonitoring.ViewModel
         public IFormFile? imageFile { get; set; }
         public DateTime CreatedAt { get; set; }
         public int SectionId { get; set; }
+        public int? AcademicPeriodId { get; set; }
 
         //Get total Students
         public int StudentCount { get; set; }

@@ -41,6 +41,8 @@ namespace AttendanceMonitoring.ViewModel
         public IFormFile? imageFile { get; set; }
         public string? imageFilePath { get; set; }
 
+        public string? currentAcademicYear { get; set; }
+        public string? currentPeriod { get; set; }
         public List<TeacherAssignment> teacherAssignments { get; set; } = new List<TeacherAssignment>();
         public List<SectionSubject> SectionSubjects { get; set; } = new List<SectionSubject>();
 

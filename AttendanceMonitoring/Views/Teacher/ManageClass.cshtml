@@ -1,0 +1,77 @@
+﻿@using AttendanceMonitoring.ViewModel.Teacher;
+@model ViewManageClassViewModel;
+@{
+    ViewData["Title"] = "ManageClass";
+    Layout = "~/Views/Shared/_TeacherLayout.cshtml";
+}
+<h1 class="h3 mb-2 text-gray-800">Manage Students List</h1>
+
+<div class="card shadow mb-4" style="margin-top: 20px;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        @if(Model.Section.Track == null)
+        {
+            <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">
+                Manage Students : Grade @Model.Section.Grade.GradeLevel - @Model.Section.SectionName, @Model.Subject?.SubjectDescription
+            </h6>
+        }
+        else
+        {
+            <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">
+                Manage Students : Grade @Model.Section.Grade @Model.Section.SectionName @Model.Section.Track @Model.Section.TVLProgram, @Model.Subject.SubjectDescription
+            </h6>
+        }
+        @* <h6 class="m-0 font-weight-bold" style="color:rgb(21, 90, 27);">Table for Student's Info</h6> *@
+        <a asp-controller="Teacher" asp-action="_MyClasses" class="btn btn-dark bg-gradient-dark">
+            <span class="text">Class List</span>
+        </a>
+        @* <div class="d-flex">
+            <button type="button" class="btn btn-success bg-gradient-success btn-icon-split mr-1" data-bs-toggle="modal" data-bs-target="#AddModalForm" data-url="/Admin/AddStudent" data-title="Add Student's Details">
+                <span class="text">Add Student</span>
+            </button>
+            <a asp-controller="Teacher" asp-action="_MyClasses" class="btn btn-dark bg-gradient-dark">
+                <span class="text">Class List</span>
+            </a>
+        </div> *@
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th><strong>#</strong></th>
+                        <th><strong>LRN No.</strong></th>
+                        <th><strong>Full Name</strong></th>
+                        <th><strong>Sex</strong></th>
+                        @* <th><strong>Action</strong></th> *@
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        var i = 1;
+                    }
+                    @foreach (var students in Model.Students)
+                    {
+                        <tr>
+                            <td><strong>@(i++)</strong></td>
+                            <td><strong>@students.Student.LRN</strong></td>
+                            <td><strong>@students.Student.LastName, @students.Student.FirstName @students.Student?.MiddelName </strong></td>
+                            <td><strong>@students.Student.Sex</strong></td>
+                            @* <td class="text-center">
+                                <button data-remove-id="@students.Id" type="button" class="btn btn-danger bg-gradient-danger remove-button" data-bs-toggle="modal" data-bs-target="#ModalDelete">
+                                    Remove
+                                </button>  
+                            </td> *@
+                        </tr>
+                    }
+
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/teacher-manageClass.js"></script>
+}

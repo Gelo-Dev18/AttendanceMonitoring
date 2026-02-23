@@ -549,6 +549,15 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, error = "Id Not Found!" });
 
             }
+            
+            var isDefault = await context.AcademicPeriods
+                            .Where(ap => ap.IsDefault == 1)
+                            .AnyAsync();
+
+            if (isDefault)
+            {
+               return Json(new { success = false, message = "Cannot delete academic year when set to default!" });
+            }
 
             //If walang Soft delete
             //var hasRecord = await context.AcademicPeriods.AnyAsync(ap => ap.Id == id);
@@ -2157,6 +2166,8 @@ namespace AttendanceMonitoring.Controllers
                 Sex = teacher.Sex,
                 positionTitle = teacher.positionTitle,
                 imageFilePath = teacher.imageFilePath,
+                currentAcademicYear = currentDefaultYear.Year,
+                currentPeriod = currentDefaultYear.GradingPeriod,
 
                 teacherAssignments = teacherAssignment
             };
@@ -3231,7 +3242,10 @@ namespace AttendanceMonitoring.Controllers
             var studentsGradeSection = await context.StudentSectionAssignments
                 .Where(si => si.StudentId == id)
                 .Select(s => s.SectionId)
-                .FirstOrDefaultAsync(); 
+                .FirstOrDefaultAsync();
+
+            
+
 
             var model = new EditStudentViewModel()
             {
@@ -3259,7 +3273,10 @@ namespace AttendanceMonitoring.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditStudent(int id, EditStudentViewModel model)
         {
-            var editStudent = await context.Students.FindAsync(id);
+            //var editStudent = await context.Students.FindAsync(id);
+            var editStudent = await context.Students.
+                            Include(s => s.SectionAssignments)
+                            .FirstOrDefaultAsync(s => s.Id == id);
 
             if(editStudent == null)
             {
@@ -3267,12 +3284,10 @@ namespace AttendanceMonitoring.Controllers
 
             }
 
-            var studentGradeSectionAssigned = await context.StudentSectionAssignments.FindAsync(id);
-            if (studentGradeSectionAssigned == null)
-            {
-                return Json(new { sucess = false, message = "Student assignment Id does not found" });
-
-            }
+            var studentGradeSectionAssigned = await context.StudentSectionAssignments
+                                            .IgnoreQueryFilters()
+                                            .Where(ssa => ssa.StudentId == id)
+                                            .FirstOrDefaultAsync();
 
             bool studentFirstLastNameExist = await context.Students.AnyAsync(t => t.FirstName == model.FirstName && t.MiddelName == model.MiddelName && t.LastName == model.LastName && t.Id != id);
 
@@ -3342,8 +3357,9 @@ namespace AttendanceMonitoring.Controllers
                 editStudent.imageFileData = saveImageData;
             }
 
-            //To Capitalize every first letter of word when inserting data
-            TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
+
+                //To Capitalize every first letter of word when inserting data
+                TextInfo textinfo = CultureInfo.CurrentCulture.TextInfo;
 
             string formattedFirstName = textinfo.ToTitleCase(model.FirstName.ToLower());
             string formattedMiddleName = textinfo.ToTitleCase(model.MiddelName?.ToLower() ?? "");
@@ -3370,10 +3386,40 @@ namespace AttendanceMonitoring.Controllers
                 username: userInfo.username
             );
 
-            studentGradeSectionAssigned.StudentId = editStudent.Id;
-            studentGradeSectionAssigned.SectionId = model.SectionId;
+            //var hasstudentAssignment = await context.StudentSectionAssignments
+            //                        .Where(ssa => ssa.StudentId == id)
+            //                        .FirstOrDefaultAsync();
 
-            context.StudentSectionAssignments.Update(studentGradeSectionAssigned);
+            if (studentGradeSectionAssigned == null)
+            {
+                var newAssignment = new StudentSectionAssignment()
+                {
+                    StudentId = id,
+                    SectionId = model.SectionId,
+                    AcademicPeriodId = model.AcademicPeriodId,
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.StudentSectionAssignments.Add(newAssignment);
+            }
+            else if (studentGradeSectionAssigned.IsDeleted == true)
+            {
+                studentGradeSectionAssigned.IsDeleted = false;
+                studentGradeSectionAssigned.DeletedAt = null;
+
+                studentGradeSectionAssigned.SectionId = model.SectionId;
+            }
+            else
+            {
+                //redundant no need to assign again
+                // studentGradeSectionAssigned.StudentId is already equal to id (which is editStudent.Id)
+
+                //studentGradeSectionAssigned.StudentId = editStudent.Id;
+                studentGradeSectionAssigned.SectionId = model.SectionId;
+            }
+
+            //context.StudentSectionAssignments.Update(studentGradeSectionAssigned);
             await context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Student Successfully Edited!" });

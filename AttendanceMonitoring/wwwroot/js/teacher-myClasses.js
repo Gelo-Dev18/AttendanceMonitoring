@@ -48,10 +48,10 @@
         //var button = $(this);
         //var button = $(event.relatedTarget); // ginagamit lang kapag modal
 
-        var assignId = $(this).data('assign-id');
+        var removeId = $(this).data('remove-id');
 
         $.ajax({
-            url: '/Teacher/RemoveSelfAssign/' + assignId,
+            url: '/Teacher/RemoveSelfAssign/' + removeId,
             type: 'DELETE',
             success: function (response) {
                 //$('#currentlyAssigned').html(response);
@@ -59,7 +59,7 @@
                     showSuccessToast(response.message);
                     setTimeout(function () {
                         location.reload();
-                    }, 2000);
+                    }, 1000);
                 } else {
                     //showDangerToast(response.message)
                     showDangerToast(response.error)
@@ -68,6 +68,41 @@
             },
             error: function (xhr, status, error) {
                 console.error('Error remove assign:', error);
+                //    alert('Something went wrong. Please try again.');
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast(response);
+            }
+        });
+    });
+
+    $('.remove-button').on('click', function (e) {
+        e.preventDefault();
+        var button = $(this);
+        //var button = $(event.relatedTarget); // ginagamit lang kapag modal
+
+        var removeid = button.data('remove-id')
+
+        $.ajax({
+            url: '/Teacher/RemoveStudent/' + removeid,
+            type: 'DELETE',
+            dataType: 'json',
+            success: function (response) {
+
+                if (response.success) {
+                    showSuccessToast(response.message);
+                    //loadSpinner();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert('Could not remove assign');
+                }
+                //alert(response.message);
+                //location.reload();
+            },
+            error: function (xhr, status, error) {
+                console.error('Error removing student assignment:', error);
                 //    alert('Something went wrong. Please try again.');
                 loadSpinner();
                 loadPageBlur();

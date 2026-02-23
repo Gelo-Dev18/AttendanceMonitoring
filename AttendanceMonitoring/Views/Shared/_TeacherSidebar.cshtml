@@ -59,6 +59,14 @@
         </a>
     </li>
 
+    <!-- Nav Item - Manage Secretary -->
+    <li class="nav-item @Html.IsActive("Teacher", "ManageSecretary")">
+        <a class="nav-link" href="@Url.Action("ManageSecretary", "Teacher")">
+            <i class="fas fa-users">‌</i>
+            <span>My Secretaries</span>
+        </a>
+    </li>
+
     <!-- Nav Item - Grade And Section -->
     @* <li class="nav-item @(isGradeAndSectionActive ? "active" : "")">
         <a class="nav-link collapsed @(isGradeAndSectionActive ? "active" : "")" href="#" data-toggle="collapse" data-target="#collapseTwo01"

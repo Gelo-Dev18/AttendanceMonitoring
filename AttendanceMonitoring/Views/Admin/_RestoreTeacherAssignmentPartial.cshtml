@@ -17,6 +17,7 @@
                         <th><strong>Teacher</strong></th>
                         <th><strong>Grade & Section</strong></th>
                         <th><strong>Subject Description</strong></th>
+                        <th><strong>Status</strong></th>
                         <th><strong>Action</strong></th>
                     </tr>
                 </thead>
@@ -42,11 +43,33 @@
                                 </td>
                                 @* <td><strong>@sectionSubject.SectionId</strong></td> *@
                                 <td><strong>@sectionSubject.SectionSubject.Subject.SubjectDescription</strong></td>
+                                <td>
+                                    
+                                    @if(sectionSubject.Teacher.IsDeleted == true)
+                                    {
+                                        <strong class="text-danger">⚠️Teacher Deleted</strong>
+                                    }
+                                    else
+                                    {
+                                        <strong class="text-success">Active</strong>
+                                    }
+                                </td>
+
                                 <td class="text-center">
                                     <strong>
-                                        <button data-assignment-id="@sectionSubject.Id" type="button" class="btn btn-warning btn-circle restore-btn" title="Restore Teacher Assignment Details">
-                                            <i class="fas fa-trash-restore"></i>
-                                        </button>
+                                        @if (sectionSubject.Teacher.IsDeleted == true)
+                                        {
+                                            <button data-assignment-id="@sectionSubject.Id" type="button" class="btn btn-warning btn-circle restore-btn" title="Restore Teacher Assignment Details" disabled>
+                                                <i class="fas fa-trash-restore"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button data-assignment-id="@sectionSubject.Id" type="button" class="btn btn-warning btn-circle restore-btn" title="Restore Teacher Assignment Details">
+                                                <i class="fas fa-trash-restore"></i>
+                                            </button>
+                                        }
+
                                     </strong>
                                 </td>
                             </tr>
