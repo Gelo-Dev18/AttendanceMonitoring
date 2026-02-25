@@ -12,26 +12,27 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     </div>
     <div class="col-6">
+        <label asp-for="SchoolId" class="form-label"><strong>Employee No.</strong></label>
+        <input asp-for="SchoolId" class="form-control" required />
+        <span asp-validation-for="SchoolId" class="text-danger"></span>
+    </div>
+    @* <div class="col-6">
         <label asp-for="Email" class="form-label"><strong>Email</strong></label>
         <input asp-for="Email" class="form-control" required />
         <span asp-validation-for="Email" class="text-danger validation-error-message"></span>
-    </div>
+    </div> *@
     <div class="col-6">
         <label asp-for="NewPassword" class="form-label"><strong>New Password</strong></label>
         <input asp-for="NewPassword" class="form-control"/>
         <span asp-validation-for="NewPassword" class="text-danger"></span>
         <label class="text-danger" style="font-style: italic; font-size: 14px;">*Leave blank if you don't want to change the password</label>
     </div>
-    <div class="col-6">
-        <label asp-for="SchoolId" class="form-label"><strong>School Id</strong></label>
-        <input asp-for="SchoolId" class="form-control" required />
-        <span asp-validation-for="SchoolId" class="text-danger"></span>
-    </div>
+    @* 
     <div class="col-6">
         <label asp-for="EmployeeId" class="form-label"><strong>Employee No</strong>.</label>
         <input asp-for="EmployeeId" class="form-control" required />
         <span asp-validation-for="EmployeeId" class="text-danger"></span>
-    </div>
+    </div> *@
 
     <div class="col-md-6">
         <label asp-for="FirstName" class="form-label"><strong>First Name</strong></label>

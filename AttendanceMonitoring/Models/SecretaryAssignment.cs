@@ -14,6 +14,7 @@
         public bool IsDeleted { get; set; }
         public DateTime? DeletedAt { get; set; }
         public DateTime? UpdatedAt { get; set; } //For class promotion if Secretary moves to new grade level
+        public DateTime StartDate { get; set; }
 
         //Navigation property
         //Nullable na parehas yung section at secretary para sa soft deletion

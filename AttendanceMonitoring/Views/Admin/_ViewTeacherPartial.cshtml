@@ -11,7 +11,7 @@
         @Html.AntiForgeryToken() 
         <div class="widget-user-header bg-dark">
             <h3 class="widget-user-username">@Model.FirstName @Model.MiddleName @Model.LastName</h3>
-            <h5 class="widget-user-desc">@Model.Email</h5>
+            <h5 class="widget-user-desc">@Model.positionTitle</h5>
         </div>
         <div class="widget-user-image">
             @* @if (Model.imageFile == null || Model.imageFile.Length > 0) *@
@@ -41,7 +41,7 @@
                 <dd>@Model.currentAcademicYear : @Model.currentPeriod Grading</dd>
             </dl>
             <dl>
-                <dt style="color: black">School ID</dt>
+                <dt style="color: black">Employee No.</dt>
                 <dd>@Model.SchoolId</dd>
             </dl>
             @* <div class="container-fluid"> *@

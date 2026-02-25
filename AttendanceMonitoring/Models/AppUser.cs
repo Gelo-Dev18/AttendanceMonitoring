@@ -5,8 +5,8 @@ namespace AttendanceMonitoring.Models
     public class AppUser : IdentityUser //Appuser inherits from IdentityUser
     {
         public int SchoolId { get; set; }
-        public int LRN { get; set; }
-        public int EmployeeId { get; set; }
+        public int? LRN { get; set; }
+        public int? EmployeeId { get; set; }
         public string FirstName { get; set; }
         public string? MiddleName { get; set;}
         public string LastName { get; set; }

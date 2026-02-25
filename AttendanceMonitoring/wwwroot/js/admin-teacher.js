@@ -1,10 +1,10 @@
 ﻿document.addEventListener("DOMContentLoaded", function () {
-    $('#ViewModal').on('show.bs.modal', function () {
+    $('#ArchiveViewModal').on('show.bs.modal', function () {
         $(this).data('has-assignments', false);
     });
 
     //This will reload the page for MyClasses list if there is a new assign
-    $('#ViewModal').on('hide.bs.modal', function () {
+    $('#ArchiveViewModal').on('hide.bs.modal', function () {
         if ($(this).data('has-assignments')) {
             location.reload();
         }
@@ -289,11 +289,11 @@
             //dataType: 'json',
             success: function (response) {
 
-                $('#ViewModal .modal-body').html(response);
+                $('#ArchiveViewModal .modal-body').html(response);
                 $('#dataTable2').DataTable();
 
                 showUpdateSuccessToast("Restore Successfully!");
-                $('#ViewModal').data('has-assignments', true);
+                $('#ArchiveViewModal').data('has-assignments', true);
             },
             error: function (xhr, status, error) {
                 console.error('Error updating user:', error);

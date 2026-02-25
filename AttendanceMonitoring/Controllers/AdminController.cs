@@ -260,7 +260,9 @@ namespace AttendanceMonitoring.Controllers
                 string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
 
-                editedUser.LRN = model.LRN;
+                //editedUser.LRN = model.LRN;
+                editedUser.SchoolId = model.LRN;
+                editedUser.UserName = model.LRN.ToString();
                 editedUser.FirstName = formattedFirstName;
                 editedUser.MiddleName = formattedMiddleName;
                 editedUser.LastName = formattedLastName;
@@ -1371,28 +1373,28 @@ namespace AttendanceMonitoring.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteGrade(int id)
         {
-            //var grade = await context.Grades.FindAsync(id);
-            var grade = await context.Grades
-                .Include(s => s.Sections)
-                    .ThenInclude(ss => ss.SectionSubjects)
-                        .ThenInclude(ta => ta.TeacherAssignments)
-                .Include(s => s.Sections)
-                    .ThenInclude(sa => sa.StudentAssignments)
-                .Include(s => s.Sections)
-                    .ThenInclude(sa => sa.SecretaryAssignments)   
-                .FirstOrDefaultAsync(g => g.Id == id);
+            var grade = await context.Grades.FindAsync(id);
+            //var grade = await context.Grades
+            //    .Include(s => s.Sections)
+            //        .ThenInclude(ss => ss.SectionSubjects)
+            //            .ThenInclude(ta => ta.TeacherAssignments)
+            //    .Include(s => s.Sections)
+            //        .ThenInclude(sa => sa.StudentAssignments)
+            //    .Include(s => s.Sections)
+            //        .ThenInclude(sa => sa.SecretaryAssignments)   
+            //    .FirstOrDefaultAsync(g => g.Id == id);
 
             if (grade == null)
             {
                 return Json(new { success = false, error = "Grade Level does not found" });
             }
 
-            //var hasSection = await context.Sections.AnyAsync(s => s.GradesId == id);
+            var hasSection = await context.Sections.AnyAsync(s => s.GradesId == id);
 
-            //if (hasSection)
-            //{
-            //    return Json(new { success = false, message = "Cannot delete Grade when contain sections" });
-            //}
+            if (hasSection)
+            {
+                return Json(new { success = false, message = "Cannot delete Grade when contain sections" });
+            }
 
             //context.Grades.Remove(grade);
 
@@ -1401,37 +1403,37 @@ namespace AttendanceMonitoring.Controllers
             grade.IsDeleted = true;
             grade.DeletedAt = time;
 
-            foreach(var section in grade.Sections)
-            {
-                section.IsDeleted = true;
-                section.DeletedAt = time;
+            //foreach(var section in grade.Sections)
+            //{
+            //    section.IsDeleted = true;
+            //    section.DeletedAt = time;
 
-                foreach(var ss in section.SectionSubjects)
-                {
-                    ss.IsDeleted = true;
-                    ss.DeletedAt = time;
+            //    foreach(var ss in section.SectionSubjects)
+            //    {
+            //        ss.IsDeleted = true;
+            //        ss.DeletedAt = time;
 
-                    foreach (var ta in ss.TeacherAssignments)
-                    {
-                        ta.IsDeleted = true;
-                        ta.DeletedAt = time;
-                    }
+            //        foreach (var ta in ss.TeacherAssignments)
+            //        {
+            //            ta.IsDeleted = true;
+            //            ta.DeletedAt = time;
+            //        }
 
-                }
+            //    }
 
-                foreach (var ssa in section.StudentAssignments)
-                {
-                    ssa.IsDeleted = true;
-                    ssa.DeletedAt = time;
-                }
+            //    foreach (var ssa in section.StudentAssignments)
+            //    {
+            //        ssa.IsDeleted = true;
+            //        ssa.DeletedAt = time;
+            //    }
 
-                foreach(var sa in section.SecretaryAssignments)
-                {
-                    sa.IsDeleted = true;
-                    sa.DeletedAt = time;
-                }
+            //    foreach(var sa in section.SecretaryAssignments)
+            //    {
+            //        sa.IsDeleted = true;
+            //        sa.DeletedAt = time;
+            //    }
 
-            }
+            //}
             await context.SaveChangesAsync();
 
             var userInfo = await GetCurrentUserInfo();
@@ -2073,6 +2075,7 @@ namespace AttendanceMonitoring.Controllers
                 .OrderBy(s => s.Id)
                 .ToListAsync();
 
+
             return View(secretariesAssignGradeSection);
         }
 
@@ -2091,10 +2094,10 @@ namespace AttendanceMonitoring.Controllers
             //Map From entity to view model
             var model = new EditTeacherViewModel()
             {
-                Email = teacher.Email, //from entity
+                //Email = teacher.Email, //from entity
                 //UserName = teacher.Email,
                 SchoolId = teacher.SchoolId,
-                EmployeeId = teacher.EmployeeId,
+                //EmployeeId = teacher.EmployeeId,
                 FirstName = teacher.FirstName,
                 MiddleName = teacher.MiddleName,
                 LastName = teacher.LastName,
@@ -2156,10 +2159,10 @@ namespace AttendanceMonitoring.Controllers
             //Manual mapping
             var model = new ViewTeacherViewModel()
             {
-                Email = teacher.Email,
+                //Email = teacher.Email,
                 //UserName = teacher.Email,
                 SchoolId = teacher.SchoolId,
-                EmployeeId = teacher.EmployeeId,
+                //EmployeeId = teacher.EmployeeId,
                 FirstName = teacher.FirstName,
                 MiddleName = teacher.MiddleName,
                 LastName = teacher.LastName,
@@ -2179,10 +2182,7 @@ namespace AttendanceMonitoring.Controllers
             return PartialView("_ViewTeacherPartial", model);
         }
 
-        public IActionResult AddTeacher()
-        {
-            return PartialView("_AddTeacherPartial");
-        }
+        
 
         [HttpGet]
         public async Task<IActionResult> AddSecretary()
@@ -2222,6 +2222,11 @@ namespace AttendanceMonitoring.Controllers
             return PartialView("_AddSecretaryPartial", model);
         }
 
+        public IActionResult AddTeacher()
+        {
+            return PartialView("_AddTeacherPartial");
+        }
+
         [HttpPost] //ViewModel → Entity (for saving to database)
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddTeacher(TeacherViewModel model)
@@ -2242,12 +2247,12 @@ namespace AttendanceMonitoring.Controllers
                 ModelState.AddModelError("SchoolId", "School Id is already taken!");
             }
 
-            bool employeeIdExisted = await context.Users.AnyAsync(e => e.EmployeeId == model.EmployeeId);
+            //bool employeeIdExisted = await context.Users.AnyAsync(e => e.EmployeeId == model.EmployeeId);
 
-            if (employeeIdExisted)
-            {
-                ModelState.AddModelError("EmployeeId", "Employee Id is already taken!");
-            }
+            //if (employeeIdExisted)
+            //{
+            //    ModelState.AddModelError("EmployeeId", "Employee Id is already taken!");
+            //}
 
             //Gagamitin to kapag gusto kong gumawa ng sarili kong validation sa Email existed kase may sariling validation si userManager.AnyAsync() about sa email exist
             //bool EmailIsExisted = await context.Users.AnyAsync(e => e.Email == model.Email);
@@ -2296,10 +2301,10 @@ namespace AttendanceMonitoring.Controllers
                 //Map from viewmodel to entity
                 AppUser teacher = new AppUser()
                 {
-                    Email = model.Email,
-                    UserName = model.Email,
+                    //Email = model.Email,
                     SchoolId = model.SchoolId,
-                    EmployeeId = model.EmployeeId,
+                    UserName = model.SchoolId.ToString(),
+                    //EmployeeId = model.EmployeeId,
                     FirstName = formattedFirstName,
                     MiddleName = formattedMiddleName,
                     LastName = formattedLastName,
@@ -2307,7 +2312,7 @@ namespace AttendanceMonitoring.Controllers
                     positionTitle = model.positionTitle,
                     imageFileData = saveImageData,
                     imageFilePath = saveImagePath,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 var result = await userManager.CreateAsync(teacher, model.Password); //.CreateAsync has a build in validation so if email existed it will return an error
@@ -2324,7 +2329,7 @@ namespace AttendanceMonitoring.Controllers
                         entityId: teacher.Id.ToString(),
                         userId: userInfo.userId,
                         schoolId: userInfo.schoolId,
-                        details: $"User {userInfo.username} added new teacher : {teacher.FirstName} {teacher.MiddleName} {teacher.LastName}, LRN : {teacher.SchoolId}",
+                        details: $"User {userInfo.username} added new teacher : {teacher.FirstName} {teacher.MiddleName} {teacher.LastName}, Employee No.: {teacher.SchoolId}",
                         username: userInfo.username
                     );
 
@@ -2398,12 +2403,12 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, message = "Teacher not found" });
             }
             //check for email duplication
-            bool sameEmail = await context.Users.AnyAsync(e => e.Email == model.Email && e.Id != id);
+            //bool sameEmail = await context.Users.AnyAsync(e => e.Email == model.Email && e.Id != id);
 
-            if (sameEmail)
-            {
-                ModelState.AddModelError("Email", "Email is already used!");
-            }
+            //if (sameEmail)
+            //{
+            //    ModelState.AddModelError("Email", "Email is already used!");
+            //}
 
             //duplicate check excluding self
             //Dito gumamit ng s.Id != id para pag nag check ng id is hindi isasama yung current id sa pag hahanap
@@ -2416,11 +2421,11 @@ namespace AttendanceMonitoring.Controllers
             }
 
             //Check for Employee Id duplication
-            bool employeeNoExisted = await context.Users.AnyAsync(e => e.EmployeeId == model.EmployeeId && e.Id != id);
-            if (employeeNoExisted)
-            {
-                ModelState.AddModelError("EmployeeId", "Employee Id is already taken!");
-            }
+            //bool employeeNoExisted = await context.Users.AnyAsync(e => e.EmployeeId == model.EmployeeId && e.Id != id);
+            //if (employeeNoExisted)
+            //{
+            //    ModelState.AddModelError("EmployeeId", "Employee Id is already taken!");
+            //}
 
             //Check if Full name duplication
             bool FullNameExisted = await context.Users.AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName && f.Id != id);
@@ -2495,9 +2500,10 @@ namespace AttendanceMonitoring.Controllers
             string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
             //Map ViewModel -> Entity(update existing entity)
-            editTeacher.Email = model.Email; //From ViewModel To Entity
+            //editTeacher.Email = model.Email; //From ViewModel To Entity
             editTeacher.SchoolId = model.SchoolId;
-            editTeacher.EmployeeId = model.EmployeeId;
+            editTeacher.UserName = model.SchoolId.ToString();
+            //editTeacher.EmployeeId = model.EmployeeId;
             editTeacher.FirstName = formattedFirstName;
             editTeacher.MiddleName = formattedMiddleName;
             editTeacher.LastName = formattedLastName;
@@ -2514,7 +2520,7 @@ namespace AttendanceMonitoring.Controllers
                 entityId: editTeacher.Id.ToString(),
                 userId: userInfo.userId,
                 schoolId: userInfo.schoolId,
-                details: $"User {userInfo.username} edited teacher {editTeacher.FirstName} {editTeacher.MiddleName} {editTeacher.LastName}, School Id: {editTeacher.SchoolId}",
+                details: $"User {userInfo.username} edited teacher {editTeacher.FirstName} {editTeacher.MiddleName} {editTeacher.LastName}, Employee No.: {editTeacher.SchoolId}",
                 username: userInfo.username
             );
 
@@ -2630,7 +2636,7 @@ namespace AttendanceMonitoring.Controllers
                     entityId: teacher.Id.ToString(),
                     userId: userInfo.userId,
                     schoolId: userInfo.schoolId,
-                    details: $"User {userInfo.username} deleted teacher {teacher.FirstName} {teacher.MiddleName} {teacher.LastName}, School Id: {teacher.SchoolId}",
+                    details: $"User {userInfo.username} deleted teacher {teacher.FirstName} {teacher.MiddleName} {teacher.LastName}, Employee No.: {teacher.SchoolId}",
                     username: userInfo.username
                 );
 
@@ -2706,7 +2712,8 @@ namespace AttendanceMonitoring.Controllers
         public async Task<IActionResult> AssignTeacher(string teacherId, int sectionSubjectId)
         {
             var teacher = await context.Users.FindAsync(teacherId);
-            
+
+            var currentAcademicPeriod = await GetCurrentAcademicPeriodId();
 
             if (teacher == null)
             {
@@ -2764,6 +2771,8 @@ namespace AttendanceMonitoring.Controllers
                                     .ToListAsync();
 
             var assignedSubject = await context.TeacherAssignments
+                                    .IgnoreQueryFilters()
+                                    .Where(ss => ss.AcademicPeriodId == currentAcademicPeriod)
                                     .Select(ss => ss.SectionSubjectId)
                                     .Distinct() // Remove Duplicates
                                     .ToListAsync();
@@ -2833,7 +2842,7 @@ namespace AttendanceMonitoring.Controllers
                 entityId: teacher.Id.ToString(),
                 userId: userInfo.userId,
                 schoolId: userInfo.schoolId,
-                details: $"User {userInfo.username} remove assignment {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo}, Subject: {subjectAssign} for Teacher: {teacher.FirstName} {teacher.MiddleName} {teacher.LastName} School Id: {teacher.SchoolId}",
+                details: $"User {userInfo.username} remove assignment {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo}, Subject: {subjectAssign} for Teacher: {teacher.FirstName} {teacher.MiddleName} {teacher.LastName} Employee No.: {teacher.SchoolId}",
                 username: userInfo.username
             );
 
@@ -2847,10 +2856,10 @@ namespace AttendanceMonitoring.Controllers
 
             var model = new ViewTeacherViewModel()
             {
-                Email = teacher.Email,
+                //Email = teacher.Email,
                 //UserName = teacher.Email,
                 SchoolId = teacher.SchoolId,
-                EmployeeId = teacher.EmployeeId,
+                //EmployeeId = teacher.EmployeeId,
                 FirstName = teacher.FirstName,
                 MiddleName = teacher.MiddleName,
                 LastName = teacher.LastName,
@@ -2872,6 +2881,16 @@ namespace AttendanceMonitoring.Controllers
         public async Task<IActionResult> RestoreTeacherAssignment()
         {
             var currentAcademicPeriod = await GetCurrentAcademicPeriodId();
+
+            var currentPeriod = await context.AcademicPeriods
+                                .Where(ap => ap.IsDefault == 1)
+                                .FirstOrDefaultAsync();
+            var year = currentPeriod.Year;
+            var period = currentPeriod.GradingPeriod;
+
+            
+            ViewBag.Year = year;
+            ViewBag.Period = period;
 
             var isDeletedTAssignments = await context.TeacherAssignments
                                 .IgnoreQueryFilters()
@@ -2929,7 +2948,7 @@ namespace AttendanceMonitoring.Controllers
                 entityId: unAssignedTeacherAssignments.Id.ToString(),
                 userId: userInfo.userId,
                 schoolId: userInfo.schoolId,
-                details: $"Admin {userInfo.username} restore Teacher Assignment {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo}, Subject: {subjectAssign} for Teacher: {teacher.FirstName} {teacher.MiddleName} {teacher.LastName} School Id: {teacher.SchoolId}",
+                details: $"Admin {userInfo.username} restore Teacher Assignment {gradeInfo} - {sectionInfo} {trackInfo} {tvlInfo}, Subject: {subjectAssign} for Teacher: {teacher.FirstName} {teacher.MiddleName} {teacher.LastName} Employee No.: {teacher.SchoolId}",
                 username: userInfo.username
             );
 
@@ -3016,7 +3035,7 @@ namespace AttendanceMonitoring.Controllers
                     entityId: deletedTeacher.Id.ToString(),
                     userId: userInfo.userId,
                     schoolId: userInfo.schoolId,
-                    details: $"Admin {userInfo.username} restore Teacher {deletedTeacher.FirstName} {deletedTeacher.LastName}. LRN: {deletedTeacher.LRN}",
+                    details: $"Admin {userInfo.username} restore Teacher {deletedTeacher.FirstName} {deletedTeacher.LastName}. LRN: {deletedTeacher.SchoolId}",
                     username: userInfo.username
                 );
 
@@ -3600,6 +3619,86 @@ namespace AttendanceMonitoring.Controllers
             return PartialView("_RestoreDeletedStudent", remainingDeletedStudent);
 
         }
+
+        [HttpDelete]
+        public async Task<IActionResult> PermanentDeleteStudent(int id)
+        {
+            try
+            {
+
+                var studentId = await context.Students
+                                   .IgnoreQueryFilters()
+                                   .FirstOrDefaultAsync(u => u.Id == id);
+
+                if (studentId == null)
+                {
+                    logger.LogWarning("Student not found with the Id of {StudentId}", id);
+                    return Json(new { success = false, message = "Student id is Null" });
+                }
+
+                var studentSectionAssignment = await context.StudentSectionAssignments
+                                            .IgnoreQueryFilters()
+                                            .Where(ssa => ssa.StudentId == studentId.Id)
+                                            .FirstOrDefaultAsync();
+
+                if (!string.IsNullOrEmpty(studentId.imageFilePath))
+                {
+                    string ImagePath = Path.Combine(environment.WebRootPath, "ProfilePic", studentId.imageFilePath);
+                    if (System.IO.File.Exists(ImagePath))
+                    {
+                        System.IO.File.Delete(ImagePath);
+                    }
+                }
+
+                if (studentSectionAssignment != null)
+                {
+                    context.Remove(studentSectionAssignment);
+                }
+
+                context.Remove(studentId);
+                await context.SaveChangesAsync();
+
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Delete",
+                    entityName: "User",
+                    entityId: studentId.Id.ToString(),
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"Admin {userInfo.username} deleted student {studentId.FirstName} {studentId.MiddelName} {studentId.LastName}. LRN: {studentId.LRN}",
+                    username: userInfo.username
+                );
+
+                var remainingDeletedStudent = await context.Students
+                                    .IgnoreQueryFilters()
+                                    .Include(sa => sa.SectionAssignments)
+                                    .Where(s => s.IsDeleted == true)
+                                    .ToListAsync();
+
+                logger.LogInformation("Student successfully deleted with the ID: {StudentId}", id);
+
+                return PartialView("_RestoreDeletedStudent", remainingDeletedStudent);
+
+            }
+            //catch (DbUpdateException ex)
+            //{
+            //    logger.LogError(ex, "Database error restoring student : {StudentId}", id);
+            //    return Json(new { success = false, message = "Database Error" });
+            //}
+
+            //Pag debug
+            catch (DbUpdateException ex)
+            {
+                logger.LogError(ex, "Database error: {Inner}", ex.InnerException?.Message);
+                return Json(new { success = false, message = ex.InnerException?.Message ?? "Database Error" });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error restoring student {StudentId}", id);
+                return Json(new { success = false, message = "Something went wrong" });
+            }
+        }
         [HttpGet]
         public async Task<IActionResult> BulkPromoteStudent(string id)
         {
@@ -3783,9 +3882,9 @@ namespace AttendanceMonitoring.Controllers
 
             AppUser secretary = new AppUser()
             {
-                Email = model.Email,
-                UserName = model.Email,
+                //Email = model.Email,
                 SchoolId = model.SchoolId,
+                UserName = model.SchoolId.ToString(),
                 FirstName = formattedFirstName,
                 MiddleName = formattedMiddleName,
                 LastName = formattedLastName,
@@ -3793,6 +3892,7 @@ namespace AttendanceMonitoring.Controllers
                 imageFileData = saveImageData,
                 imageFilePath = saveImagePath,
                 CreatedAt = DateTime.UtcNow
+                
             };
 
             var result = await userManager.CreateAsync(secretary, model.Password);
@@ -3807,7 +3907,8 @@ namespace AttendanceMonitoring.Controllers
                     SecretaryId = secretary.Id,
                     SectionId = model.SectionId,
                     //AcademicPeriodId = defaultAcademic, //(Optional)Used only for filtered archive
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    StartDate = DateTime.UtcNow
                 };
 
                 context.SecretaryAssignments.Add(secretaryAssignment);
@@ -3821,7 +3922,7 @@ namespace AttendanceMonitoring.Controllers
                     entityId: secretary.Id.ToString(),
                     userId: userInfo.userId,
                     schoolId: userInfo.schoolId,
-                    details: $"User {userInfo.username} Added secretary {secretary.FirstName} {secretary.MiddleName} {secretary.LastName}. LRN: {secretary.SchoolId}",
+                    details: $"Admin {userInfo.username} Added secretary {secretary.FirstName} {secretary.MiddleName} {secretary.LastName}. LRN: {secretary.SchoolId}",
                     username: userInfo.username
                 );
 
@@ -3959,7 +4060,8 @@ namespace AttendanceMonitoring.Controllers
                     var oldSectionId = secretaryAssignment.SectionId;
 
                     secretaryAssignment.SectionId = model.SectionId;
-                    secretaryAssignment.UpdatedAt = DateTime.UtcNow;
+                    //secretaryAssignment.UpdatedAt = DateTime.UtcNow;
+                    secretaryAssignment.StartDate = DateTime.UtcNow;
 
                     ///GAMITIN KAPAG MAG SET NG BAGONG SECRETARY ASSIGNMENT
                     //1.var oldSecretaryAssignment = await context.SecretaryAssignments
@@ -4040,7 +4142,7 @@ namespace AttendanceMonitoring.Controllers
 
             var model = new EditSecretaryViewModel()
             {
-                Email = secretary.Email,
+                //Email = secretary.Email,
                 SchoolId = secretary.SchoolId,
                 FirstName = secretary.FirstName,
                 MiddleName = secretary.MiddleName,
@@ -4104,7 +4206,7 @@ namespace AttendanceMonitoring.Controllers
                 }).ToList(),
 
                 SectionId = studentsGradeSection.SectionId,
-                Email = secretary.Email,
+                //Email = secretary.Email,
                 SchoolId = secretary.SchoolId,
                 FirstName = secretary.FirstName,
                 MiddleName = secretary.MiddleName,
@@ -4130,12 +4232,12 @@ namespace AttendanceMonitoring.Controllers
             }
 
             //check for email duplication
-            bool sameEmail = await context.Users.AnyAsync(e => e.Email == model.Email && e.Id != id);
+            //bool sameEmail = await context.Users.AnyAsync(e => e.Email == model.Email && e.Id != id);
 
-            if (sameEmail)
-            {
-                ModelState.AddModelError("Email", "Email is already used!");
-            }
+            //if (sameEmail)
+            //{
+            //    ModelState.AddModelError("Email", "Email is already used!");
+            //}
 
             //duplicate check excluding self
             //Dito gumamit ng s.Id != id para pag nag check ng id is hindi isasama yung current id sa pag hahanap
@@ -4232,8 +4334,9 @@ namespace AttendanceMonitoring.Controllers
             string formattedMiddleName = textinfo.ToTitleCase(model.MiddleName?.ToLower() ?? "");
             string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
-            editSecretary.Email = model.Email;
+            //editSecretary.Email = model.Email;
             editSecretary.SchoolId = model.SchoolId;
+            editSecretary.UserName = model.SchoolId.ToString();
             editSecretary.FirstName = formattedFirstName;
             editSecretary.MiddleName = formattedMiddleName;
             editSecretary.LastName = formattedLastName;
@@ -4295,6 +4398,7 @@ namespace AttendanceMonitoring.Controllers
 
             secretaryAssigned.SecretaryId = editSecretary.Id;
             secretaryAssigned.SectionId = model.SectionId;
+            secretaryAssigned.StartDate = DateTime.UtcNow;
 
             context.SecretaryAssignments.Update(secretaryAssigned);
             await context.SaveChangesAsync();
@@ -4411,7 +4515,6 @@ namespace AttendanceMonitoring.Controllers
                 .ToListAsync();
 
             return PartialView("_RestoreDeletedSecretaryPartial", deletedSecretary);
-
         }
 
         [HttpPost]
@@ -4510,6 +4613,93 @@ namespace AttendanceMonitoring.Controllers
                 logger.LogError(ex, "Unexpected error restoring secretary {SecretaryId}", secretaryId);
                 return Json(new { success = false, message = "Something went wrong" });
             }
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> PermanentDeleteSecretary(string id)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Json(new { success = false, message = "ID is required" });
+                }
+
+                var secretaryId = await context.Users
+                                   .IgnoreQueryFilters()
+                                   .FirstOrDefaultAsync(u => u.Id == id);            
+
+                if(secretaryId == null)
+                {
+                    logger.LogWarning("Secretary not found with the Id of {SecretaryId}", id);
+                    return Json(new { success = false, message = "Secretary id is Null" });
+                }
+
+                var secretaryAssignment = await context.SecretaryAssignments
+                                            .IgnoreQueryFilters()
+                                            .Where(sa => sa.SecretaryId == secretaryId.Id)
+                                            .FirstOrDefaultAsync();
+
+
+                if (!string.IsNullOrEmpty(secretaryId.imageFilePath))
+                {
+                    string ImagePath = Path.Combine(environment.WebRootPath, "ProfilePic", secretaryId.imageFilePath);
+                    if (System.IO.File.Exists(ImagePath))
+                    {
+                        System.IO.File.Delete(ImagePath);
+                    }
+                }
+                
+                if(secretaryAssignment != null)
+                {
+                    context.Remove(secretaryAssignment);
+                }
+
+                context.Remove(secretaryId);
+                await context.SaveChangesAsync();
+
+                var userInfo = await GetCurrentUserInfo();
+
+                await logService.LogActivity(
+                    actionType: "Delete",
+                    entityName: "User",
+                    entityId: secretaryId.Id.ToString(),
+                    userId: userInfo.userId,
+                    schoolId: userInfo.schoolId,
+                    details: $"Admin {userInfo.username} deleted secretary {secretaryId.FirstName} {secretaryId.MiddleName} {secretaryId.LastName}. LRN: {secretaryId.SchoolId}",
+                    username: userInfo.username
+                );
+
+                var remainingUserRoleId = await context.Roles
+                                .Where(r => r.Name == "Secretary")
+                                .Select(r => r.Id)
+                                .FirstOrDefaultAsync();
+
+                var remainingDeletedSecretary = await context.Users
+                    .IgnoreQueryFilters()
+                    .Include(u => u.SecretariesAssignments)
+                    .Include(u => u.SecretariesAssignments)
+                        .ThenInclude(s => s.Section.Grade)
+                    .Include(g => g.SecretariesAssignments)
+                        .ThenInclude(sa => sa.Section.SectionSubjects)
+                    .Where(u => context.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == remainingUserRoleId))
+                    .Where(u => u.IsDeleted == true)
+                    .ToListAsync();
+
+                logger.LogInformation("Secretary successfully deleted with the ID: {SecretaryId}", id);
+                //return Json(new { success = true, message = "Secretary Deleted Permanently!" });
+                return PartialView("_RestoreDeletedSecretaryPartial", remainingDeletedSecretary);
+            }
+            catch (DbUpdateException ex)
+            {
+                logger.LogError(ex, "Database error restoring secretary{SecretaryId}", id);
+                return Json(new { success = false, message = "Database Error" });
+            }
+            catch(Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error restoring secretary {SecretaryId}", id);
+                return Json(new { success = false, message = "Something went wrong" });
+            }     
         }
 
         [HttpGet]

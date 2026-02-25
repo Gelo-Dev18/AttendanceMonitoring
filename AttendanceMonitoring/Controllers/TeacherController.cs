@@ -1200,7 +1200,8 @@ namespace AttendanceMonitoring.Controllers
 
             var model = new MyClassesViewModel()
             {
-                LRN = user.SchoolId,
+                //LRN = user.SchoolId,
+                SchoolId = user.SchoolId,
                 FirstName = user.FirstName,
                 MiddleName = user.MiddleName,
                 LastName = user.LastName,

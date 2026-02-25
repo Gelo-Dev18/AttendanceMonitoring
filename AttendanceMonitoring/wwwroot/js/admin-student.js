@@ -9,12 +9,12 @@ function updateBulkPromotionButton() {
 
 $(document).ready(function () {
 
-    $('#ViewModal').on('show.bs.modal', function () {
+    $('#ArchiveViewModal').on('show.bs.modal', function () {
         $(this).data('has-assignments', false);
     });
 
     //This will reload the page for MyClasses list if there is a new assign
-    $('#ViewModal').on('hide.bs.modal',  function () {   
+    $('#ArchiveViewModal').on('hide.bs.modal',  function () {   
         if ($(this).data('has-assignments')) {
             location.reload();
         }
@@ -303,11 +303,11 @@ $(document).ready(function () {
             //dataType: 'json',
             success: function (response) {
 
-                $('#ViewModal .modal-body').html(response);
+                $('#ArchiveViewModal .modal-body').html(response);
                 $('#dataTable2').DataTable();
 
                 showUpdateSuccessToast("Restore Successfully!");
-                $('#ViewModal').data('has-assignments', true);
+                $('#ArchiveViewModal').data('has-assignments', true);
             },
             error: function (xhr, status, error) {
                 console.error('Error updating user:', error);
@@ -315,6 +315,31 @@ $(document).ready(function () {
                 loadSpinner();
                 loadPageBlur();
                 showDangerToast('An error occurred while restoring student.');
+            }
+        });
+    });
+
+    $(document).on('click', '.remove-btn', function (e) {
+        e.preventDefault();
+        //var button = $(this);
+        //var button = $(event.relatedTarget); // ginagamit lang kapag modal
+
+        var studentId = $(this).data('student-id');
+
+        $.ajax({
+            url: '/Admin/PermanentDeleteStudent/' + studentId,
+            type: 'DELETE',
+            success: function (response) {
+                $('#ArchiveViewModal .modal-body').html(response);
+                $('#dataTable2').DataTable();
+                showUpdateSuccessToast("Remove Successfully");
+            },
+            error: function (xhr, status, error) {
+                console.error('Error remove assign:', error);
+                //    alert('Something went wrong. Please try again.');
+                loadSpinner();
+                loadPageBlur();
+                showDangerToast(response);
             }
         });
     });

@@ -222,6 +222,22 @@
             </div>
         </div>
     </div>
+
+    @*Archive Modal*@
+    <div class="modal fade" id="ArchiveViewModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ArchiveViewModalBody">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ArchiveViewModalLabel"><strong>...</strong></h5>
+                </div>
+                <div class="modal-body" id="ArchiveViewModalBody">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     @*View small Modal*@
     <div class="modal fade" id="ViewSmallModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ViewSmallModalBody">
@@ -267,6 +283,29 @@
                 </div>
                 <div class="modal-footer">
                     <button id="confirmDeleteButton" class="btn btn-danger delete-teacher-button">
+                        Delete
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* <!-- Delete Permanent Confirmation Modal --> *@
+    <div class="modal fade" id="ModalPermanentDelete" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
+        <div class="modal-dialog">
+            @* <div class="modal-dialog modal-dialog-centered"> *@
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center" id="staticBackdropLabel"><strong>Confirmation</strong></h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to Delete ?
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmPermanentDeleteButton" class="btn btn-danger delete-teacher-button">
                         Delete
                     </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">

@@ -204,7 +204,7 @@
             success: function (response) {
 
                 $('#ViewModal .modal-body').html(response);
-                //$('#dataTable2').DataTable();
+                $('#dataTable2').DataTable();
 
                 showUpdateSuccessToast("Restore Successfully!");
                 $('#ViewModal').data('has-assignments', true);

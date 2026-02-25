@@ -6,9 +6,9 @@ namespace AttendanceMonitoring.ViewModel
 {
     public class SecretaryViewModel
     {
-        [Required(ErrorMessage = "Email is Required!"), MaxLength(60)]
-        [EmailAddress(ErrorMessage = "Use a valid email with an '@' sign")]
-        public string Email { get; set; }
+        //[Required(ErrorMessage = "Email is Required!"), MaxLength(60)]
+        //[EmailAddress(ErrorMessage = "Use a valid email with an '@' sign")]
+        //public string Email { get; set; }
 
         [DataType(DataType.Password)]
         [Required(ErrorMessage = "Password is Required!"), MaxLength(60)]
@@ -33,6 +33,8 @@ namespace AttendanceMonitoring.ViewModel
         public int SectionId { get; set; }
 
         public List<SelectListItem>? AvailableGradeSection { get; set; }
+
+        public DateTime CreatedDate { get; set; }
 
 
 

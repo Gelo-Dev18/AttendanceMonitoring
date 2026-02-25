@@ -4,6 +4,7 @@ using AttendanceMonitoring.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AttendanceMonitoring.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260225013917_StudentIdInAttendanceTAbleSetToNullableForAbleToDeleteStudentUsers")]
+    partial class StudentIdInAttendanceTAbleSetToNullableForAbleToDeleteStudentUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -775,7 +778,7 @@ namespace AttendanceMonitoring.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("AttendanceMonitoring.Models.Student", "Student")
-                        .WithMany("Attendances")
+                        .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -993,8 +996,6 @@ namespace AttendanceMonitoring.Data.Migrations
 
             modelBuilder.Entity("AttendanceMonitoring.Models.Student", b =>
                 {
-                    b.Navigation("Attendances");
-
                     b.Navigation("SectionAssignments");
                 });
 

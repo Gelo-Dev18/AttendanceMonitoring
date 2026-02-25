@@ -11,26 +11,27 @@
     <div class="col-12">
         <div  asp-validation-summary="ModelOnly" class="text-danger"></div>
     </div>
-    <div class="col-6">
+    @* <div class="col-6">
         <label asp-for="Email" class="form-label"><strong>Email</strong></label>
         <input asp-for="Email" class="form-control" required/>
         <span asp-validation-for="Email" class="text-danger validation-error-message"></span>       
+    </div> *@
+    <div class="col-6">
+        <label asp-for="SchoolId" class="form-label"><strong>Employee No.</strong></label>
+        <input asp-for="SchoolId" class="form-control" required />
+        <span asp-validation-for="SchoolId" class="text-danger"></span>
     </div>
     <div class="col-6">
         <label asp-for="Password" class="form-label"><strong>Password</strong></label>
         <input asp-for="Password" class="form-control" required />
         <span asp-validation-for="Password" class="text-danger"></span>
     </div>
-    <div class="col-6">
-        <label asp-for="SchoolId" class="form-label"><strong>School Id</strong></label>
-        <input asp-for="SchoolId" class="form-control" required />
-        <span asp-validation-for="SchoolId" class="text-danger"></span>
-    </div>
-    <div class="col-6">
+    
+    @* <div class="col-6">
         <label asp-for="EmployeeId" class="form-label"><strong>Employee No</strong>.</label>
         <input asp-for="EmployeeId" class="form-control" required />
         <span asp-validation-for="EmployeeId" class="text-danger"></span>
-    </div>
+    </div> *@
 
     <div class="col-md-6">
         <label asp-for="FirstName" class="form-label"><strong>First Name</strong></label>
@@ -58,7 +59,7 @@
     </div>
     <div class="col-6">
         <label asp-for="positionTitle" class="form-label"><strong>Designation/Position</strong></label>
-        <input asp-for="positionTitle" class="form-control" placeholder="Teacher 1, Teacher 2, Teacher 3...." required>
+        <input asp-for="positionTitle" class="form-control" placeholder="Teacher 1/Teacher 2/Teacher 3...." required>
         <span asp-validation-for="positionTitle" class="text-danger"></span>
     </div>
     <div class="col-6 form-group">

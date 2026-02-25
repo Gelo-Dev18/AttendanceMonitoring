@@ -245,7 +245,7 @@ namespace AttendanceMonitoring.Data
             //foreign keys to Student table
             modelBuilder.Entity<Attendance>()
                 .HasOne(a => a.Student)
-                .WithMany()
+                .WithMany(a => a.Attendances) // bagong lagay para gumana ang permanent delete function
                 .HasForeignKey(a => a.StudentId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false); //this is needed so that the navigation can be null

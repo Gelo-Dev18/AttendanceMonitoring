@@ -25,7 +25,7 @@
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <a class="dropdown-item" style="font-size: 12px;" href="#" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreTeacherAssignment/" data-title="Teacher Assignment Details">Deleted Assignments</a>
-                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreDeletedTeacher/" data-title="Deleted Teacher Details">Deleted Teachers</a>
+                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#ArchiveViewModal" data-url="/Admin/RestoreDeletedTeacher/" data-title="Deleted Teacher Details">Deleted Teachers</a>
                 </div>
             </div>
             @* <button type="button" class="btn btn-link" data-bs-toggle="modal" data-bs-target="#ViewModal" data-url="/Admin/RestoreTeacherAssignment/" data-title="Teacher Assignment Detail's">
@@ -39,8 +39,8 @@
                 <thead>
                     <tr>
                         <th class="text-center"><strong>#</strong></th>
-                        <th><strong>School ID</strong></th>
-                        <th><strong>Email</strong></th>
+                        <th><strong>Employee No,</strong></th>
+                        @* <th><strong>Email</strong></th> *@
                         <th><strong>Full name</strong></th>
                         <th><strong>Sex</strong></th>
                         <th><strong>Designation</strong></th>
@@ -67,7 +67,7 @@
                         <tr>
                             <td class="text-center"><strong>@(i++)</strong></td>
                             <td><strong>@teacher.SchoolId</strong></td>
-                            <td><strong>@teacher.Email</strong></td>
+                            @* <td><strong>@teacher.Email</strong></td> *@
                             <td><strong>@teacher.LastName, @teacher.FirstName @teacher.MiddleName</strong></td>
                             <td><strong>@teacher.Sex</strong></td>
                             <td><strong>@teacher.positionTitle</strong></td>

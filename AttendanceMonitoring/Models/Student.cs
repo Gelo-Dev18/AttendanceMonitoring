@@ -27,5 +27,7 @@ namespace AttendanceMonitoring.Models
         //Direct relationship: One-to-Many(Student → StudentSectionAssignment)
         //Overall pattern: Many-to-Many (Student ↔ Section through linking table)
         public ICollection<StudentSectionAssignment> SectionAssignments { get; set; }
+
+        public ICollection<Attendance> Attendances { get; set; }
     }
 }

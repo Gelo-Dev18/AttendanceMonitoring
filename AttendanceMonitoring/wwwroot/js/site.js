@@ -63,6 +63,30 @@ function loadViewModal(url, userID, modal) {
     });
 }
 
+function loadArchiveViewModal(url, userID, modal) {
+    if (userID !== undefined && userID !== null) {
+        url = url + userID;
+    }
+    $.ajax({
+
+        //url: url + userID,
+        url: url,
+        type: 'GET',
+        success: function (html) {
+            modal.find('#ArchiveViewModalBody').html(html);
+            $('#dataTable2').DataTable({
+                "autoWidth": false, // PREVENTION SA WIDE TABLE
+                "responsive": true,
+                "destroy": true // SAFETY NET: Wasakin ang luma bago gumawa ng bago
+            });
+        },
+        error: function (xhr, status, error) {
+            console.error('Error loading add teacher modal:', error);
+            modal.find('#ArchiveModalFormBody').html('<p class="text-center">Failed to load modal body</p>');
+        }
+    });
+}
+
 //function checkGrade() {
 //    const selectElement = $('#gradeId');
 //    const inputElement = $('#TVLInput');
@@ -474,6 +498,35 @@ $(document).ready(function () {
     });
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //View Small Modal
+
+    //Trigger View Modal
+    $('#ArchiveViewModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        userID = button.data('id');
+
+        var url = button.data('url');
+        var title = button.data('title');
+
+        var modal = $(this);
+
+        modal.find('#ArchiveViewModalLabel').text(title);
+
+
+        if (userID !== undefined && userID !== null) {
+            url = url + userID;
+        }
+
+        loadBlurBackground();
+
+        loadArchiveViewModal(url, userID, modal);
+
+    });
+
+    $('#ArchiveViewModal').on('hide.bs.modal', function () {
+        hideBlurBackground();
+    });
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     $('#ViewSmallModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         userID = button.data('id');

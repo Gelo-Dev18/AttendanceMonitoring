@@ -6,7 +6,7 @@ namespace AttendanceMonitoring.ViewModel
 {
     public class EditSecretaryViewModel
     {
-        public string Email {get; set;}
+        //public string Email {get; set;}
         public string? NewPassword { get; set; }
         public int SchoolId { get; set; }
         public string FirstName { get; set; }

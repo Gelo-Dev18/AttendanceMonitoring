@@ -11,7 +11,7 @@
 
         public DateTime AttendanceDate { get; set; }//Actual date of attendance
         
-        public int StudentId { get; set; }
+        public int? StudentId { get; set; } // Need na maging nullable para gumana ang delete sa student
         public string RecordedById { get; set; }// Recorded by (Teacher or Secretary)
 
         //public int SubjectId { get; set; }
