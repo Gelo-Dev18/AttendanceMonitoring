@@ -28,6 +28,6 @@ namespace AttendanceMonitoring.Models
         //Overall pattern: Many-to-Many (Student ↔ Section through linking table)
         public ICollection<StudentSectionAssignment> SectionAssignments { get; set; }
 
-        public ICollection<Attendance> Attendances { get; set; }
+        //public ICollection<Attendance> Attendances { get; set; }
     }
 }

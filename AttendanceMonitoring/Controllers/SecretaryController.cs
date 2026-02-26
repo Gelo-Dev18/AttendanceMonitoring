@@ -561,10 +561,15 @@ namespace AttendanceMonitoring.Controllers
                         .ThenInclude(s => s.Grade)
                     .Include(sa => sa.Section.SectionSubjects)
                         .ThenInclude(ssa => ssa.Subject)
-                    .FirstOrDefaultAsync();
-                    
+                    .FirstOrDefaultAsync(sa => sa.Id == model.SecretaryAssignmentId);
 
-            if(!model.SecretaryAssignmentId.HasValue || model.SecretaryAssignmentId == 0)
+            if (secretaryClass == null)
+            {
+                return Json(new { success = false, message = "Secretary Assignment not found!" });
+            }
+
+
+            if (!model.SecretaryAssignmentId.HasValue || model.SecretaryAssignmentId == 0)
             {
                 return Json(new { success = false, message = "Secretary Assignment Id is missing!" });
             }
@@ -588,11 +593,19 @@ namespace AttendanceMonitoring.Controllers
             {
                 var recordedById = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+                var sectionId = secretaryClass.SectionId;
+
+                var students = await _context.StudentSectionAssignments
+                                .Where(ssa => ssa.SectionId == sectionId)
+                                .ToListAsync();
+
                 //uses foreach to loop all student because multple student's attendance marking is inserted to database
                 foreach(var attendance in model.StudentAttendance)
                 {
                     var studentId = attendance.Key; //Student id(1, 2, 3)
                     var marking = attendance.Value; //Present etc 
+
+                    var studentAssignments = students.FirstOrDefault(s => s.StudentId == studentId);
                     
                     string? excuseReason = null;
 
@@ -603,7 +616,8 @@ namespace AttendanceMonitoring.Controllers
 
                     var newAttendance = new Attendance
                     {
-                        StudentId = studentId,
+                        //StudentId = studentId,
+                        StudentSectionAssignmentId = studentAssignments.Id,
                         AttendanceMarking = marking,
                         AcademicPeriodId = model.AcademicPeriodId,
                         AttendanceDate = model.AttendanceDate,

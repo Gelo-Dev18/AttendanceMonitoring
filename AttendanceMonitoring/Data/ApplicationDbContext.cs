@@ -243,12 +243,20 @@ namespace AttendanceMonitoring.Data
 
             //ALWAYS CONFIGURE FOREIGN KEY IF A CLASS HAS A FOREIGN KEY (EX.Class Attendance has public int Academic Period - public virtual AcademicPeriod AcademicPeriod
             //foreign keys to Student table
+            //modelBuilder.Entity<Attendance>()
+            //    .HasOne(a => a.Student)
+            //    .WithMany(a => a.Attendances) // bagong lagay para gumana ang permanent delete function
+            //    .HasForeignKey(a => a.StudentId)
+            //    .OnDelete(DeleteBehavior.Restrict)
+            //    .IsRequired(false); //this is needed so that the navigation can be null
+
+            //BAGONG DAGDAG FOR REFACTOR ABOUT STUDENT
             modelBuilder.Entity<Attendance>()
-                .HasOne(a => a.Student)
-                .WithMany(a => a.Attendances) // bagong lagay para gumana ang permanent delete function
-                .HasForeignKey(a => a.StudentId)
+                .HasOne(a => a.StudentSectionAssignment)
+                .WithMany(a => a.StudentAttendances)
+                .HasForeignKey(a => a.StudentSectionAssignmentId)
                 .OnDelete(DeleteBehavior.Restrict)
-                .IsRequired(false); //this is needed so that the navigation can be null
+                .IsRequired(false);
 
             //foreign keys to AppUser table
             modelBuilder.Entity<Attendance>()
@@ -301,7 +309,8 @@ namespace AttendanceMonitoring.Data
             modelBuilder.Entity<Attendance>()
                 .HasIndex(a => new
                 {
-                    a.StudentId,
+                    //a.StudentId,
+                    a.StudentSectionAssignmentId,
                     a.AttendanceDate,
                     a.TeacherAssignmentId,
                     a.SecretaryAssignmentId,

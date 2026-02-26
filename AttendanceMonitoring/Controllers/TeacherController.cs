@@ -447,21 +447,18 @@ namespace AttendanceMonitoring.Controllers
                 });
             }
 
+            var sectionId = TeachersClass.SectionSubject.SectionId;
+
+            var students = await context.StudentSectionAssignments
+                .Where(ssa => ssa.SectionId == sectionId)
+                .ToListAsync();
+
             foreach (var attendance in model.StudentAttendance)
             {
                 var studentId = attendance.Key;
                 var marking = attendance.Value;
 
-                //if(attendance.Value == "Excuse")
-                //{
-                //    string? excuseReason = null;
-                //    model.ExcuseReason.TryGetValue(studentId, out excuseReason);
-
-                //    if (string.IsNullOrWhiteSpace(excuseReason))
-                //    {
-                //        ModelState.AddModelError("ExcuseReason", "Please enter a reason for the excuse.");
-                //    }
-                //}
+                var studentAssignments = students.FirstOrDefault(s => s.StudentId == studentId);
 
                 string? excuseReason = null;
                 if (marking == "Excuse" && model.ExcuseReason != null)
@@ -471,7 +468,8 @@ namespace AttendanceMonitoring.Controllers
 
                 var newAttendance = new Attendance
                 {
-                    StudentId = studentId,
+                    //StudentId = studentId, //Comment muna para palitan at itesting ang pag attendance
+                    StudentSectionAssignmentId = studentAssignments.Id,
                     AttendanceMarking = marking,
                     AcademicPeriodId = model.AcademicPeriodId,
                     AttendanceDate = model.AttendanceDate,
@@ -664,7 +662,8 @@ namespace AttendanceMonitoring.Controllers
                     {
                         var studentData = new AttendanceReportData //Helper in the ViewModel
                         {
-                            StudentId = student.StudentId,
+                            StudentSectionAssignmentId = student.Id,
+                            //StudentId = student.StudentId,
                             StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
                             DailyAttendance = new List<string>()
                         };
@@ -673,10 +672,15 @@ namespace AttendanceMonitoring.Controllers
                         foreach(var date in dateRange)
                         {
                             var attendance = record
-                                .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                                .FirstOrDefault(ar => ar.StudentSectionAssignmentId == student.Id
                                                 && ar.AttendanceDate.Date == date.Date);
 
-                            if(attendance != null)
+                            ///OLD QUERY FOR FETCHING STUDENT ID
+                            //var attendance = record
+                            //    .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                            //                    && ar.AttendanceDate.Date == date.Date);
+
+                            if (attendance != null)
                             {
                                 //Map attendance marking to P/L/A, shortcute for Present,Late,Absent
                                 studentData.DailyAttendance.Add(
@@ -843,7 +847,8 @@ namespace AttendanceMonitoring.Controllers
             {
                 var studentData = new AdminAttendanceReportData
                 {
-                    StudentId = student.StudentId,
+                    StudentSectionAssignmentId = student.Id,
+                    //StudentId = student.StudentId,
                     StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
                     DailyAttendance = new List<string>()
                 };
@@ -851,7 +856,7 @@ namespace AttendanceMonitoring.Controllers
                 foreach (var date in dateRange)
                 {
                     var attendance = record
-                        .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                        .FirstOrDefault(ar => ar.StudentSectionAssignment.StudentId == student.StudentId
                                         && ar.AttendanceDate.Date == date.Date);
 
                     if (attendance != null)

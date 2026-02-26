@@ -3262,9 +3262,7 @@ namespace AttendanceMonitoring.Controllers
                 .Where(si => si.StudentId == id)
                 .Select(s => s.SectionId)
                 .FirstOrDefaultAsync();
-
-            
-
+          
 
             var model = new EditStudentViewModel()
             {
@@ -3505,7 +3503,7 @@ namespace AttendanceMonitoring.Controllers
             //context.Students.Remove(Student);
 
             var hasAttendance = await context.Attendances
-                .AnyAsync(a => a.StudentId == id);
+                .AnyAsync(a => a.StudentSectionAssignmentId != null && a.StudentSectionAssignment.StudentId == id);
 
             var time = DateTime.UtcNow;
 
@@ -3585,7 +3583,7 @@ namespace AttendanceMonitoring.Controllers
             }
 
             var hasAttendance = await context.Attendances
-                .Where(a => a.StudentId == deletedStudent.Id)
+                .Where(a => a.StudentSectionAssignmentId != null && a.StudentSectionAssignment.StudentId == deletedStudent.Id)
                 .FirstOrDefaultAsync();
                           
             deletedStudent.IsDeleted = false;
@@ -3620,85 +3618,96 @@ namespace AttendanceMonitoring.Controllers
 
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> PermanentDeleteStudent(int id)
-        {
-            try
-            {
+        //NO NEED NA LALO NA INDUSTRY STANDARD. GAMITIN NALANG IF MISMONG CLIENT ANG NAG SUGGEST!
+        //[HttpDelete]
+        //public async Task<IActionResult> PermanentDeleteStudent(int id)
+        //{
+        //    try
+        //    {
 
-                var studentId = await context.Students
-                                   .IgnoreQueryFilters()
-                                   .FirstOrDefaultAsync(u => u.Id == id);
+        //        var studentId = await context.Students
+        //                           .IgnoreQueryFilters()
+        //                           .FirstOrDefaultAsync(u => u.Id == id);
 
-                if (studentId == null)
-                {
-                    logger.LogWarning("Student not found with the Id of {StudentId}", id);
-                    return Json(new { success = false, message = "Student id is Null" });
-                }
+        //        if (studentId == null)
+        //        {
+        //            logger.LogWarning("Student not found with the Id of {StudentId}", id);
+        //            return Json(new { success = false, message = "Student id is Null" });
+        //        }
 
-                var studentSectionAssignment = await context.StudentSectionAssignments
-                                            .IgnoreQueryFilters()
-                                            .Where(ssa => ssa.StudentId == studentId.Id)
-                                            .FirstOrDefaultAsync();
+        //        var studentSectionAssignment = await context.StudentSectionAssignments
+        //                                    .IgnoreQueryFilters()
+        //                                    .Where(ssa => ssa.StudentId == studentId.Id)
+        //                                    .FirstOrDefaultAsync();
 
-                if (!string.IsNullOrEmpty(studentId.imageFilePath))
-                {
-                    string ImagePath = Path.Combine(environment.WebRootPath, "ProfilePic", studentId.imageFilePath);
-                    if (System.IO.File.Exists(ImagePath))
-                    {
-                        System.IO.File.Delete(ImagePath);
-                    }
-                }
+        //        if (!string.IsNullOrEmpty(studentId.imageFilePath))
+        //        {
+        //            string ImagePath = Path.Combine(environment.WebRootPath, "ProfilePic", studentId.imageFilePath);
+        //            if (System.IO.File.Exists(ImagePath))
+        //            {
+        //                System.IO.File.Delete(ImagePath);
+        //            }
+        //        }
 
-                if (studentSectionAssignment != null)
-                {
-                    context.Remove(studentSectionAssignment);
-                }
+        //        //if (studentSectionAssignment != null)
+        //        //{
+        //        //    //context.Remove(studentSectionAssignment);
+        //        //    studentSectionAssignment.IsDeleted = true;
+        //        //    studentSectionAssignment.DeletedAt = DateTime.UtcNow;
+        //        //    context.Update(studentSectionAssignment);
+        //        //}
 
-                context.Remove(studentId);
-                await context.SaveChangesAsync();
+        //        context.Remove(studentId);
+        //        await context.SaveChangesAsync();
 
-                var userInfo = await GetCurrentUserInfo();
+        //        var userInfo = await GetCurrentUserInfo();
 
-                await logService.LogActivity(
-                    actionType: "Delete",
-                    entityName: "User",
-                    entityId: studentId.Id.ToString(),
-                    userId: userInfo.userId,
-                    schoolId: userInfo.schoolId,
-                    details: $"Admin {userInfo.username} deleted student {studentId.FirstName} {studentId.MiddelName} {studentId.LastName}. LRN: {studentId.LRN}",
-                    username: userInfo.username
-                );
+        //        await logService.LogActivity(
+        //            actionType: "Delete",
+        //            entityName: "User",
+        //            entityId: studentId.Id.ToString(),
+        //            userId: userInfo.userId,
+        //            schoolId: userInfo.schoolId,
+        //            details: $"Admin {userInfo.username} deleted student {studentId.FirstName} {studentId.MiddelName} {studentId.LastName}. LRN: {studentId.LRN}",
+        //            username: userInfo.username
+        //        );
 
-                var remainingDeletedStudent = await context.Students
-                                    .IgnoreQueryFilters()
-                                    .Include(sa => sa.SectionAssignments)
-                                    .Where(s => s.IsDeleted == true)
-                                    .ToListAsync();
+        //        var remainingDeletedStudent = await context.Students
+        //                            .IgnoreQueryFilters()
+        //                            .Include(sa => sa.SectionAssignments)
+        //                            .Where(s => s.IsDeleted == true)
+        //                            .ToListAsync();
 
-                logger.LogInformation("Student successfully deleted with the ID: {StudentId}", id);
+        //        logger.LogInformation("Student successfully deleted with the ID: {StudentId}", id);
 
-                return PartialView("_RestoreDeletedStudent", remainingDeletedStudent);
+        //        return PartialView("_RestoreDeletedStudent", remainingDeletedStudent);
 
-            }
-            //catch (DbUpdateException ex)
-            //{
-            //    logger.LogError(ex, "Database error restoring student : {StudentId}", id);
-            //    return Json(new { success = false, message = "Database Error" });
-            //}
+        //    }
+        //    //catch (DbUpdateException ex)
+        //    //{
+        //    //    logger.LogError(ex, "Database error restoring student : {StudentId}", id);
+        //    //    return Json(new { success = false, message = "Database Error" });
+        //    //}
 
-            //Pag debug
-            catch (DbUpdateException ex)
-            {
-                logger.LogError(ex, "Database error: {Inner}", ex.InnerException?.Message);
-                return Json(new { success = false, message = ex.InnerException?.Message ?? "Database Error" });
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Unexpected error restoring student {StudentId}", id);
-                return Json(new { success = false, message = "Something went wrong" });
-            }
-        }
+        //    //Pag debug
+        //    catch (DbUpdateException ex)
+        //    {
+        //        logger.LogError(ex, "Database error: {Inner}", ex.InnerException?.Message);
+        //        return Json(new { success = false, message = ex.InnerException?.Message ?? "Database Error" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "Unexpected error: {Message} | Inner: {Inner}",
+        //            ex.Message,
+        //            ex.InnerException?.Message);
+        //        return Json(new { success = false, message = ex.Message + " | " + ex.InnerException?.Message });
+        //    }
+        //    //catch (Exception ex)
+        //    //{
+        //    //    logger.LogError(ex, "Unexpected error restoring student {StudentId}", id);
+        //    //    return Json(new { success = false, message = "Something went wrong" });
+        //    //}
+        //}
         [HttpGet]
         public async Task<IActionResult> BulkPromoteStudent(string id)
         {
@@ -3712,13 +3721,13 @@ namespace AttendanceMonitoring.Controllers
                 .Include(ssa => ssa.Student)
                 .Include(ssa => ssa.Section)
                     .ThenInclude(s => s.Grade)
-                .Where(ssa => studentIds.Contains(ssa.StudentId))
+                .Where(ssa => ssa.StudentId.HasValue && studentIds.Contains(ssa.StudentId.Value))
                 .ToListAsync();
 
             var currentAssignments = await context.StudentSectionAssignments
                 .Include(ssa => ssa.Section)
                     .ThenInclude(s => s.Grade)
-                .Where(ssa => studentIds.Contains(ssa.StudentId))
+                .Where(ssa => ssa.StudentId.HasValue && studentIds.Contains(ssa.StudentId.Value))
                 .FirstOrDefaultAsync();
             //.ToListAsync();
 
@@ -3731,7 +3740,7 @@ namespace AttendanceMonitoring.Controllers
                 .ToList();
 
             var alreadyAssinged = await context.StudentSectionAssignments
-                .Where(ssa => studentIds.Contains(ssa.StudentId))
+                .Where(ssa => ssa.StudentId.HasValue && studentIds.Contains(ssa.StudentId.Value))
                 .Select(ssa => ssa.SectionId)
                 .ToListAsync();
 
@@ -3770,7 +3779,7 @@ namespace AttendanceMonitoring.Controllers
             try
             {
                 var students = await context.StudentSectionAssignments
-                    .Where(sa => model.StudentIds.Contains(sa.StudentId))
+                    .Where(sa => model.StudentIds.Contains(sa.StudentId.Value))
                     .ToListAsync();
 
 
@@ -4615,92 +4624,95 @@ namespace AttendanceMonitoring.Controllers
             }
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> PermanentDeleteSecretary(string id)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(id))
-                {
-                    return Json(new { success = false, message = "ID is required" });
-                }
 
-                var secretaryId = await context.Users
-                                   .IgnoreQueryFilters()
-                                   .FirstOrDefaultAsync(u => u.Id == id);            
+        ///        //NO NEED NA LALO NA INDUSTRY STANDARD. GAMITIN NALANG IF MISMONG CLIENT ANG NAG SUGGEST!
+        ///HINDI PA GAANONG AYOS, PARA MAAYOS IS DAPAT NULLABLE YUNG SecretaryId sa SecretaryAssignment
+        //[HttpDelete]
+        //public async Task<IActionResult> PermanentDeleteSecretary(string id)
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrEmpty(id))
+        //        {
+        //            return Json(new { success = false, message = "ID is required" });
+        //        }
 
-                if(secretaryId == null)
-                {
-                    logger.LogWarning("Secretary not found with the Id of {SecretaryId}", id);
-                    return Json(new { success = false, message = "Secretary id is Null" });
-                }
+        //        var secretaryId = await context.Users
+        //                           .IgnoreQueryFilters()
+        //                           .FirstOrDefaultAsync(u => u.Id == id);            
 
-                var secretaryAssignment = await context.SecretaryAssignments
-                                            .IgnoreQueryFilters()
-                                            .Where(sa => sa.SecretaryId == secretaryId.Id)
-                                            .FirstOrDefaultAsync();
+        //        if(secretaryId == null)
+        //        {
+        //            logger.LogWarning("Secretary not found with the Id of {SecretaryId}", id);
+        //            return Json(new { success = false, message = "Secretary id is Null" });
+        //        }
+
+        //        var secretaryAssignment = await context.SecretaryAssignments
+        //                                    .IgnoreQueryFilters()
+        //                                    .Where(sa => sa.SecretaryId == secretaryId.Id)
+        //                                    .FirstOrDefaultAsync();
 
 
-                if (!string.IsNullOrEmpty(secretaryId.imageFilePath))
-                {
-                    string ImagePath = Path.Combine(environment.WebRootPath, "ProfilePic", secretaryId.imageFilePath);
-                    if (System.IO.File.Exists(ImagePath))
-                    {
-                        System.IO.File.Delete(ImagePath);
-                    }
-                }
-                
-                if(secretaryAssignment != null)
-                {
-                    context.Remove(secretaryAssignment);
-                }
+        //        if (!string.IsNullOrEmpty(secretaryId.imageFilePath))
+        //        {
+        //            string ImagePath = Path.Combine(environment.WebRootPath, "ProfilePic", secretaryId.imageFilePath);
+        //            if (System.IO.File.Exists(ImagePath))
+        //            {
+        //                System.IO.File.Delete(ImagePath);
+        //            }
+        //        }
 
-                context.Remove(secretaryId);
-                await context.SaveChangesAsync();
+        //        if(secretaryAssignment != null)
+        //        {
+        //            context.Remove(secretaryAssignment);
+        //        }
 
-                var userInfo = await GetCurrentUserInfo();
+        //        context.Remove(secretaryId);
+        //        await context.SaveChangesAsync();
 
-                await logService.LogActivity(
-                    actionType: "Delete",
-                    entityName: "User",
-                    entityId: secretaryId.Id.ToString(),
-                    userId: userInfo.userId,
-                    schoolId: userInfo.schoolId,
-                    details: $"Admin {userInfo.username} deleted secretary {secretaryId.FirstName} {secretaryId.MiddleName} {secretaryId.LastName}. LRN: {secretaryId.SchoolId}",
-                    username: userInfo.username
-                );
+        //        var userInfo = await GetCurrentUserInfo();
 
-                var remainingUserRoleId = await context.Roles
-                                .Where(r => r.Name == "Secretary")
-                                .Select(r => r.Id)
-                                .FirstOrDefaultAsync();
+        //        await logService.LogActivity(
+        //            actionType: "Delete",
+        //            entityName: "User",
+        //            entityId: secretaryId.Id.ToString(),
+        //            userId: userInfo.userId,
+        //            schoolId: userInfo.schoolId,
+        //            details: $"Admin {userInfo.username} deleted secretary {secretaryId.FirstName} {secretaryId.MiddleName} {secretaryId.LastName}. LRN: {secretaryId.SchoolId}",
+        //            username: userInfo.username
+        //        );
 
-                var remainingDeletedSecretary = await context.Users
-                    .IgnoreQueryFilters()
-                    .Include(u => u.SecretariesAssignments)
-                    .Include(u => u.SecretariesAssignments)
-                        .ThenInclude(s => s.Section.Grade)
-                    .Include(g => g.SecretariesAssignments)
-                        .ThenInclude(sa => sa.Section.SectionSubjects)
-                    .Where(u => context.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == remainingUserRoleId))
-                    .Where(u => u.IsDeleted == true)
-                    .ToListAsync();
+        //        var remainingUserRoleId = await context.Roles
+        //                        .Where(r => r.Name == "Secretary")
+        //                        .Select(r => r.Id)
+        //                        .FirstOrDefaultAsync();
 
-                logger.LogInformation("Secretary successfully deleted with the ID: {SecretaryId}", id);
-                //return Json(new { success = true, message = "Secretary Deleted Permanently!" });
-                return PartialView("_RestoreDeletedSecretaryPartial", remainingDeletedSecretary);
-            }
-            catch (DbUpdateException ex)
-            {
-                logger.LogError(ex, "Database error restoring secretary{SecretaryId}", id);
-                return Json(new { success = false, message = "Database Error" });
-            }
-            catch(Exception ex)
-            {
-                logger.LogError(ex, "Unexpected error restoring secretary {SecretaryId}", id);
-                return Json(new { success = false, message = "Something went wrong" });
-            }     
-        }
+        //        var remainingDeletedSecretary = await context.Users
+        //            .IgnoreQueryFilters()
+        //            .Include(u => u.SecretariesAssignments)
+        //            .Include(u => u.SecretariesAssignments)
+        //                .ThenInclude(s => s.Section.Grade)
+        //            .Include(g => g.SecretariesAssignments)
+        //                .ThenInclude(sa => sa.Section.SectionSubjects)
+        //            .Where(u => context.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == remainingUserRoleId))
+        //            .Where(u => u.IsDeleted == true)
+        //            .ToListAsync();
+
+        //        logger.LogInformation("Secretary successfully deleted with the ID: {SecretaryId}", id);
+        //        //return Json(new { success = true, message = "Secretary Deleted Permanently!" });
+        //        return PartialView("_RestoreDeletedSecretaryPartial", remainingDeletedSecretary);
+        //    }
+        //    catch (DbUpdateException ex)
+        //    {
+        //        logger.LogError(ex, "Database error restoring secretary{SecretaryId}", id);
+        //        return Json(new { success = false, message = "Database Error" });
+        //    }
+        //    catch(Exception ex)
+        //    {
+        //        logger.LogError(ex, "Unexpected error restoring secretary {SecretaryId}", id);
+        //        return Json(new { success = false, message = "Something went wrong" });
+        //    }     
+        //}
 
         [HttpGet]
         public async Task<IActionResult> AttendanceReport(string? SelectedTeacher,
@@ -4840,18 +4852,26 @@ namespace AttendanceMonitoring.Controllers
                     {
                         var studentData = new AdminAttendanceReportData
                         {
-                            StudentId = student.StudentId,
+                            StudentSectionAssignmentId = student.Id,
+                            //StudentId = student.StudentId,
                             StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
                             DailyAttendance = new List<string>()
                         };
 
                         foreach(var date in dateRange)
                         {
+
                             var attendance = record
-                                .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                                .FirstOrDefault(ar => ar.StudentSectionAssignmentId == student.Id
                                                 && ar.AttendanceDate.Date == date.Date);
 
-                            if(attendance != null)
+                            ///OLD QUERY FOR FETCHING STUDENT ID
+
+                            //var attendance = record
+                            //    .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                            //                    && ar.AttendanceDate.Date == date.Date);
+
+                            if (attendance != null)
                             {
                                 studentData.DailyAttendance.Add(
                                     attendance.AttendanceMarking == "Present" ? "P" :
@@ -5053,7 +5073,8 @@ namespace AttendanceMonitoring.Controllers
 
             //Get Attendance Record
             var attendanceRecord = context.Attendances
-                .IgnoreQueryFilters()
+                //.IgnoreQueryFilters()
+                .Include(a => a.StudentSectionAssignment)
                 .Where(a => a.SectionSubjectId == sectionSubjectId
                         && a.AttendanceDate.Date >= StartDate.Value.Date
                         && a.AttendanceDate.Date <= EndDate.Value.Date
@@ -5076,7 +5097,8 @@ namespace AttendanceMonitoring.Controllers
             {
                 var studentData = new AdminAttendanceReportData
                 {
-                    StudentId = student.StudentId,
+                    StudentSectionAssignmentId = student.Id,
+                    //StudentId = student.StudentId,
                     StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
                     DailyAttendance = new List<string>()
                 };
@@ -5084,7 +5106,7 @@ namespace AttendanceMonitoring.Controllers
                 foreach (var date in dateRange)
                 {
                     var attendance = record
-                        .FirstOrDefault(ar => ar.StudentId == student.StudentId
+                        .FirstOrDefault(ar => ar.StudentSectionAssignment.StudentId == student.StudentId
                                         && ar.AttendanceDate.Date == date.Date);
 
                     if (attendance != null)

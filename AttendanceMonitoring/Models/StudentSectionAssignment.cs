@@ -3,7 +3,7 @@
     public class StudentSectionAssignment
     {
         public int Id { get; set; }
-        public int StudentId { get; set; }
+        public int? StudentId { get; set; }
         public int SectionId { get; set; }
         public int? AcademicPeriodId { get; set; } //This is needed for archive so it can filter assigned history
 
@@ -20,6 +20,9 @@
         public Section? Section { get; set; }
 
         public AcademicPeriod AcademicPeriod { get; set; }
+        //BAGONG DAGDAG FOR REFACTOR ABOUT STUDENT
+        public virtual ICollection<Attendance> StudentAttendances { get; set; }
+
 
 
     }

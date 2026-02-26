@@ -11,11 +11,14 @@
 
         public DateTime AttendanceDate { get; set; }//Actual date of attendance
         
-        public int? StudentId { get; set; } // Need na maging nullable para gumana ang delete sa student
+        //public int? StudentId { get; set; } // Need na maging nullable para gumana ang delete sa student
+        
         public string RecordedById { get; set; }// Recorded by (Teacher or Secretary)
 
         //public int SubjectId { get; set; }
 
+        //BAGONG DAGDAG FOR REFACTOR ABOUT STUDENT
+        public int? StudentSectionAssignmentId { get; set; }
         public int? TeacherAssignmentId { get; set; }
         public int? SecretaryAssignmentId { get; set; }
         public int? SectionSubjectId { get; set; }
@@ -36,10 +39,12 @@
         //PAG NON-NULLABLE ANG MGA NP, EF CORE EXPECTS IT TO ALWAYS HAVE VALUE
             
         //public Student Student { get; set; } Option 1 : just public (older Style) used in .net 6 and below
-        public virtual Student Student { get; set; } //Option 2: public virtual na (modern Ef Core best practice)
+        //public virtual Student Student { get; set; } //Option 2: public virtual na (modern Ef Core best practice)
                                                      //other info: SINGEL OBJECT (one to one or many to one) kaya walang ICollection
                                                      //Ibig sabihin isang attendance lang kada isang student
-        public virtual AppUser RecordedBy { get; set; } 
+        public virtual AppUser RecordedBy { get; set; }
+        //BAGONG DAGDAG FOR REFACTOR ABOUT STUDENT
+        public virtual StudentSectionAssignment StudentSectionAssignment { get; set; }
         public virtual TeacherAssignment TeacherAssignment { get; set; }
         public virtual AcademicPeriod AcademicPeriod { get; set; }
         public virtual SecretaryAssignment SecretaryAssignment { get; set; } //SINGLE - One Attendance links to ONE secretaryAssignment so ICollection didn't use
