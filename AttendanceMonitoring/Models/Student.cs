@@ -7,7 +7,7 @@ namespace AttendanceMonitoring.Models
     {
         public int Id { get; set; }
         [Required]
-        public int LRN { get; set; }
+        public string LRN { get; set; }
         [Required]
 
         public string FirstName { get; set; }

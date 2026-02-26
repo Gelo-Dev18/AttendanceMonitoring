@@ -18,10 +18,10 @@
     </div>
     <div class="col-6">
         <label asp-for="LRN" class="form-label"><strong>LRN</strong></label>
-        <input asp-for="LRN" class="form-control" required />
+        <input type="text" maxlength="12" oninput="this.value = this.value.replace(/[^0-9]/g, '')" asp-for="LRN" class="form-control" required />
         <span asp-validation-for="LRN" class="text-danger"></span>
     </div>
-    <div class="col-md-5">
+    <div class="col-md-6">
         <label asp-for="Sex" class="form-label"><strong>Sex</strong></label>
         <select asp-for="Sex" class="form-control" required>
             <option value="" selected>Choose...</option>
@@ -33,17 +33,17 @@
 
     <div class="col-md-6">
         <label asp-for="FirstName" class="form-label"><strong>First Name</strong></label>
-        <input asp-for="FirstName" class="form-control" required />
+        <input type="text" maxlength="50" oninput="this.value = this.value.replace(/[^a-zA-ZÑñ\s\-']/g, '')" asp-for="FirstName" class="form-control" required />
         <span asp-validation-for="FirstName" class="text-danger"></span>
     </div>
     <div class="col-md-6">
         <label asp-for="MiddelName" class="form-label"><strong>Middle Name</strong></label>
-        <input asp-for="MiddelName" class="form-control" />
+        <input type="text" maxlength="50" oninput="this.value = this.value.replace(/[^a-zA-ZÑñ\s\-']/g, '')" asp-for="MiddelName" class="form-control" />
         <span asp-validation-for="MiddelName" class="text-danger"></span>
     </div>
     <div class="col-6">
         <label asp-for="LastName" class="form-label"><strong>Last Name</strong></label>
-        <input asp-for="LastName" class="form-control" required />
+        <input type="text" maxlength="50" oninput="this.value = this.value.replace(/[^a-zA-ZÑñ\s\-']/g, '')" asp-for="LastName" class="form-control" required />
         <span asp-validation-for="LastName" class="text-danger"></span>
     </div>
 

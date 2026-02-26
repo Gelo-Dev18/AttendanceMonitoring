@@ -6,7 +6,7 @@ namespace AttendanceMonitoring.ViewModel
     public class StudentViewModel
     {
         [Required]
-        public int LRN { get; set; }
+        public string LRN { get; set; }
         [Required]
         public string FirstName { get; set; }
         public string? MiddelName { get; set; }

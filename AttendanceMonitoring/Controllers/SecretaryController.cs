@@ -53,7 +53,7 @@ namespace AttendanceMonitoring.Controllers
         {
             return User.Identity.Name;
         }
-        public async Task<int> GetCurrentUserSchoolId()
+        public async Task<string> GetCurrentUserSchoolId()
         {
             var userId = GetCurrentUserId();
 
@@ -61,7 +61,7 @@ namespace AttendanceMonitoring.Controllers
 
             return user.SchoolId;
         }
-        public async Task<(string userId, string userName, int schoolId)> GetCurrentUserInfo()
+        public async Task<(string userId, string userName, string schoolId)> GetCurrentUserInfo()
         {
             var userId = GetCurrentUserId();
 
@@ -160,7 +160,7 @@ namespace AttendanceMonitoring.Controllers
                 string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
 
-                editSecretary.LRN = model.LRN;
+                editSecretary.SchoolId = model.LRN;
                 editSecretary.FirstName = formattedFirstName;
                 editSecretary.MiddleName = formattedMiddleName;
                 editSecretary.LastName = formattedLastName;

@@ -6,7 +6,7 @@ namespace AttendanceMonitoring.ViewModel
     {
         [Required(ErrorMessage = "School Id is Required!")]
         [Display(Name = "School ID")]
-        public int SchoolId { get; set; }
+        public string SchoolId { get; set; }
 
         //[Required(ErrorMessage = "Email address is required!")]
         [EmailAddress]

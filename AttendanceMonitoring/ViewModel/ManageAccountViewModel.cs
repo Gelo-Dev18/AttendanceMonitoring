@@ -7,7 +7,7 @@ namespace AttendanceMonitoring.ViewModel
     public class ManageAccountViewModel
     {
         [Required]
-        public int LRN { get; set; }
+        public string LRN { get; set; }
         [DataType(DataType.Password)]
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 Characters")]
         public string? NewPassword { get; set; }

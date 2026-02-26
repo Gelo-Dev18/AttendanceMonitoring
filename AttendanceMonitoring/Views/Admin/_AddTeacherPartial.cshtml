@@ -18,7 +18,7 @@
     </div> *@
     <div class="col-6">
         <label asp-for="SchoolId" class="form-label"><strong>Employee No.</strong></label>
-        <input asp-for="SchoolId" class="form-control" required />
+        <input type="text" maxlength="12" oninput="this.value = this.value.replace(/[^0-9]/g, '')" asp-for="SchoolId" class="form-control" required />
         <span asp-validation-for="SchoolId" class="text-danger"></span>
     </div>
     <div class="col-6">
@@ -35,17 +35,17 @@
 
     <div class="col-md-6">
         <label asp-for="FirstName" class="form-label"><strong>First Name</strong></label>
-        <input asp-for="FirstName" class="form-control" required />
+        <input type="text" maxlength="50" oninput="this.value = this.value.replace(/[^a-zA-ZÑñ\s\-']/g, '')" asp-for="FirstName" class="form-control" required />
         <span asp-validation-for="FirstName" class="text-danger"></span>
     </div>
     <div class="col-md-6">
         <label asp-for="MiddleName" class="form-label"><strong>Middle Name</strong></label>
-        <input asp-for="MiddleName" class="form-control" />
+        <input type="text" maxlength="50" oninput="this.value = this.value.replace(/[^a-zA-ZÑñ\s\-']/g, '')" asp-for="MiddleName" class="form-control" />
         <span asp-validation-for="MiddleName" class="text-danger"></span>
     </div>
     <div class="col-8">
         <label asp-for="LastName" class="form-label"><strong>Last Name</strong></label>
-        <input asp-for="LastName" class="form-control" required />
+        <input type="text" maxlength="50" oninput="this.value = this.value.replace(/[^a-zA-ZÑñ\s\-']/g, '')" asp-for="LastName" class="form-control" required />
         <span asp-validation-for="LastName" class="text-danger"></span>
     </div>
     <div class="col-md-4">

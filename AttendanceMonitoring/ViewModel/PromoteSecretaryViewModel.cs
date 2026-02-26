@@ -7,7 +7,7 @@ namespace AttendanceMonitoring.ViewModel
         public int SectionId { get; set; }
 
         public List<SelectListItem>? AvailableGradeSection { get; set; }
-        public int SchoolId { get; set; }
+        public string SchoolId { get; set; }
         public string FirstName { get; set; }
         public string? MiddleName { get; set; }
         public string LastName { get; set; }

@@ -15,7 +15,7 @@ namespace AttendanceMonitoring.ViewModel
         public string Password { get; set; }
 
         [Required(ErrorMessage = "School Id is Required!")]
-        public int SchoolId { get; set; }
+        public string SchoolId { get; set; }
 
         [Required, MaxLength(30)]               
         public string FirstName { get; set; }

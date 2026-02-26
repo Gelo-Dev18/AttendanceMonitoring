@@ -110,7 +110,7 @@ namespace AttendanceMonitoring.Controllers
             return User.Identity.Name;
         }
 
-        protected async Task<int> GetCurrentUserSchoolId()
+        protected async Task<string> GetCurrentUserSchoolId()
         {
             var userId = GetCurrentUserId();
 
@@ -119,7 +119,7 @@ namespace AttendanceMonitoring.Controllers
             return user.SchoolId;
         }
 
-        protected async Task<(string userId, string username, int schoolId)> GetCurrentUserInfo()
+        protected async Task<(string userId, string username, string schoolId)> GetCurrentUserInfo()
         {
             var userId = GetCurrentUserId();
 
@@ -4825,6 +4825,7 @@ namespace AttendanceMonitoring.Controllers
                                     .IgnoreQueryFilters()
                                     .Include(ssa => ssa.Student)
                                     .Where(ssa => ssa.SectionId == sectionId)
+                                    //.Where(ssa => ssa.SectionId == sectionId && ssa.StudentId != null) // gamitin kapag gustong walang lalabas sa attendnace report kapag deelted nayung student
                                     .OrderBy(ssa => ssa.Student.LastName)
                                     .ToListAsync();
 
@@ -4850,11 +4851,15 @@ namespace AttendanceMonitoring.Controllers
                     //Builder Report Data
                     foreach(var student in students)
                     {
+                        var studentName = student.Student != null
+                            ? $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}"
+                            : "Deleted Student";
+
                         var studentData = new AdminAttendanceReportData
                         {
                             StudentSectionAssignmentId = student.Id,
                             //StudentId = student.StudentId,
-                            StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                            StudentName = studentName,
                             DailyAttendance = new List<string>()
                         };
 

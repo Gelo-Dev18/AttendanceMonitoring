@@ -8,7 +8,7 @@ namespace AttendanceMonitoring.ViewModel
     {
         //public string Email {get; set;}
         public string? NewPassword { get; set; }
-        public int SchoolId { get; set; }
+        public string SchoolId { get; set; }
         public string FirstName { get; set; }
         public string? MiddleName { get; set; }
         public string LastName { get; set; }

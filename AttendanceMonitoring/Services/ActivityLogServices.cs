@@ -12,7 +12,7 @@ namespace AttendanceMonitoring.Services
             _context = context;
         }
 
-        public async Task LogActivity(string actionType, string entityName, string entityId, string userId, int schoolId, string details, string username)
+        public async Task LogActivity(string actionType, string entityName, string entityId, string userId, string schoolId, string details, string username)
         {
           
 

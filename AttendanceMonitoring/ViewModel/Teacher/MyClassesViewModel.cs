@@ -5,8 +5,8 @@ namespace AttendanceMonitoring.ViewModel.Teacher
 {
     public class MyClassesViewModel
     {
-        public int LRN { get; set; }
-        public int SchoolId { get; set; }
+        public string LRN { get; set; }
+        public string SchoolId { get; set; }
         public string FirstName { get; set; }
         public string MiddleName { get; set; }
         public string LastName { get; set; }

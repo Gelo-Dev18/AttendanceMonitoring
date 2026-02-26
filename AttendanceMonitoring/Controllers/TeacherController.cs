@@ -64,7 +64,7 @@ namespace AttendanceMonitoring.Controllers
             return User.Identity.Name;
         }
 
-        protected async Task<int> GetCurrentUserSchoolId()
+        protected async Task<string> GetCurrentUserSchoolId()
         {
             var userId = GetCurrentUserId();
 
@@ -73,7 +73,7 @@ namespace AttendanceMonitoring.Controllers
             return user.SchoolId;
         }
 
-        protected async Task<(string userId, string username, int schoolId)> GetCurrentUserInfo()
+        protected async Task<(string userId, string username, string schoolId)> GetCurrentUserInfo()
         {
             var userId = GetCurrentUserId();
 
@@ -174,7 +174,7 @@ namespace AttendanceMonitoring.Controllers
                 string formattedLastName = textinfo.ToTitleCase(model.LastName.ToLower());
 
 
-                editTeacher.LRN = model.LRN;
+                editTeacher.SchoolId = model.LRN; //
                 editTeacher.FirstName = formattedFirstName;
                 editTeacher.MiddleName = formattedMiddleName;
                 editTeacher.LastName = formattedLastName;
@@ -660,11 +660,16 @@ namespace AttendanceMonitoring.Controllers
                     //BUild report data
                     foreach(var student in students)
                     {
+                        var studentName = student.Student != null
+                            ? $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}"
+                            : "Deleted Student";
+
                         var studentData = new AttendanceReportData //Helper in the ViewModel
                         {
                             StudentSectionAssignmentId = student.Id,
                             //StudentId = student.StudentId,
-                            StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                            //StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                            StudentName = studentName,
                             DailyAttendance = new List<string>()
                         };
 
@@ -1646,7 +1651,9 @@ namespace AttendanceMonitoring.Controllers
             var user = await userManager.GetUserAsync(User);
 
             var userId = user?.Id;
-            var schoolId = user?.SchoolId ?? 0;
+            //var schoolId = user?.SchoolId ?? 0;
+            var schoolId = user?.SchoolId;
+
             var username = user?.UserName;
 
             await signInManager.SignOutAsync();
