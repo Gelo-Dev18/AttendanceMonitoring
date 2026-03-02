@@ -681,6 +681,7 @@ namespace AttendanceMonitoring.Controllers
             //var username = user?.UserName;
 
             var userInfo = await GetCurrentUserInfo();
+            var user = await _userManager.GetUserAsync(User);
 
             await _signInManager.SignOutAsync();
 
@@ -690,7 +691,7 @@ namespace AttendanceMonitoring.Controllers
                 entityId: userInfo.userId,
                 userId: userInfo.userId,
                 schoolId: userInfo.schoolId,
-                details: $"User {userInfo.userName} logged out successfully!",
+                details: $"User {user.FirstName} {user?.MiddleName} {user.LastName}, logged out successfully!",
                 username: userInfo.userName
             );
 

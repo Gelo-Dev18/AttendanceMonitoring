@@ -1546,7 +1546,7 @@ namespace AttendanceMonitoring.Controllers
         {
             var sectionList = await context.Sections
                 .Include(g => g.Grade) // dahil sa Nav.Property/Lazy loading na nakadeclare sa Section.cs kaya gumana ang .Include
-                .OrderBy(s => s.GradesId)
+                .OrderBy(s => s.Grade.GradeLevel)
                 .ToListAsync();
 
             return View(sectionList);
@@ -2055,9 +2055,15 @@ namespace AttendanceMonitoring.Controllers
         //}
         public async Task<IActionResult> TeacherList()//string TeacherRole
         {
-            var teacher = await userManager.GetUsersInRoleAsync("Teacher");
 
-            return View(teacher);// return view dahil full page ang nirereload
+            var teacher = await userManager.GetUsersInRoleAsync("Teacher");
+            var list = teacher.OrderBy(t => t.LastName).ToList();
+
+            //var teacherIds = teacher.OrderBy(t => t.LastName).Select(t => t.Id).ToList();
+
+
+
+            return View(list);// return view dahil full page ang nirereload
             //return PartialView();// kapag maliit or more on modal ang rereload
         }
 
@@ -2072,7 +2078,7 @@ namespace AttendanceMonitoring.Controllers
                 .Include(sa => sa.SecretariesAssignments)
                     .ThenInclude(sn => sn.Section)
                         .ThenInclude(g => g.Grade)
-                .OrderBy(s => s.Id)
+                .OrderBy(s => s.LastName)
                 .ToListAsync();
 
 
@@ -5851,7 +5857,7 @@ namespace AttendanceMonitoring.Controllers
                 entityId: userinfo.userId,
                 userId: userinfo.userId,
                 schoolId: userinfo.schoolId,
-                details: $"User {userinfo.username} logged out successfully!",
+                details: $"User with the Id of {userinfo.schoolId}, logged out successfully!",
                 username: userinfo.username
             );
 

@@ -186,7 +186,7 @@ namespace AttendanceMonitoring.Controllers
                            entityId: userId,
                            userId: userId,
                            schoolId: schoolId,
-                           details: $"User {username} logged in successfully",
+                           details: $"User {user.FirstName} {user?.MiddleName} {user.LastName}, logged in successfully",
                            username: username
                     );
 

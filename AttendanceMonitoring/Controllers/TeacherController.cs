@@ -2,6 +2,7 @@
 using AttendanceMonitoring.Models;
 using AttendanceMonitoring.Services;
 using AttendanceMonitoring.ViewModel;
+using AttendanceMonitoring.ViewModel.Secretary;
 using AttendanceMonitoring.ViewModel.Teacher;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -242,11 +243,29 @@ namespace AttendanceMonitoring.Controllers
                 return Json(new { success = false, message = "Something went wrong" });
             }
 
-        }
+        }   
         //[Authorize(Roles = "Teacher")]
-        public IActionResult TeacherHome()
+        public async Task<IActionResult> TeacherHome()
         {
-            return View();
+            var teacherId = GetCurrentUserId();
+
+            var user = await userManager.FindByIdAsync(teacherId);
+
+            var currentAcademic = await context.AcademicPeriods
+                                   .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+
+            var teacherClass = await context.TeacherAssignments
+                .Where(ta => ta.TeacherId == teacherId && ta.AcademicPeriodId == currentAcademic.Id)
+                .ToListAsync();                                              
+
+            var model = new TeacherHomeViewModel
+            {
+                YearLevel = currentAcademic.Year,
+                Grading = currentAcademic.GradingPeriod,
+                Status = currentAcademic.Status,
+                teacherAssignments = teacherClass
+            };
+            return View(model);
         }
 
         [HttpGet]
@@ -1666,7 +1685,7 @@ namespace AttendanceMonitoring.Controllers
                 entityId: userId,
                 userId: userId,
                 schoolId: schoolId,
-                details: $"User {username} logged out successfully!",
+                details: $"User {user.FirstName} {user?.MiddleName} {user.LastName}, logged out successfully!",
                 username: username
             );
 
