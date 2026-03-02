@@ -757,4 +757,15 @@ $(document).ready(function () {
     $('#PromoteModal').on('hide.bs.modal', function () {
         hideBlurBackground();
     });
+
+
+    $('#ModalBackup').on('show.bs.modal', function (event) {
+
+        loadBlurBackground();
+    });
+
+    $('#ModalBackup').on('hide.bs.modal', function (event) {
+        hideBlurBackground();
+        
+    });
 });

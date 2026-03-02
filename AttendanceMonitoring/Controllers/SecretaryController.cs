@@ -13,6 +13,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace AttendanceMonitoring.Controllers
 {
@@ -228,9 +229,23 @@ namespace AttendanceMonitoring.Controllers
             }
 
         }
-        public IActionResult SecretaryHome()
+        public async Task<IActionResult> SecretaryHome()
         {
-            return View();
+            var currentAcademic = await _context.AcademicPeriods
+                                    .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
+            
+
+            var model = new SecretaryHomeViewModel
+            {
+                currentAcademicId = currentAcademic?.Id ?? 1,
+                YearLevel = currentAcademic.Year,
+                Grading = currentAcademic.GradingPeriod,
+                Status = currentAcademic.Status
+
+            };
+
+
+            return View(model);
         }
 
         //[HttpGet]

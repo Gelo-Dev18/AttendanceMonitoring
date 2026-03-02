@@ -237,6 +237,11 @@
                             {
                                 <text>, @excuse excuse@(cutting > 1 ? "s" : "")</text>
                             }
+                            else if(excuse > 0 || cutting > 0)
+                            {
+                                <text>, @cutting cutting@(cutting > 1 ? "" : "")</text>
+                                <text>, @excuse excuse@(cutting > 1 ? "s" : "")</text>
+                            }
                             (@rate% attendance)
                         </li>
 

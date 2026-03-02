@@ -232,6 +232,9 @@
                     {
                         var absents = student.DailyAttendance.Count(d => d == "A");
                         var lates = student.DailyAttendance.Count(d => d == "L");
+                        var cutting = student.DailyAttendance.Count(d => d == "C");
+                        var excuse = student.DailyAttendance.Count(d => d == "E");
+
                         var total = student.DailyAttendance.Count(d => d != "-");
                         var rate = total > 0
                             ? Math.Round(((double)(student.DailyAttendance.Count(d => d == "P") + lates * 0.5) / total) * 100)
@@ -240,9 +243,22 @@
                         <li>
                             <strong>@student.StudentName</strong> -
                             @absents absence@(absents > 1 ? "s" : "")
-                            @if(lates > 0)
+                            @if (lates > 0)
                             {
                                 <text>, @lates late arrival@(lates > 1 ? "s" : "")</text>
+                            }
+                            else if (cutting > 0)
+                            {
+                                <text>, @cutting cutting@(cutting > 1 ? "" : "")</text>
+                            }
+                            else if (excuse > 0)
+                            {
+                                <text>, @excuse excuse@(cutting > 1 ? "s" : "")</text>
+                            }
+                            else if (excuse > 0 || cutting > 0)
+                            {
+                                <text>, @cutting cutting@(cutting > 1 ? "" : "")</text>
+                                <text>, @excuse excuse@(cutting > 1 ? "s" : "")</text>
                             }
                             (@rate% attendance)
                         </li>

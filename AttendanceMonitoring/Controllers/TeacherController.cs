@@ -284,7 +284,7 @@ namespace AttendanceMonitoring.Controllers
                 .FirstOrDefaultAsync(ap => ap.IsDefault == 1);
 
             var hasAnyAssignments = await context.TeacherAssignments
-                         .AnyAsync(ta => ta.TeacherId == teacherId);
+                         .AnyAsync(ta => ta.TeacherId == teacherId && ta.AcademicPeriod == currentAcademicPeriod);
 
             //Exclude student that already has an attendance record
             var alreadyRecordedAttendance = await context.Attendances
@@ -628,7 +628,8 @@ namespace AttendanceMonitoring.Controllers
                     var students = await context.StudentSectionAssignments
                                     .IgnoreQueryFilters()
                                     .Include(ssa => ssa.Student)
-                                    .Where(ssa => ssa.SectionId == sectionId)
+                                    //.Where(ssa => ssa.SectionId == sectionId)
+                                    .Where(ssa => ssa.SectionId == sectionId && ssa.StudentId != null)
                                     .OrderBy(ssa => ssa.Student.LastName)
                                     .ToListAsync();
 
@@ -660,16 +661,16 @@ namespace AttendanceMonitoring.Controllers
                     //BUild report data
                     foreach(var student in students)
                     {
-                        var studentName = student.Student != null
-                            ? $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}"
-                            : "Deleted Student";
+                        //var studentName = student.Student != null
+                        //    ? $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}"
+                        //    : "Deleted Student";
 
                         var studentData = new AttendanceReportData //Helper in the ViewModel
                         {
                             StudentSectionAssignmentId = student.Id,
                             //StudentId = student.StudentId,
-                            //StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
-                            StudentName = studentName,
+                            StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                            //StudentName = studentName,
                             DailyAttendance = new List<string>()
                         };
 
@@ -823,7 +824,8 @@ namespace AttendanceMonitoring.Controllers
             var students = await context.StudentSectionAssignments
                .IgnoreQueryFilters()
                .Include(ssa => ssa.Student)
-               .Where(ssa => ssa.SectionId == sectionId)
+               //.Where(ssa => ssa.SectionId == sectionId)
+               .Where(ssa => ssa.SectionId == sectionId && ssa.StudentId != null)
                .OrderBy(ssa => ssa.Student.LastName)
                .ToListAsync();
 
@@ -854,14 +856,14 @@ namespace AttendanceMonitoring.Controllers
                 {
                     StudentSectionAssignmentId = student.Id,
                     //StudentId = student.StudentId,
-                    StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                    StudentName = $"{student.Student.LastName}, {student.Student.FirstName} {student.Student.MiddelName} ",
                     DailyAttendance = new List<string>()
                 };
 
                 foreach (var date in dateRange)
                 {
                     var attendance = record
-                        .FirstOrDefault(ar => ar.StudentSectionAssignment.StudentId == student.StudentId
+                        .FirstOrDefault(ar => ar.StudentSectionAssignmentId == student.Id
                                         && ar.AttendanceDate.Date == date.Date);
 
                     if (attendance != null)

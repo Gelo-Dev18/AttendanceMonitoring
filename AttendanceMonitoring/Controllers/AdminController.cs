@@ -2231,7 +2231,9 @@ namespace AttendanceMonitoring.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddTeacher(TeacherViewModel model)
         {
-            bool teacherFirstLastNameExist = await context.Users.AnyAsync(t => t.FirstName == model.FirstName && t.MiddleName == model.MiddleName && t.LastName == model.LastName);
+            bool teacherFirstLastNameExist = await context.Users
+                .IgnoreQueryFilters()
+                .AnyAsync(t => t.FirstName == model.FirstName && t.MiddleName == model.MiddleName && t.LastName == model.LastName);
 
             if (teacherFirstLastNameExist)
             {
@@ -3118,7 +3120,9 @@ namespace AttendanceMonitoring.Controllers
             {
                 try
                 {
-                    bool studentFirstLastNameExist = await context.Students.AnyAsync(t => t.FirstName == model.FirstName && t.MiddelName == model.MiddelName && t.LastName == model.LastName);
+                    bool studentFirstLastNameExist = await context.Students
+                        .IgnoreQueryFilters()
+                        .AnyAsync(t => t.FirstName == model.FirstName && t.MiddelName == model.MiddelName && t.LastName == model.LastName);
 
                     if (studentFirstLastNameExist)
                     {
@@ -3832,10 +3836,13 @@ namespace AttendanceMonitoring.Controllers
                 ModelState.AddModelError("SchoolId", "School Id is already taken!");
             }
 
-            bool fullNameExisted = await context.Users.AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName);
+            bool fullNameExisted = await context.Users
+                .IgnoreQueryFilters()
+                .AnyAsync(f => f.FirstName == model.FirstName && f.MiddleName == model.MiddleName && f.LastName == model.LastName);
+
             if (fullNameExisted)
             {
-                ModelState.AddModelError("FirstName", "A secretary with this Full name is already existed");
+                ModelState.AddModelError("FirstName", "A secretary with this Full name is already existed. Check archives also.");
                 ModelState.AddModelError("MiddleName", "");
                 ModelState.AddModelError("LastName", "");
             }
@@ -4824,8 +4831,8 @@ namespace AttendanceMonitoring.Controllers
                     var students = await context.StudentSectionAssignments
                                     .IgnoreQueryFilters()
                                     .Include(ssa => ssa.Student)
-                                    .Where(ssa => ssa.SectionId == sectionId)
-                                    //.Where(ssa => ssa.SectionId == sectionId && ssa.StudentId != null) // gamitin kapag gustong walang lalabas sa attendnace report kapag deelted nayung student
+                                    //.Where(ssa => ssa.SectionId == sectionId)
+                                    .Where(ssa => ssa.SectionId == sectionId && ssa.StudentId != null) // gamitin kapag gustong walang lalabas sa attendnace report kapag deelted nayung student
                                     .OrderBy(ssa => ssa.Student.LastName)
                                     .ToListAsync();
 
@@ -5039,6 +5046,12 @@ namespace AttendanceMonitoring.Controllers
                 //return Json(new { success = false, message = "Please select all filters before exporting." });
             }
 
+            var teacher = GetCurrentUserId();
+            var query = await userManager.FindByIdAsync(teacher);
+
+            var firstName = query.FirstName;
+            var middleName = query?.MiddleName;
+            var lastName = query.LastName;
 
             // Get the same data as the view
             var selectedClass = await context.TeacherAssignments
@@ -5071,15 +5084,16 @@ namespace AttendanceMonitoring.Controllers
             var students = await context.StudentSectionAssignments
                 .IgnoreQueryFilters()
                 .Include(ssa => ssa.Student)
-                .Where(ssa => ssa.SectionId == sectionId)
+                //.Where(ssa => ssa.SectionId == sectionId)
+                .Where(ssa => ssa.SectionId == sectionId && ssa.StudentId != null)
                 .OrderBy(ssa => ssa.Student.LastName)
                 .ToListAsync();
 
 
             //Get Attendance Record
             var attendanceRecord = context.Attendances
-                //.IgnoreQueryFilters()
-                .Include(a => a.StudentSectionAssignment)
+                .IgnoreQueryFilters()
+                //.Include(a => a.StudentSectionAssignment)
                 .Where(a => a.SectionSubjectId == sectionSubjectId
                         && a.AttendanceDate.Date >= StartDate.Value.Date
                         && a.AttendanceDate.Date <= EndDate.Value.Date
@@ -5088,8 +5102,11 @@ namespace AttendanceMonitoring.Controllers
 
                 if (!string.IsNullOrEmpty(SelectedAttendanceStatus))
                 {
-                    attendanceRecord = attendanceRecord
-                                    //.IgnoreQueryFilters()
+                //attendanceRecord = context.Attendances
+                //                .IgnoreQueryFilters()
+                //                .Where(a => a.AttendanceMarking == SelectedAttendanceStatus);
+
+                attendanceRecord = attendanceRecord
                                     .Where(a => a.AttendanceMarking == SelectedAttendanceStatus);
                 }
 
@@ -5100,18 +5117,23 @@ namespace AttendanceMonitoring.Controllers
 
             foreach (var student in students)
             {
+                //var studentName = student.Student != null
+                //            ? $"{student.Student.LastName}, {student.Student.FirstName} {student.Student.MiddelName} "
+                //            : "Deleted Student";
+
                 var studentData = new AdminAttendanceReportData
                 {
                     StudentSectionAssignmentId = student.Id,
                     //StudentId = student.StudentId,
-                    StudentName = $"{student.Student.FirstName} {student.Student.MiddelName} {student.Student.LastName}",
+                    StudentName = $"{student.Student.LastName}, {student.Student.FirstName} {student.Student.MiddelName} ",
+                    //StudentName = studentName,
                     DailyAttendance = new List<string>()
                 };
 
                 foreach (var date in dateRange)
                 {
                     var attendance = record
-                        .FirstOrDefault(ar => ar.StudentSectionAssignment.StudentId == student.StudentId
+                        .FirstOrDefault(ar => ar.StudentSectionAssignmentId == student.Id
                                         && ar.AttendanceDate.Date == date.Date);
 
                     if (attendance != null)
@@ -5168,6 +5190,11 @@ namespace AttendanceMonitoring.Controllers
                 worksheet.Cells[currentRow, 1].Style.Font.Size = 12;
                 currentRow++;
 
+                worksheet.Cells[currentRow, 1].Value = $"Teacher Name: {firstName} {middleName} {lastName}";
+                worksheet.Cells[currentRow, 1].Style.Font.Size = 12;
+                currentRow++;
+
+
                 //Class info
                 var classInfo = $"Grade {selectedClass.SectionSubject.Section.Grade.GradeLevel} " +
                                 $"{selectedClass.SectionSubject.Section.SectionName}" +
@@ -5187,8 +5214,8 @@ namespace AttendanceMonitoring.Controllers
                 worksheet.Cells[currentRow, 1].Value = $"Generated: {DateTime.Now:MMM dd, yyyy hh:mm tt}";
                 worksheet.Cells[currentRow, 1].Style.Font.Size = 10;
                 worksheet.Cells[currentRow, 1].Style.Font.Italic = true;
-                currentRow += 2; // spacing
-
+                //currentRow += 2; // spacing
+                currentRow++;
                 //TABLE HEADER
                 int col = 1;
                 //int currentRow = 7;
@@ -5476,12 +5503,13 @@ namespace AttendanceMonitoring.Controllers
                 );
 
                 logger.LogInformation("Backup created: {FileName}", backupFileName);
+                TempData["successMessage"] = "Backed up created Successfully!";
                 //return Json(new { success = true, message = $"Backup created successfully! File: {backupFileName}" });
                 //logger.LogInformation("Backup created: {FileName}", backupFileName);
             }catch(Exception ex)
             {
                 logger.LogError(ex, "Backup Creation failed");
-                //TempData["ErrorMessage"] = "Failed to create backup. Please check server logs.";
+                TempData["ErrorMessage"] = "Failed to create backup. Please check server logs.";
 
                 //return Json(new { success = false, message = "Failed to create backup. Please check server logs." });
             }
@@ -5573,14 +5601,16 @@ namespace AttendanceMonitoring.Controllers
 
 
                 //Success message
-                TempData["SuccessMessage"] = $@"
-                    Database restored Sucessfully!
+                //TempData["SuccessMessage"] = $@"
+                //    Database restored Sucessfully!
 
-                    Restored From: {result.RestoredFrom}
-                    Safely backup created: {result.SafetyBackupCreated}
+                //    Restored From: {result.RestoredFrom}
+                //    Safely backup created: {result.SafetyBackupCreated}
 
-                    All data hase been restored to the state from the selected backup.
-                ";
+                //    All data hase been restored to the state from the selected backup.
+                //";
+
+                TempData["SuccessMessage"] = "Database restored Sucessfully!";
 
                 logger.LogWarning(
                     "RESTORED COMPLETED - User: {User}, From: {Backup}, Safety: {Safety}",
@@ -5615,6 +5645,194 @@ namespace AttendanceMonitoring.Controllers
 
             return View(activityLogs);
         }
+
+        // Shows backup page with list of existing backups
+        //[HttpGet]
+        //public IActionResult BackupAndRestore()
+        //{
+        //    try
+        //    {
+        //        //Get list of all backups
+        //        var backups = backupService.GetAllBackups();
+
+        //        var recentForRestore = backupService.GetRecentBackups(5);
+
+        //        var model = new BackupViewModel
+        //        {
+        //            BackupFiles = backups,
+        //            RecentBackupsForRestore = recentForRestore
+        //        };
+
+        //        return View(model);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "Failed to load backup page");
+        //        TempData["ErrorMessage"] = "Failed to load backups. Please try again.";
+        //        //Json(new { success = false, message = "Failed to load backups. Please try again." });
+        //        return View(new List<BackupFileInfo>());
+        //    }
+        //}
+
+        ////Creats a new backup
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> CreateBackup()
+        //{
+        //    try
+        //    {
+        //        string backupFileName = await backupService.CreateBackupAsync();
+
+        //        var userInfo = await GetCurrentUserInfo();
+
+        //        await logService.LogActivity(
+        //            actionType: "Backup",
+        //            entityName: "Backup",
+        //            entityId: backupFileName,
+        //            userId: userInfo.userId,
+        //            schoolId: userInfo.schoolId,
+        //            details: $"User {userInfo.username} created a backup file",
+        //            username: userInfo.username
+        //        );
+
+        //        logger.LogInformation("Backup created: {FileName}", backupFileName);
+        //        TempData["successMessage"] = "Backed up created Successfully!"; ;
+        //        //return Json(new { success = true, message = $"Backup created successfully! File: {backupFileName}" });
+        //        //logger.LogInformation("Backup created: {FileName}", backupFileName);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "Backup Creation failed");
+        //        //TempData["ErrorMessage"] = "Failed to create backup. Please check server logs.";
+
+        //        //return Json(new { success = false, message = "Failed to create backup. Please check server logs." });
+        //    }
+        //    return RedirectToAction(nameof(BackupAndRestore)); ////Use only if Tempdata is used
+        //}
+
+        ////Downloads a backup file
+        //[HttpGet]
+        //public async Task<IActionResult> DownloadBackup(string filename)
+        //{
+        //    try
+        //    {
+        //        //Validate filename first
+        //        if (string.IsNullOrEmpty(filename))
+        //        {
+        //            return BadRequest("FileName is Required!");
+        //            //return Json(new { success = false, message = "FileName is Required!" });
+        //        }
+
+        //        //Get full file path(validation happens inside service)
+        //        string filePath = backupService.GetBackupFilePath(filename);
+
+        //        //check if file exists
+        //        if (!System.IO.File.Exists(filePath))
+        //        {
+        //            TempData["ErrorMessage"] = "Backup file not found";
+        //            return RedirectToAction(nameof(BackupAndRestore));
+        //            //return Json(new { success = false, message = "Backup file not found" });
+        //        }
+
+        //        //Read file bytes
+        //        byte[] fileBytes = System.IO.File.ReadAllBytes(filePath);
+
+        //        var userInfo = await GetCurrentUserInfo();
+
+        //        await logService.LogActivity(
+        //            actionType: "Download Backup",
+        //            entityName: "Backup",
+        //            entityId: filePath,
+        //            userId: userInfo.userId,
+        //            schoolId: userInfo.schoolId,
+        //            details: $"Admin {userInfo.username} download a backup file",
+        //            username: userInfo.username
+        //        );
+
+        //        logger.LogInformation("Downloaded backup: {FileName}", filePath);
+        //        TempData["successMessage"] = "Downloaded backup Successfully!"; ;
+        //        //Return file to user's browser (triggers download)
+        //        return File(fileBytes, "application/octet-stream", filename); //application/octet-stream save the data to a file
+
+        //    }
+        //    catch (ArgumentException ex)
+        //    {
+        //        logger.LogWarning(ex, "Invalid filename attempt: {FileName}", filename);
+        //        return BadRequest("Invalid filename");
+        //        //return Json(new { success = false, message = "Invalid filename" });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "Download failed for: {Filename}", filename);
+        //        TempData["ErrorMessage"] = "Failed to download backup";
+        //        return RedirectToAction(nameof(BackupAndRestore));
+        //    }
+        //}
+
+        ////Restore Database
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> RestoreDatabase(string backupFileName)
+        //{
+        //    try
+        //    {
+        //        if (string.IsNullOrEmpty(backupFileName))
+        //        {
+        //            TempData["ErrorMEssage"] = "Please select a backup file to restore";
+        //            return RedirectToAction(nameof(BackupAndRestore));
+
+        //        }
+        //        //return warning about user. If it is null it will return Unknown
+        //        logger.LogWarning(
+        //            "RESTORE INITIATED by user: {User}, Backup: {Backup}",
+        //            //?. means, null-conditaional operator means User.Identity is not null, it returns the value of `Name`
+        //            //?? means, it checks the left side(User.Identity) is null. it returns "Unknown"
+        //            User.Identity?.Name ?? "Unknown",
+        //            backupFileName
+        //        );
+
+        //        var result = await backupService.RestoreDatabaseAsync(backupFileName);
+
+        //        var userInfo = await GetCurrentUserInfo();
+
+        //        await logService.LogActivity(
+        //            actionType: "Restore",
+        //            entityName: "Restore",
+        //            entityId: backupFileName,
+        //            userId: userInfo.userId,
+        //            schoolId: userInfo.schoolId,
+        //            details: $"User {userInfo.username} restored a backup file",
+        //            username: userInfo.username
+        //        );
+
+        //        //Success message
+        //        TempData["SuccessMessage"] = $@"
+        //            Database restored Sucessfully!
+
+        //            Restored From: {result.RestoredFrom}
+        //            Safely backup created: {result.SafetyBackupCreated}
+
+        //            All data hase been restored to the state from the selected backup.
+        //        ";
+
+        //        logger.LogWarning(
+        //            "RESTORED COMPLETED - User: {User}, From: {Backup}, Safety: {Safety}",
+        //            User.Identity?.Name ?? "Unknown",
+        //            result.RestoredFrom,
+        //            result.SafetyBackupCreated
+        //        );
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        logger.LogError(ex, "RESTORE FAILED - User: {User}, Backup: {Backup}",
+        //        User.Identity?.Name ?? "Unknown",
+        //        backupFileName);
+
+        //        TempData["ErrorMessage"] = $"Failed to restore DataBase: {ex.Message}";
+        //    }
+
+        //    return RedirectToAction(nameof(BackupAndRestore));
+        //}
         public async Task<IActionResult> Logout()
         {
             //Get the current user

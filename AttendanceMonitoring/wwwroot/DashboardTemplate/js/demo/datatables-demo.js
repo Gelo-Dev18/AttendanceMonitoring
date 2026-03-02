@@ -1,6 +1,11 @@
 // Call the dataTables jQuery plugin
 $(document).ready(function() {
-    $('#dataTable').DataTable();
+    $('#dataTable').DataTable({
+        "order": [[1, "desc"]],
+        "columnDefs": [
+            {"orderable": false, "targets": [3]}
+        ]
+    });
     //$('#dataTable2').DataTable();
     $('#dataTable2').DataTable({
         "autoWidth": false, // PREVENTION SA WIDE TABLE

@@ -339,8 +339,54 @@
         </div>
     </div>
 
-    
+    @* <!-- Backup --> *@
+    <div class="modal fade" id="ModalBackup" data-bs-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center" id="staticBackdropLabel"><strong>Confirmation</strong></h5>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to perform a backup?
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmBackupButton" class="btn btn-success delete-teacher-button">
+                        Create
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    @* <!-- Restore --> *@
+    <div class="modal fade" id="ModalRestore" data-bs-backdrop="static" data-keyboard="false" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center" ><strong>⚠️ Restore Confirmation</strong></h5>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to restore the database from:</p>
+                    <p><strong id="restoreFileName"></strong></p>
+                    @* <p>Created: <span id="restoreDate"></span></p> *@
+                    <hr>
+                    <p class="text-danger"><strong>❌ This will DELETE all current data!</strong></p>
+                    <p class="text-danger"><strong>❌ All changes after this backup will be LOST!</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmRestoreButton" class="btn btn-success delete-teacher-button">
+                        Restore
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/DashboardTemplate/vendor/jquery/jquery.min.js"></script>
     <script src="~/DashboardTemplate/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
