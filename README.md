@@ -123,6 +123,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 
 
-*Built as a portfolio project to demonstrate ASP.NET Core MVC, Entity Framework Core, and role-based authentication in a real-world academic use case.*
+> *Built as a portfolio project to demonstrate ASP.NET Core MVC, Entity Framework Core, and role-based authentication in a real-world academic use case.*
 
 
